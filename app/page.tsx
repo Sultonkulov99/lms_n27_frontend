@@ -1,9 +1,5 @@
-import Image from "next/image";
+import KurslarPage from "./pages/landing-pages/course/courses.page";
 
 export default function Home() {
-  return (
-    <>
-      
-    </>
-  );
+  return <KurslarPage />;
 }
