@@ -37,22 +37,22 @@ export default function AboutUs() {
         <div className="flex flex-col gap-4">
           {/* Top row - 3 images */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+            <div className="aspect-4/3 rounded-xl overflow-hidden bg-gray-100">
               <img src={photo1.src} alt="Media 1" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
-            <div className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+            <div className="aspect-4/3 rounded-xl overflow-hidden bg-gray-100">
               <img src={photo2.src} alt="Media 2" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
-            <div className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+            <div className="aspect-4/3 rounded-xl overflow-hidden bg-gray-100">
               <img src={photo3.src} alt="Media 3" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
           </div>
           {/* Bottom row - 2 images */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="aspect-[16/9] md:aspect-[2/1] rounded-xl overflow-hidden bg-gray-100">
+            <div className="aspect-video md:aspect-2/1 rounded-xl overflow-hidden bg-gray-100">
               <img src={photo4.src} alt="Media 4" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
-            <div className="aspect-[16/9] md:aspect-[2/1] rounded-xl overflow-hidden bg-gray-100">
+            <div className="aspect-video md:aspect-2/1 rounded-xl overflow-hidden bg-gray-100">
               <img src={photo5.src} alt="Media 5" className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
             </div>
           </div>
@@ -82,11 +82,11 @@ export default function AboutUs() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Sertifikat va guvohnomalar</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Certificate 1 (Portrait) */}
-          <div className="aspect-[3/4] bg-white border border-gray-200 p-2 shadow-sm flex items-center justify-center rounded-lg overflow-hidden group">
+          <div className="aspect-3/4 bg-white border border-gray-200 p-2 shadow-sm flex items-center justify-center rounded-lg overflow-hidden group">
              <img src={photo7.src} alt="Sertifikat 1" className="w-full h-full object-cover rounded shadow-sm group-hover:scale-105 transition-transform duration-500" />
           </div>
           {/* Certificate 2 (Portrait) */}
-          <div className="aspect-[3/4] bg-white border border-gray-200 p-2 shadow-sm flex items-center justify-center rounded-lg overflow-hidden group">
+          <div className="aspect-3/4 bg-white border border-gray-200 p-2 shadow-sm flex items-center justify-center rounded-lg overflow-hidden group">
              <img src={photo7.src} alt="Sertifikat 2" className="w-full h-full object-cover rounded shadow-sm group-hover:scale-105 transition-transform duration-500" />
           </div>
           {/* Certificates 3 & 4 (Landscape Stacked) */}
@@ -117,14 +117,14 @@ export default function AboutUs() {
             <div 
               key={mentor.id} 
               className={`
-                ${mentor.id === 5 ? 'w-1/2 md:w-[10.5%]' : 'w-full md:w-[21%] aspect-[4/5]'} 
+                ${mentor.id === 5 ? 'w-1/2 md:w-[10.5%]' : 'w-full md:w-[21%] aspect-4/5'} 
                 bg-[#f3f4f6] rounded-none overflow-hidden relative group cursor-pointer
               `}
             >
               <img src={mentor.img.src} alt={mentor.name} className="w-full h-full object-cover transition-transform duration-500" />
               
               {/* Info Overlay (Visible only on hover) */}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 lg:p-5 pt-20 lg:pt-24 text-left opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/90 via-black/40 to-transparent p-4 lg:p-5 pt-20 lg:pt-24 text-left opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 <div className="flex flex-col">
                   <span className="text-white font-bold text-sm lg:text-lg leading-tight">{mentor.name}</span>
                   <span className="text-gray-300 text-[10px] lg:text-xs mt-1">{mentor.role}</span>
