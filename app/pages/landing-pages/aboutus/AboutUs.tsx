@@ -17,7 +17,7 @@ export default function AboutUs() {
       {/* Biz haqimizda section */}
       <section className="mb-16">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">Biz haqimizda</h1>
-        <div className="text-gray-600 space-y-4 text-sm md:text-base leading-relaxed max-w-5xl">
+        <div className="text-gray-600 space-y-4 text-sm md:text-base leading-relaxed w-full">
           <p>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas elementum non dui non congue. Commodo ut mattis dignissim justo adipiscing odio quisque ut. Urna tellus at dui posuere neque. Posuere eget dictum turpis iaculis massa. Arcu pharetra sed tellus habitant tincidunt. Proin tempor aliquam sit ut amet sed erat. Vestibulum ut pellentesque quis id eu ullamcorper hendrerit. Vitae consequat massa tempor sed vitae ornare - nullam nibh. Eget tristique cras orci maecenas ac dolor vitae id. Malesuada morbi ultrices diam morbi vulputate odio purus. Placerat aliquam at duis at elementum.
           </p>
