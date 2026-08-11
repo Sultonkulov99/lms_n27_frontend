@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import ImageLogin from "@/app/assets/login.png";
+import ImageLogin from "@/app/assets/register.png";
 import Link from "next/link";
 import { User, Smartphone, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,7 +21,7 @@ export default function RegisterPage() {
     async function RegisterForm(e: React.FormEvent) {
         e.preventDefault()
         try {
-            if (!data.fullName || data.phone || data.password) {
+            if (!data.fullName || !data.phone || !data.password) {
                 return showToast('Xatolik !', {
                     title: "Iltimos barcha maydonlarni to'ldiring",
                     type: "error",
