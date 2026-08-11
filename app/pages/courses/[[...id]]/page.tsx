@@ -44,11 +44,11 @@ export default async function CoursePage({ params }: PageProps) {
 
       <div className="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:col-span-1">
         <div className="lg:col-span-2 space-y-8">
-          <section className="bg-white p-6 rounded-2xl shadow-sm">
+          <section className="bg-white p-6 rounded-2xl">
             <AccordionList courseId={courseId} />
           </section>
 
-          <section className="bg-white p-6 rounded-2xl shadow-sm">
+          <section className="bg-white p-6 rounded-2xl">
             <CommentsSection courseId={courseId} />
           </section>
         </div>

@@ -9,7 +9,7 @@ export function CourseSidebar({ price }: CourseSidebarProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+      <div className="bg-white p-6 rounded-2xl space-y-4">
         <div className="aspect-video bg-gray-900 rounded-xl relative overflow-hidden flex items-center justify-center text-white text-xs">
           [ Kursga video razm solish ]
         </div>
@@ -33,7 +33,7 @@ export function CourseSidebar({ price }: CourseSidebarProps) {
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+      <div className="bg-white p-4 rounded-2xl flex flex-col gap-4">
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 bg-gray-200 rounded-full shrink-0 relative overflow-hidden">
             <div className="w-full h-full bg-slate-300 flex items-center justify-center text-xs font-bold text-slate-600">
