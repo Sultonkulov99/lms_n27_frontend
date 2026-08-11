@@ -21,9 +21,6 @@ export default function CourseCard({
     <div className="bg-white rounded-xl overflow-hidden border border-[#e5e7eb]">
       <div className="relative h-[180px] w-full">
         <Image src={image} alt={title} fill className="object-cover" />
-        <span className="absolute top-3 left-3 bg-[#22c55e] text-white text-xs font-semibold px-3 py-1 rounded-full">
-          {tag}
-        </span>
       </div>
 
       <div className="p-4">
