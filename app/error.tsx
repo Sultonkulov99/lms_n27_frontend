@@ -21,7 +21,7 @@ export default function Error({
         onClick={() => reset()}
         className="rounded-lg bg-blue-600 px-6 py-3 text-white transition-colors hover:bg-blue-700"
       >
-        Qayta urinib ko'rish
+        Qayta urinib korish
       </button>
     </div>
   );

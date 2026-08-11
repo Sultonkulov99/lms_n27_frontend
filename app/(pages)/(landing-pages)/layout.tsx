@@ -1,6 +1,5 @@
-import Footer from "../../../components/landing/home/Footer";
-import Navbar from "../../../components/landing/home/Navbar";
-
+import Footer from "../../components/landing/home/Footer";
+import Navbar from "../../components/landing/home/Navbar";
 
 
 export default function LandingLayout({
