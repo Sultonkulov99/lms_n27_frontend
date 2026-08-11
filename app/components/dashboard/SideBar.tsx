@@ -13,7 +13,7 @@ export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isUsersOpen, setIsUsersOpen] = useState(false);
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
-  const userSubLinks = ["adminstrators", "assistents", "mentors", "students"];
+  const userSubLinks = ["administrators", "assistents", "mentors", "students"];
 
   return (
     <aside
