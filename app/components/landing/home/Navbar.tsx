@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const langRef = useRef<HTMLDivElement>(null);
+
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState("O'z");
@@ -21,6 +23,27 @@ export default function Navbar() {
   ];
 
   const languages = ["O'z", "Рус", "Eng"];
+
+  // 1. Sahifa (route) o'zgarganda barcha menyu/dropdownlarni avtomatik yopish
+  useEffect(() => {
+    setLangDropdownOpen(false);
+    setCoursesDropdownOpen(false);
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // 2. Til tanlash menyusidan tashqariga bosilganda yopish (Click Outside)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Qaysi sahifa aktivligini aniqlash
   const isActive = (path: string) => {
@@ -119,10 +142,10 @@ export default function Navbar() {
           </nav>
         </div>
 
-        {/* O'ng tomon: Til tanlash, Dark Mode Icon va Kirish tugmasi */}
+        {/* O'ng tomon: Til tanlash, Dark Mode va Kirish tugmasi */}
         <div className="hidden lg:flex items-center gap-4">
-          {/* Language Selector */}
-          <div className="relative">
+          {/* Language Selector (Click Outside bilan ta'minlandi) */}
+          <div className="relative" ref={langRef}>
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer"
@@ -167,7 +190,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Dark Mode Icon Button (Visual Only) */}
+          {/* Dark Mode Icon Button */}
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
@@ -213,32 +236,12 @@ export default function Navbar() {
           aria-label="Menu"
         >
           {mobileMenuOpen ? (
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           ) : (
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           )}
         </button>
@@ -251,22 +254,14 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               Asosiy
             </Link>
             <Link
               href="/courses"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/courses")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/courses") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               Kurslar
             </Link>
@@ -285,22 +280,14 @@ export default function Navbar() {
             <Link
               href="/about"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/about")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/about") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               Biz haqimizda
             </Link>
             <Link
               href="/contact"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/contact")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/contact") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               Bog&#39;lanish
             </Link>
