@@ -1,3 +1,4 @@
+import ToastAndModal from "@/components/toast";
 import "./globals.css";
 
 
@@ -6,7 +7,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <ToastAndModal/>
+      </body>
     </html>
   );
 }
