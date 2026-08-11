@@ -8,6 +8,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
@@ -182,9 +183,9 @@ export default function Sidebar() {
                     "Barcha kurslar",
                     "Kategoriyalar",
                   ].map((link, idx) => (
-                    <a
+                    <Link
                       key={link}
-                      href="#"
+                      href={link === "Barcha kurslar" ? "/dashboard/courses/allCourses" : "#"}
                       className={`block px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
                         idx === 0
                           ? "bg-white/10 text-white font-medium"
@@ -192,7 +193,7 @@ export default function Sidebar() {
                       }`}
                     >
                       {link}
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
