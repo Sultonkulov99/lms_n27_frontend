@@ -7,7 +7,7 @@ const filters = [
   "Barcha kurslar",
   "Dizayn",
   "Frontend",
-  "Backend",
+  "Backend", 
   "Mobil",
   "Full Stack",
   "Sun'iy intellekt",
@@ -308,7 +308,7 @@ export default function KurslarPage() {
 
         <div className="flex justify-center mt-10">
           <button className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-            Barcha kurslarni ko'rish
+            Barcha kurslarni korish
           </button>
         </div>
       </div>
@@ -318,7 +318,7 @@ export default function KurslarPage() {
           <div className="flex items-center justify-center gap-1 mb-6">
             <span className="text-2xl font-bold text-gray-900">iT</span>
             <span className="text-2xl font-bold text-blue-600">live</span>
-            <span className="text-blue-600 text-sm align-top">'</span>
+            <span className="text-blue-600 text-sm align-top"></span>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Biz bilan muvaffaqiyatga erishing
@@ -335,7 +335,7 @@ export default function KurslarPage() {
               Intro video
             </button>
             <button className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-              Bog'lanish
+              Boglanish
             </button>
           </div>
         </div>
