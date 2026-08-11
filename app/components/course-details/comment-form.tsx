@@ -2,7 +2,7 @@
 
 import { useRef, useActionState } from "react";
 import { Send } from "lucide-react";
-import { createComment } from "../actions";
+import { createComment } from "./actions";
 
 export function CommentForm({ courseId }: { courseId: string }) {
   const formRef = useRef<HTMLFormElement>(null);

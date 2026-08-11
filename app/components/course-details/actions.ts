@@ -10,7 +10,7 @@ export async function createComment(courseId: string, formData: FormData) {
   }
 
   try {
-    console.log(`Сохраняем коммент для курса ${courseId}: ${content}`);
+    console.log(`Kurs uchun fikr saqlanmoqda ${courseId}: ${content}`);
 
     await new Promise((resolve) => setTimeout(resolve, 800));
 

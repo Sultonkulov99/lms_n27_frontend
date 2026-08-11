@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { CourseHero } from "@/app/features/course-details/components/course-hero";
-import { CourseSidebar } from "@/app/features/course-details/components/course-sidebar";
-import { AccordionList } from "@/app/features/course-details/components/accordion-list";
-import { CommentsSection } from "@/app/features/course-details/components/comments-section";
+import { CourseHero } from "@/app/components/course-details/course-hero";
+import { CourseSidebar } from "@/app/components/course-details/course-sidebar";
+import { AccordionList } from "@/app/components/course-details/accordion-list";
+import { CommentsSection } from "@/app/components/course-details/comments-section";
 
 interface PageProps {
   params: Promise<{ id?: string[] }>;
