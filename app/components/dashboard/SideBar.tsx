@@ -181,12 +181,6 @@ export default function Sidebar() {
                   {[
                     "Barcha kurslar",
                     "Kategoriyalar",
-                    "Guruhlar",
-                    "Darslar",
-                    "Vazifalar",
-                    "Testlar",
-                    "Savol javoblar",
-                    "Uyga vazifalar",
                   ].map((link, idx) => (
                     <a
                       key={link}
