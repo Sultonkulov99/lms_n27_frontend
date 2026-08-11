@@ -1,10 +1,15 @@
 "use client";
 
+<<<<<<< HEAD
 import { useState, useRef, useEffect } from "react";
 import { Heart, Play, Pause, X } from "lucide-react";
 import Link from "next/link";
 import { PrecisionStars } from "@/app/components/course-details/precision-stars";
 import { coursesData } from "@/app/data/courses";
+=======
+import { useState } from "react";
+import { Heart, Star } from "lucide-react";
+>>>>>>> bfa11e58141d31fa917ccd56b887692e1e1d4888
 
 const filters = [
   "Barcha kurslar",
@@ -73,7 +78,7 @@ function CourseCard({ course }: CourseCardProps) {
               setLiked((v) => !v);
             }}
             aria-label="Saqlash"
-            className="text-gray-300 hover:text-rose-400 transition-colors"
+            className="text-gray-300 hover:text-rose-400 transition-colors cursor-pointer"
           >
             <Heart
               size={18}
@@ -98,107 +103,8 @@ function CourseCard({ course }: CourseCardProps) {
   );
 }
 
-interface VideoModalProps {
-  onClose: () => void;
-}
-
-function VideoModal({ onClose }: VideoModalProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [playing, setPlaying] = useState(true);
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (playing) {
-      video.pause();
-    } else {
-      video.play();
-    }
-    setPlaying(!playing);
-  };
-
-  const handleTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-    setProgress((video.currentTime / video.duration) * 100);
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-xl overflow-hidden rounded-2xl bg-black shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          aria-label="Yopish"
-          className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors"
-        >
-          <X size={16} />
-        </button>
-
-        <div className="relative aspect-video w-full">
-          <video
-            ref={videoRef}
-            className="h-full w-full object-cover"
-            autoPlay
-            onTimeUpdate={handleTimeUpdate}
-            onClick={togglePlay}
-            poster="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=900&q=80"
-          >
-            <source src="/video_2026-08-10_11-15-10.mp4" type="video/mp4" />
-          </video>
-
-          {!playing && (
-            <button
-              onClick={togglePlay}
-              aria-label="Video ijro etish"
-              className="absolute inset-0 flex items-center justify-center"
-            >
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
-                <Play size={22} className="ml-1 fill-gray-900 text-gray-900" />
-              </span>
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 px-4 py-3">
-          <button
-            onClick={togglePlay}
-            aria-label={playing ? "To'xtatish" : "Ijro etish"}
-            className="flex h-7 w-7 shrink-0 items-center justify-center text-white"
-          >
-            {playing ? (
-              <Pause size={16} className="fill-white" />
-            ) : (
-              <Play size={16} className="ml-0.5 fill-white" />
-            )}
-          </button>
-          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/30">
-            <div
-              className="h-full rounded-full bg-white"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function KurslarPage() {
+<<<<<<< HEAD
   const [activeFilter, setActiveFilter] = useState("Barcha kurslar");
   const [showModal, setShowModal] = useState(false);
 
@@ -260,6 +166,42 @@ export default function KurslarPage() {
             </p>
           </div>
         )}
+=======
+  const [active, setActive] = useState("Barcha kurslar");
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-16">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">Kurslar</h1>
+
+        <div className="flex flex-wrap gap-2 mb-8">
+          {filters.map((f) => (
+            <button
+              key={f}
+              onClick={() => setActive(f)}
+              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
+                active === f
+                  ? "bg-blue-600 text-white border-blue-600"
+                  : "bg-white text-blue-600 border-blue-200 hover:bg-blue-50"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {courses.map((c) => (
+            <CourseCard key={c.id} course={c} />
+          ))}
+        </div>
+
+        <div className="flex justify-center mt-10">
+          <button className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
+            Barcha kurslarni ko&#39;rish
+          </button>
+        </div>
+>>>>>>> bfa11e58141d31fa917ccd56b887692e1e1d4888
       </div>
     </div>
   );
