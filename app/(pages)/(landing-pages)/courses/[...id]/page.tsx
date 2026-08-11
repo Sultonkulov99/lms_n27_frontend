@@ -3,28 +3,37 @@ import { CourseHero } from "@/app/components/course-details/course-hero";
 import { CourseSidebar } from "@/app/components/course-details/course-sidebar";
 import { AccordionList } from "@/app/components/course-details/accordion-list";
 import { CommentsSection } from "@/app/components/course-details/comments-section";
+import { coursesData } from "@/app/data/courses";
 
 interface PageProps {
   params: Promise<{ id?: string[] }>;
 }
 
 async function getCourseData(id: string) {
+  const numericId = parseInt(id, 10);
+  const foundCourse = coursesData.find((c) => c.id === numericId);
+
+  if (!foundCourse) return null;
+
   return {
-    title: "Frontend dasturlash",
-    description: "Asosiy tushunchalarning mustahkam poydevoriga ega bo'ling...",
-    price: 750000,
-    duration: "20 soat 56 daqiqa",
-    studentsCount: 255,
-    level: "Beginner",
+    title: foundCourse.title,
+    description: foundCourse.desc,
+    price: parseInt(foundCourse.price.replace(/\s/g, ""), 10),
+    duration: foundCourse.duration || "10 soat",
+    studentsCount: foundCourse.studentsCount || 0,
+    level: foundCourse.level || "Beginner",
+    cover: foundCourse.cover,
+    coverImg: foundCourse.coverImg,
   };
 }
 
 export default async function CoursePage({ params }: PageProps) {
   const resolvedParams = await params;
 
-  const courseId = Array.isArray(resolvedParams.id) && resolvedParams.id.length > 0
-    ? resolvedParams.id[0]
-    : "1";
+  const courseId =
+    Array.isArray(resolvedParams.id) && resolvedParams.id.length > 0
+      ? resolvedParams.id[0]
+      : "1";
 
   const course = await getCourseData(courseId);
 
@@ -55,7 +64,12 @@ export default async function CoursePage({ params }: PageProps) {
 
         <div className="lg:col-span-1">
           <div className="top-6 -mt-71.75 relative z-10">
-            <CourseSidebar price={course.price} />
+            <CourseSidebar
+              price={course.price}
+              cover={course.cover}
+              coverImg={course.coverImg}
+              title={course.title}
+            />
           </div>
         </div>
       </div>

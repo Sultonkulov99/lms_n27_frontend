@@ -101,7 +101,7 @@ export function AccordionList({ courseId }: { courseId: string }) {
                           </div>
                         ) : (
                           <div className="w-8 h-8 bg-[#F7F7F8] rounded-full flex items-center justify-center shrink-0">
-                          <Lock size={16} className="text-black" />
+                            <Lock size={16} className="text-black" />
                           </div>
                         )}
                         <span>{lesson.title}</span>
@@ -113,7 +113,7 @@ export function AccordionList({ courseId }: { courseId: string }) {
                   ))
                 ) : (
                   <p className="p-4 text-xs text-black italic">
-                    В этом модуле пока нет уроков
+                    Bu modulda hali darslar yo‘q
                   </p>
                 )}
               </div>

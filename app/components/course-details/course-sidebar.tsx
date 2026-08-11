@@ -1,17 +1,39 @@
+import Image from "next/image";
 import { PrecisionStars } from "./precision-stars";
 
 interface CourseSidebarProps {
   price: number;
+  title: string;
+  cover?: string;
+  coverImg?: string;
 }
 
-export function CourseSidebar({ price }: CourseSidebarProps) {
+export function CourseSidebar({
+  price,
+  title,
+  cover,
+  coverImg,
+}: CourseSidebarProps) {
   const formattedPrice = new Intl.NumberFormat("ru-RU").format(price);
 
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl space-y-4">
-        <div className="aspect-video bg-gray-900 rounded-xl relative overflow-hidden flex items-center justify-center text-white text-xs">
-          [ Kursga video razm solish ]
+        <div
+          className={`aspect-video rounded-xl relative overflow-hidden flex items-center justify-center ${cover || "bg-gray-100"}`}
+        >
+          {coverImg ? (
+            <Image
+              src={coverImg}
+              alt={title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 1024px) 100vw, 350px"
+              priority
+            />
+          ) : !cover ? (
+            <span className="text-xs text-gray-400">Rasm mavjud emas</span>
+          ) : null}
         </div>
 
         <div className="space-y-1">
