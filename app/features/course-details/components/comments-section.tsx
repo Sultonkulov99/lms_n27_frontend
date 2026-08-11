@@ -1,4 +1,4 @@
-import { ThumbsUp, MessageSquare } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { CommentForm } from "./comment-form";
 
 const COMMENTS_MOCK = [
@@ -44,6 +44,10 @@ export function CommentsSection({ courseId }: { courseId: string }) {
               <div className="flex items-center gap-4 pt-1 text-xs text-gray-400">
                 <button className="flex items-center gap-1 hover:text-blue-600 transition-colors">
                   <ThumbsUp className="w-3.5 h-3.5" />
+                  <span>{comment.likes}</span>
+                </button>
+                <button className="flex items-center gap-1 hover:text-red-600 transition-colors">
+                  <ThumbsDown className="w-3.5 h-3.5" />
                   <span>{comment.likes}</span>
                 </button>
                 <button className="flex items-center gap-1 hover:text-gray-600 transition-colors">

@@ -20,8 +20,8 @@ export function CommentForm({ courseId }: { courseId: string }) {
 
   return (
     <form ref={formRef} action={formAction} className="space-y-2">
-      <div className="relative flex items-center border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus-within:bg-white focus-within:border-blue-500 transition-all">
-        <div className="w-7 h-7 bg-blue-600 rounded-full shrink-0 text-white flex items-center justify-center text-xs font-bold mr-3">
+      <div className="relative flex items-center border-b border-gray-200 py-3 focus-within:border-blue-500 transition-all">
+        <div className="w-9 h-9 bg-blue-600 rounded-full shrink-0 text-white flex items-center justify-center text-xs font-bold mr-3">
           U
         </div>
 
