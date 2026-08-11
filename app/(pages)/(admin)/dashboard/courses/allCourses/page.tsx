@@ -104,7 +104,7 @@ export default function AllCoursesPage() {
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-6">
               {/* Search */}
-              <div className="relative w-[340px]">
+              <div className="relative w-85">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Search size={16} className="text-gray-400" />
                 </div>
@@ -196,7 +196,7 @@ export default function AllCoursesPage() {
                       />
                     </td>
                     <td className="p-4">
-                      <div className="w-[60px] h-[36px] rounded-lg bg-gradient-to-br from-blue-400 to-indigo-500 shadow-sm"></div>
+                      <div className="w-15 h-9 rounded-lg bg-linear-to-brr from-blue-400 to-indigo-500 shadow-sm"></div>
                     </td>
                     <td className="p-4 font-medium text-gray-900">
                       <Link href="/dashboard/courses/allCourses/1" className="hover:text-blue-600 hover:underline transition-colors">
@@ -247,7 +247,7 @@ export default function AllCoursesPage() {
                       />
                     </td>
                     <td className="p-4">
-                      <div className="w-[60px] h-[36px] rounded-lg bg-gradient-to-br from-orange-400 to-red-500 shadow-sm"></div>
+                      <div className="w-15 h-9 rounded-lg bg-linear-to-br from-orange-400 to-red-500 shadow-sm"></div>
                     </td>
                     <td className="p-4 font-medium text-gray-900">
                       <Link href="/dashboard/courses/allCourses/2" className="hover:text-blue-600 hover:underline transition-colors">
@@ -327,7 +327,7 @@ export default function AllCoursesPage() {
       {/* Add Course Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[600px] flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-150 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">
@@ -350,7 +350,7 @@ export default function AllCoursesPage() {
                   <label className="block text-[13px] font-semibold text-gray-700 mb-2">Banner</label>
                   <div className={`border border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center ${modalMode === "edit" ? "p-2" : "py-6 px-4"} bg-gray-50/50 hover:bg-blue-50/50 hover:border-blue-300 transition-colors cursor-pointer group text-center`}>
                     {modalMode === "edit" ? (
-                      <div className="w-full h-24 mb-3 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 shadow-sm relative overflow-hidden flex items-center justify-center">
+                      <div className="w-full h-24 mb-3 rounded-xl bg-linear-to-br from-blue-400 to-indigo-500 shadow-sm relative overflow-hidden flex items-center justify-center">
                         <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
                           <UploadCloud size={16} />
                         </div>
@@ -369,7 +369,7 @@ export default function AllCoursesPage() {
                   <label className="block text-[13px] font-semibold text-gray-700 mb-2">Kirish video</label>
                   <div className={`border border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center ${modalMode === "edit" ? "p-2" : "py-6 px-4"} bg-gray-50/50 hover:bg-blue-50/50 hover:border-blue-300 transition-colors cursor-pointer group text-center`}>
                     {modalMode === "edit" ? (
-                      <div className="w-full h-24 mb-3 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 shadow-sm relative overflow-hidden flex items-center justify-center">
+                      <div className="w-full h-24 mb-3 rounded-xl bg-linear-to-br from-orange-400 to-red-500 shadow-sm relative overflow-hidden flex items-center justify-center">
                          <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
                           <UploadCloud size={16} />
                         </div>
@@ -474,8 +474,8 @@ export default function AllCoursesPage() {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[400px] p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 p-8 text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
               <span className="text-3xl font-bold">?</span>
             </div>
@@ -500,8 +500,8 @@ export default function AllCoursesPage() {
 
       {/* Success Modal */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[400px] p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 p-8 text-center animate-in fade-in zoom-in-95 duration-200">
             <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
               <Check size={32} strokeWidth={3} />
             </div>
@@ -518,8 +518,8 @@ export default function AllCoursesPage() {
 
       {/* View Course Details Modal */}
       {isViewModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[500px] flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-125 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">Batafsil</h2>
@@ -555,7 +555,7 @@ export default function AllCoursesPage() {
               </div>
 
               <div>
-                <div className="w-full h-32 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 shadow-sm mb-2"></div>
+                <div className="w-full h-32 rounded-xl bg-linear-to-br from-blue-400 to-indigo-500 shadow-sm mb-2"></div>
                 <div className="flex items-center gap-1.5 text-blue-600 text-[13px] font-medium cursor-pointer hover:underline">
                   <LinkIcon size={14} />
                   Banner.jpg
@@ -624,8 +624,8 @@ export default function AllCoursesPage() {
 
       {/* Assign Assistant Modal */}
       {isAssignModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[400px] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 flex flex-col animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">Assistent biriktirish</h2>
               <button 
