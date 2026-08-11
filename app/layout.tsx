@@ -28,18 +28,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-    >
-      <body className="min-h-full flex flex-col">
-        {children}
-        <ToastAndModal/>
-    <html lang="uz" className="scroll-smooth" suppressHydrationWarning>
+    <html lang="uz" className="scroll-smooth min-h-full" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={`${inter.className} min-h-screen antialiased flex flex-col selection:bg-blue-600 selection:text-white`}
       >
         {children}
+        <ToastAndModal />
       </body>
     </html>
   );

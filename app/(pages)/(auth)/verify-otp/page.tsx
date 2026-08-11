@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import ImageLogin from "@/app/assets/login.png";
+import ImageLogin from "@/app/assets/register.png";
 import { Copy, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRegisterStore } from "@/store/useRegisterStore";
@@ -25,9 +25,7 @@ export default function VerificationPage() {
         };
 
         try {
-            const res = await baseAPI.post('/register', {
-                payload
-            })
+            const res = await baseAPI.post('/auth/register', payload)
 
             if (res.status === 201) {
                 resetFormData();
