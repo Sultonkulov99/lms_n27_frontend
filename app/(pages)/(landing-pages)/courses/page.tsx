@@ -1,15 +1,10 @@
 "use client";
 
-<<<<<<< HEAD
 import { useState, useRef, useEffect } from "react";
 import { Heart, Play, Pause, X } from "lucide-react";
 import Link from "next/link";
 import { PrecisionStars } from "@/app/components/course-details/precision-stars";
 import { coursesData } from "@/app/data/courses";
-=======
-import { useState } from "react";
-import { Heart, Star } from "lucide-react";
->>>>>>> bfa11e58141d31fa917ccd56b887692e1e1d4888
 
 const filters = [
   "Barcha kurslar",
@@ -104,7 +99,6 @@ function CourseCard({ course }: CourseCardProps) {
 }
 
 export default function KurslarPage() {
-<<<<<<< HEAD
   const [activeFilter, setActiveFilter] = useState("Barcha kurslar");
   const [showModal, setShowModal] = useState(false);
 
@@ -166,42 +160,6 @@ export default function KurslarPage() {
             </p>
           </div>
         )}
-=======
-  const [active, setActive] = useState("Barcha kurslar");
-
-  return (
-    <div className="min-h-screen bg-gray-50 pb-16">
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Kurslar</h1>
-
-        <div className="flex flex-wrap gap-2 mb-8">
-          {filters.map((f) => (
-            <button
-              key={f}
-              onClick={() => setActive(f)}
-              className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors cursor-pointer ${
-                active === f
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-blue-600 border-blue-200 hover:bg-blue-50"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {courses.map((c) => (
-            <CourseCard key={c.id} course={c} />
-          ))}
-        </div>
-
-        <div className="flex justify-center mt-10">
-          <button className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors cursor-pointer">
-            Barcha kurslarni ko&#39;rish
-          </button>
-        </div>
->>>>>>> bfa11e58141d31fa917ccd56b887692e1e1d4888
       </div>
     </div>
   );

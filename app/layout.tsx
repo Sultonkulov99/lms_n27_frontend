@@ -6,13 +6,6 @@ interface RootLayoutProps {
   children: React.ReactNode;
 }
 
-
-export default function RootLayout({ children }: RootLayoutProps) {
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   title: "IT Live Academy — Zamonaviy IT Kasblar Maktabi",
   description:
@@ -42,4 +35,4 @@ export default function RootLayout({
       </body>
     </html>
   );
-}}
+}
