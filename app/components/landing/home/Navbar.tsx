@@ -14,7 +14,7 @@ export default function Navbar() {
   const { selectedLang, setSelectedLang, t } = useLanguage();
 
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState<boolean>(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
