@@ -18,6 +18,6 @@ export async function createComment(courseId: string, formData: FormData) {
 
     return { success: true };
   } catch (error) {
-    return { error: "Xatolik yuz berdi. Qaytadan urinib ko'ring." };
+    return { error: "Xatolik yuz berdi. Qaytadan urinib ko’ring." };
   }
 }

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useLanguage } from "../context/LanguageContext"; // To'g'ri path ko'rsatilganiga ishonch hosil qiling
+import { useLanguage } from "../context/LanguageContext"; // To’g’ri path ko’rsatilganiga ishonch hosil qiling
 
 interface Course {
   id: string;
@@ -17,7 +17,7 @@ interface Course {
   rating: number;
   ratingCount: string;
   price: string;
-  descriptionKey: string; // Static matn o'rniga tarjima kalitidan foydalanamiz
+  descriptionKey: string; // Static matn o’rniga tarjima kalitidan foydalanamiz
   category: string;
 }
 
@@ -104,7 +104,6 @@ export default function PopularCourses() {
   return (
     <section id="courses" className="pt-8 pb-16 bg-[#F8FAFC]">
       <div className="container">
-
         {/* Heading */}
         <h2
           className="text-center"
@@ -143,10 +142,11 @@ export default function PopularCourses() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-[10px] text-sm font-medium transition-all duration-200 border cursor-pointer ${activeCategory === cat.id
+              className={`px-4 py-2 rounded-[10px] text-sm font-medium transition-all duration-200 border cursor-pointer ${
+                activeCategory === cat.id
                   ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                   : "bg-white text-slate-600 border-blue-100 hover:border-blue-300 hover:text-blue-600"
-                }`}
+              }`}
             >
               {cat.label}
             </button>
@@ -205,8 +205,13 @@ export default function PopularCourses() {
                 }}
               >
                 {/* Top block */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
                   {/* Mentor va Like */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -228,13 +233,14 @@ export default function PopularCourses() {
                     <button
                       onClick={() => toggleLike(course.id)}
                       className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                      aria-label="Sevimlilarga qo'shish"
+                      aria-label="Sevimlilarga qo’shish"
                     >
                       <svg
-                        className={`w-5 h-5 ${likedCourses[course.id]
+                        className={`w-5 h-5 ${
+                          likedCourses[course.id]
                             ? "fill-red-500 text-red-500"
                             : "fill-none"
-                          }`}
+                        }`}
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={1.8}
@@ -289,7 +295,7 @@ export default function PopularCourses() {
           ))}
         </div>
 
-        {/* "Barcha kurslarni ko'rish" */}
+        {/* "Barcha kurslarni ko’rish" */}
         <div className="text-center mt-8">
           <Link
             href="/courses"
@@ -298,7 +304,6 @@ export default function PopularCourses() {
             {t("courses.view_all")}
           </Link>
         </div>
-
       </div>
     </section>
   );

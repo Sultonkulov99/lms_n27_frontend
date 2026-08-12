@@ -5,10 +5,10 @@ import uz from "@/app/components/landing/messages/uz.json";
 import ru from "@/app/components/landing/messages/ru.json";
 import en from "@/app/components/landing/messages/en.json";
 
-type Language = "O'z" | "Рус" | "Eng";
+type Language = "O’z" | "Рус" | "Eng";
 
 const translations: Record<Language, any> = {
-  "O'z": uz,
+  "O’z": uz,
   "Рус": ru,
   "Eng": en,
 };
@@ -19,10 +19,10 @@ interface LanguageContextType {
   t: (path: string) => string;
 }
 
-// Default fallback — LanguageProvider bo'lmasa ham xato otmaydi
+// Default fallback — LanguageProvider bo’lmasa ham xato otmaydi
 const defaultT = (path: string): string => {
   const keys = path.split(".");
-  let current: any = translations["O'z"];
+  let current: any = translations["O’z"];
   for (const key of keys) {
     if (current && current[key]) {
       current = current[key];
@@ -34,7 +34,7 @@ const defaultT = (path: string): string => {
 };
 
 const defaultContextValue: LanguageContextType = {
-  selectedLang: "O'z",
+  selectedLang: "O’z",
   setSelectedLang: () => {},
   t: defaultT,
 };
@@ -42,12 +42,12 @@ const defaultContextValue: LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType>(defaultContextValue);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [selectedLang, setSelectedLang] = useState<Language>("O'z");
+  const [selectedLang, setSelectedLang] = useState<Language>("O’z");
 
   // LocalStorage ga tilni saqlash va yuklash
   useEffect(() => {
     const saved = localStorage.getItem("app_lang") as Language;
-    if (saved && ["O'z", "Рус", "Eng"].includes(saved)) {
+    if (saved && ["O’z", "Рус", "Eng"].includes(saved)) {
       setSelectedLang(saved);
     }
   }, []);
@@ -57,7 +57,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("app_lang", lang);
   };
 
-  // Nesting bo'yicha matnni olish kodi (masalan: "Navbar.home")
+  // Nesting bo’yicha matnni olish kodi (masalan: "Navbar.home")
   const t = (path: string) => {
     const keys = path.split(".");
     let current = translations[selectedLang];
@@ -72,7 +72,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <LanguageContext.Provider value={{ selectedLang, setSelectedLang: changeLanguage, t }}>
+    <LanguageContext.Provider
+      value={{ selectedLang, setSelectedLang: changeLanguage, t }}
+    >
       {children}
     </LanguageContext.Provider>
   );

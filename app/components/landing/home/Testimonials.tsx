@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from "../context/LanguageContext"; // Path to'g'riligiga ishonch hosil qiling
+import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface Testimonial {
   id: string;
@@ -89,7 +89,6 @@ export default function Testimonials() {
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

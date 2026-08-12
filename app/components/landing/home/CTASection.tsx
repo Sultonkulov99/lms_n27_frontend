@@ -7,7 +7,7 @@ export default function CTASection() {
   const { t } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
-  // Komponent brauzerga yuklangandan so'ng mounted state-ni true qilamiz
+  // Komponent brauzerga yuklangandan so’ng mounted state-ni true qilamiz
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -53,7 +53,7 @@ export default function CTASection() {
         {/* ── Content ─────────────────────────────────────────────────────── */}
         <div className="flex flex-col items-center text-center relative z-10 gap-6">
           <h2 className="font-bold text-3xl sm:text-4xl lg:text-[48px] leading-tight lg:leading-[60px] tracking-normal text-white m-0">
-            {mounted ? t("cta.title") : "Istalgan nuqtadan onlayn o'qish imkoniyati"}
+            {mounted ? t("cta.title") : "Istalgan nuqtadan onlayn o’qish imkoniyati"}
           </h2>
 
           <p className="font-medium text-lg sm:text-[20px] leading-relaxed lg:leading-[30px] tracking-normal text-white/90 m-0">
@@ -64,7 +64,7 @@ export default function CTASection() {
             href="#register"
             className="inline-flex items-center justify-center bg-white text-[#1C232C] hover:bg-slate-100 py-3.5 px-6 rounded-lg font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors whitespace-nowrap shadow-md"
           >
-            {mounted ? t("cta.registerBtn") : "Ro'yxatdan o'tish"}
+            {mounted ? t("cta.registerBtn") : "Ro’yxatdan o’tish"}
           </a>
         </div>
       </div>

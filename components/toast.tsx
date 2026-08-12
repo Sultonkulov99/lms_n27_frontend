@@ -55,7 +55,7 @@ export default function ToastAndModal() {
 
     return (
         <>
-            {/* 1. TOAST (O'ng yuqori burchakda qalqib chiquvchi xabar) */}
+            {/* 1. TOAST (O’ng yuqori burchakda qalqib chiquvchi xabar) */}
             {isOpen && (
                 <div className="fixed top-5 right-5 z-[9999] transition-all duration-300 animate-in fade-in slide-in-from-top-5">
                     <div

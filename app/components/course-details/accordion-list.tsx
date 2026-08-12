@@ -10,7 +10,7 @@ const MODULES_MOCK = [
     lessons: [
       {
         id: "l1",
-        title: "What You'll Get From Taking This Course",
+        title: "What You’ll Get From Taking This Course",
         duration: "9m 34s",
         isFree: true,
       },

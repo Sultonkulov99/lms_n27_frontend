@@ -37,29 +37,26 @@ export default function CourseCard({
 
       {/* Kontent qismi */}
       <div className="p-4">
-        {/* Instructor Avatar va Ismi */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <div className="relative w-12 h-12 mt-6 rounded-full overflow-hidden shrink-0">
-              <Image
-                src={instructorAvatar}
-                alt={instructor}
-                fill
-                className="object-cover object-center"
-                sizes="36px"
-              />
-            </div>
-            <span className="text-sm font-bold text-black">{instructor}</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Image
+              src={instructorAvatar}
+              alt={instructor}
+              width={22}
+              height={22}
+              className="rounded-full object-cover"
+            />
+            <span className="text-xs font-medium text-[#1a1a1a]">
+              {instructor}
+            </span>
           </div>
-
           <button
             onClick={() => setIsLiked(!isLiked)}
-            aria-label="Sevimlilarga qo'shish"
-            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+            aria-label="Sevimlilarga qo’shish"
           >
             <svg
-              width="20"
-              height="20"
+              width="18"
+              height="18"
               viewBox="0 0 24 24"
               fill={isLiked ? "#ef4444" : "none"}
               stroke={isLiked ? "#ef4444" : "currentColor"}

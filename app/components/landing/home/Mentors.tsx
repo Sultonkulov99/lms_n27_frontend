@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLanguage } from "../context/LanguageContext"; // Path to'g'riligiga ishonch hosil qiling
+import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface Mentor {
   id: string;

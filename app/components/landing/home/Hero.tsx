@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useLanguage } from "../context/LanguageContext"; // To'g'ri path ko'rsatilganiga ishonch hosil qiling
+import { useLanguage } from "../context/LanguageContext"; // To’g’ri path ko’rsatilganiga ishonch hosil qiling
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -36,7 +36,7 @@ export default function Hero() {
               {t("hero.subtitle")}
             </p>
 
-            {/* Ko'k Tugma */}
+            {/* Ko’k Tugma */}
             <div className="pt-2">
               <Link
                 href="/courses"
@@ -47,7 +47,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* O'ng ustun: Hero Rasmi */}
+          {/* O’ng ustun: Hero Rasmi */}
           <div className="relative flex justify-center lg:justify-end">
             <div className="relative w-full max-w-[580px]">
               <Image
