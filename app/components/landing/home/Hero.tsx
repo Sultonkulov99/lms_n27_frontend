@@ -2,8 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useLanguage } from "../context/LanguageContext"; // To’g’ri path ko’rsatilganiga ishonch hosil qiling
 
 export default function Hero() {
+  const { t } = useLanguage();
+
   return (
     <section className="relative w-full overflow-hidden min-h-[660px] flex items-center bg-gradient-to-r from-[#EAF2FF] via-[#F8FAFC] to-[#FFF3EB] py-12 lg:py-0">
       <div className="container relative z-10">
@@ -21,37 +24,34 @@ export default function Hero() {
                 }}
                 className="inline-block"
               >
-                Kelajak kasblarini
+                {t("hero.title_gradient")}
               </span>{" "}
-              <span className="text-slate-900">biz</span>
+              <span className="text-slate-900">{t("hero.title_part1")}</span>
               <br />
-              <span className="text-slate-900">bilan o&#39;rganing!</span>
+              <span className="text-slate-900">{t("hero.title_part2")}</span>
             </h1>
 
             {/* Subtitle / Tavsif */}
             <p className="text-[#64748B] text-base lg:text-[16px] font-normal leading-relaxed max-w-lg">
-              Tekinga o&#39;qib, pul ishlashga nima deysiz? Ishonmayapsizmi? Biz
-              buni
-              <br className="hidden sm:inline" />
-              isbotlaymiz. Hammasi o&#39;zingizga bog&#39;liq.
+              {t("hero.subtitle")}
             </p>
 
-            {/* Ko'k Tugma */}
+            {/* Ko’k Tugma */}
             <div className="pt-2">
               <Link
                 href="/courses"
                 className="inline-flex items-center justify-center px-7 py-3.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm lg:text-base shadow-md shadow-blue-600/20 transition-all cursor-pointer"
               >
-                Kurslar bilan tanishish
+                {t("hero.button")}
               </Link>
             </div>
           </div>
 
-          {/* O'ng ustun: Hero Rasmi (public/hero.png) */}
+          {/* O’ng ustun: Hero Rasmi */}
           <div className="relative flex justify-center lg:justify-end">
             <div className="relative w-full max-w-[580px]">
               <Image
-                src="/hero.png"
+                src="/hero_purple.png"
                 alt="IT Live Academy Hero Illustration"
                 width={600}
                 height={450}

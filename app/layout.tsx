@@ -3,17 +3,18 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin", "cyrillic"],
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin"] });
+
+interface RootLayoutProps {
+  children: React.ReactNode;
+}
 
 export const metadata: Metadata = {
-  title: "IT Live Academy — Zamonaviy IT Kasblar Maktabi",
+  title: "Kebyu LMS — Zamonaviy IT Kasblar Maktabi",
   description:
-    "Dasturlash, UI/UX Dizayn, Kiberxavfsizlik va Data Science bo'yicha amaliy IT kurslar va karyera markazi.",
+    "Dasturlash, UI/UX Dizayn, Kiberxavfsizlik va Data Science bo’yicha amaliy IT kurslar va karyera markazi.",
   keywords: [
-    "IT Live Academy",
+    "Kebyu LMS",
     "Dasturlash kursi",
     "Frontend",
     "Backend",

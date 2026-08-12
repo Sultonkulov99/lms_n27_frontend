@@ -1,7 +1,7 @@
 import Link from "next/link";
+import { Home } from "lucide-react";
 import Navbar from "@/app/components/landing/home/Navbar";
 import Footer from "@/app/components/landing/home/Footer";
-import { Home } from "lucide-react";
 
 export default function NotFound() {
   return (

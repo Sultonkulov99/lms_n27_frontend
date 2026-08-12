@@ -1,0 +1,88 @@
+{
+    "Navbar": {
+        "home": "Home",
+        "courses": "Courses",
+        "about": "About Us",
+        "contact": "Contact",
+        "login": "Sign In / Register"
+    },
+    "hero": {
+        "title_gradient": "Learn the professions",
+        "title_part1": "of the future",
+        "title_part2": "with us!",
+        "subtitle": "How about studying for free and earning money? Don’t believe it? We will prove it. It all depends on you.",
+        "button": "Explore Courses"
+    },
+    "courses": {
+        "title": "Popular Courses",
+        "subtitle": "Join the ranks of professionals in the fastest and most effective way through career-oriented practicums. Each practicum is designed by industry experts based on the latest curriculum",
+        "price_label": "Course price:",
+        "view_all": "View all courses",
+        "card_description": "Learn the field from scratch and start your career in top companies",
+        "categories": {
+            "all": "All Courses",
+            "design": "Design",
+            "frontend": "Frontend",
+            "backend": "Backend",
+            "mobile": "Mobile",
+            "fullstack": "Full Stack",
+            "ai": "Artificial Intelligence",
+            "other": "Others"
+        }
+    },
+    "cta": {
+        "title": "Opportunity to study online from anywhere",
+        "subtitle": "We offer you this opportunity",
+        "registerBtn": "Register Now"
+    },
+    "join": {
+        "title": "Join Us",
+        "subtitle": "You can join us not only as a student, but also as a mentor if you have sufficient experience",
+        "studentTitle": "Are you a student?",
+        "studentDesc": "If you are a student, become an apprentice to our international expert mentors",
+        "studentBtn": "Get Started",
+        "mentorTitle": "Are you a mentor?",
+        "mentorDesc": "Join our team of authors and share your experience through an easy and convenient platform",
+        "mentorBtn": "Join Now"
+    },
+    "finalCta": {
+        "title": "Achieve success with us",
+        "subtitle": "The strongest stay with us!",
+        "introVideo": "Intro video",
+        "contact": "Contact Us",
+        "close": "Close",
+        "playVideo": "Play video",
+        "pause": "Pause",
+        "play": "Play"
+    },
+    "mentors": {
+        "title": "Experienced Mentors",
+        "subtitle": "All our courses are prepared by experienced mentors",
+        "roles": {
+            "frontend": "Frontend Developer",
+            "backend": "Backend Specialist",
+            "uiux": "UI/UX Designer",
+            "pm": "Product Manager",
+            "dataScientist": "Data Scientist",
+            "mobile": "Mobile Developer"
+        }
+    },
+    "testimonials": {
+        "title": "Testimonials",
+        "subtitle": "Reviews left by our students",
+        "items": {
+            "1": {
+                "role": "Frontend course student",
+                "comment": "Lorem ipsum dolor sit amet consectetur. Sit in eget posuere facilisis elementum. Est semper aenean erat est etiam sit. Auctor risus semper ultrices eleifend vel at. Pharetra turpis fames cursus sit in faucibus."
+            },
+            "2": {
+                "role": "Frontend course student",
+                "comment": "Lorem ipsum dolor sit amet consectetur. In mattis ullamcorper faucibus amet libero. Et varius lorem magna non ultricies dictum duis. Quis imperdiet parturient leo orci libero gravida. Tortor malesuada quam."
+            },
+            "3": {
+                "role": "Frontend course student",
+                "comment": "Lorem ipsum dolor sit amet consectetur. Lectus placerat convallis vel mauris. Donec nunc tincidunt mattis enim rhoncus viverra libero enim nulla. Faucibus eleifend commodo sollicitudin eu turpis risus vitae."
+            }
+        }
+    }
+}

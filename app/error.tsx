@@ -2,9 +2,9 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { RefreshCcw, Home } from "lucide-react";
 import Navbar from "@/app/components/landing/home/Navbar";
 import Footer from "@/app/components/landing/home/Footer";
-import { RefreshCcw, Home } from "lucide-react";
 
 export default function Error({
   error,

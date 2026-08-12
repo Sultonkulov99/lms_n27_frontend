@@ -11,7 +11,6 @@ import {
   Check
 } from "lucide-react";
 import Link from "next/link";
-import Sidebar from "@/app/components/dashboard/SideBar";
 import Header from "@/app/components/dashboard/Header";
 
 export default function CourseDetailsPage({ params }: { params: { id: string } }) {
@@ -34,18 +33,13 @@ export default function CourseDetailsPage({ params }: { params: { id: string } }
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC]">
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Header />
-        
+    <>
         {/* Breadcrumb */}
-        <div className="px-8 pt-4 pb-2">
+        <div className="px-6 pt-6 pb-2">
           <p className="text-[13px] text-blue-500 font-medium">Kurslar \ Barcha kurslar</p>
         </div>
 
-        <div className="flex-1 overflow-auto p-8 pt-2">
+        <div className="flex-1 overflow-auto px-6 pb-6">
           {/* Page Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-1">Kursda qatnashuvchilar</h1>
@@ -208,7 +202,6 @@ export default function CourseDetailsPage({ params }: { params: { id: string } }
             
           </div>
         </div>
-      </main>
-    </div>
+    </>
   );
 }
