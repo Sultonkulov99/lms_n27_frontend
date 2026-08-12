@@ -18,8 +18,12 @@ import {
   Pencil,
   Trash2,
   Upload,
+  Globe,
+  Send,
+  Camera,
+  Briefcase,
+  Code,
 } from "lucide-react";
-import Sidebar from "@/app/components/dashboard/SideBar";
 import Pagination from "@/app/components/dashboard/Pagination";
 
 export default function AdministratorsPage() {
@@ -28,6 +32,9 @@ export default function AdministratorsPage() {
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingAdmin, setViewingAdmin] = useState<any>(null);
   
   const [showPassword, setShowPassword] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -162,13 +169,6 @@ export default function AdministratorsPage() {
   const handleSaveAdmin = () => {
     let hasError = false;
 
-    if (!imagePreview) {
-      setImageError(true);
-      hasError = true;
-    } else {
-      setImageError(false);
-    }
-
     if (!name.trim()) {
       setNameError(true);
       hasError = true;
@@ -221,71 +221,13 @@ export default function AdministratorsPage() {
     }
     
     setIsModalOpen(false);
+    if (!editingId) {
+      setIsSuccessModalOpen(true);
+    }
   };
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] font-sans overflow-hidden text-gray-900">
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <header className="h-22 flex items-center justify-between px-8 shrink-0 border-b border-gray-100 bg-white shadow-sm z-10">
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={20} className="text-gray-700" />
-            <span className="font-semibold text-gray-800 text-lg">Admin</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-4 bg-white px-4 py-2.5 rounded-full border border-gray-100 shadow-sm text-gray-500">
-              <button className="relative hover:text-gray-700 transition-colors">
-                <Bell size={20} />
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-              </button>
-              <div className="w-px h-5 bg-gray-200"></div>
-              <button className="hover:text-gray-700 transition-colors">
-                <Settings size={20} />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white px-4 py-2.5 rounded-full border border-gray-100 shadow-sm cursor-pointer">
-              <span>O'zbek (Lotin)</span>
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
-
-            <div className="relative">
-              <button
-                className="flex items-center gap-3 text-left bg-white p-1 pr-4 rounded-full border border-gray-100 shadow-sm transition-shadow hover:shadow-md"
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-              >
-                <img
-                  src="https://i.pravatar.cc/150?u=admin"
-                  alt="Profile"
-                  className="w-9 h-9 rounded-full object-cover bg-gray-100"
-                />
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-gray-900 leading-none mb-0.5">
-                    Istamov Xurshid
-                  </span>
-                  <span className="text-[11px] text-gray-500 leading-none">
-                    Administrator
-                  </span>
-                </div>
-                <ChevronDown size={16} className="text-gray-400 ml-1" />
-              </button>
-
-              {/* Profile Dropdown */}
-              {isProfileOpen && (
-                <div className="absolute right-0 top-14 w-56 bg-white border border-gray-100 shadow-lg rounded-xl py-1 z-50 animate-in fade-in slide-in-from-top-2">
-                  <button className="w-full px-4 py-2 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50">
-                    <div className="flex items-center gap-2"><User size={16} /> Profil</div><ChevronRight size={16} />
-                  </button>
-                  <button className="w-full px-4 py-2 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 mt-1 border-t border-gray-50">
-                    <div className="flex items-center gap-2"><LogOut size={16} /> Chiqish</div><ChevronRight size={16} />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+    <>
 
         <div className="flex-1 overflow-y-auto p-8 pt-6">
           {/* Top Page Header */}
@@ -344,7 +286,6 @@ export default function AdministratorsPage() {
                     <th className="px-5 py-4 border border-gray-200">Telefon raqam <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
                     <th className="px-5 py-4 border border-gray-200">Yaratilgan vaqt <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
                     <th className="px-5 py-4 border border-gray-200">Rol <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
-                    <th className="px-5 py-4 border border-gray-200">Parol</th>
                     <th className="px-5 py-4 border border-gray-200">Holati <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
                     <th className="px-5 py-4 text-center border border-gray-200">Amallar</th>
                   </tr>
@@ -354,7 +295,10 @@ export default function AdministratorsPage() {
                     <tr key={admin.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-5 py-4 font-medium border border-gray-200">{admin.id}</td>
                       <td className="px-5 py-4 border border-gray-200">
-                        <div className="flex items-center gap-3">
+                        <div 
+                          className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
+                          onClick={() => { setViewingAdmin(admin); setIsViewModalOpen(true); }}
+                        >
                           <img src={admin.image} alt={admin.name} className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200" />
                           <span className="font-semibold text-[13px]">{admin.name}</span>
                         </div>
@@ -362,12 +306,6 @@ export default function AdministratorsPage() {
                       <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">{admin.phone}</td>
                       <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">{admin.date}</td>
                       <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">{admin.role}</td>
-                      <td className="px-5 py-4 text-gray-400 border border-gray-200">
-                        <div className="flex items-center gap-2">
-                          <span>********</span>
-                          <EyeOff size={16} className="cursor-pointer hover:text-gray-600" />
-                        </div>
-                      </td>
                       <td className="px-5 py-4 border border-gray-200">
                         <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
                           {admin.status}
@@ -393,7 +331,7 @@ export default function AdministratorsPage() {
                   ))}
                   {currentAdmins.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-6 py-10 text-center text-gray-500 border border-gray-200">
+                      <td colSpan={7} className="px-6 py-10 text-center text-gray-500 border border-gray-200">
                         Ma'lumot topilmadi
                       </td>
                     </tr>
@@ -418,7 +356,6 @@ export default function AdministratorsPage() {
             />
           </div>
         </div>
-      </main>
 
       {/* Add/Edit Modal Overlay */}
       {isModalOpen && (
@@ -445,7 +382,7 @@ export default function AdministratorsPage() {
               <div className="flex flex-col items-center gap-1 w-full shrink-0">
                 <label className="block text-[13px] font-bold text-gray-900 w-full text-left">Rasm</label>
                 <div className="flex flex-col items-center gap-2 w-full">
-                  <label className={`flex flex-col items-center justify-center w-1/2 aspect-square border-[1.5px] border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors bg-white overflow-hidden relative ${imageError ? 'border-[#ff4d4f]' : 'border-gray-300'}`}>
+                  <label className={`flex flex-col items-center justify-center w-[120px] h-[120px] rounded-full border-[1.5px] border-dashed cursor-pointer hover:bg-gray-50 transition-colors bg-white overflow-hidden relative ${imageError ? 'border-[#ff4d4f]' : 'border-gray-300'}`}>
                     {imagePreview ? (
                       <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
@@ -562,22 +499,26 @@ export default function AdministratorsPage() {
       {/* Custom Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-[400px] animate-in fade-in zoom-in duration-200">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">O'chirishni tasdiqlash</h3>
-            <p className="text-gray-600 text-sm mb-6">Haqiqatan ham o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.</p>
-            <div className="flex items-center justify-end gap-3">
+          <div className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center animate-in fade-in zoom-in duration-200">
+            <div className="w-[84px] h-[84px] rounded-full bg-[#FFF0F0] flex items-center justify-center mb-6">
+              <div className="w-[60px] h-[60px] rounded-full bg-[#FF4D4F] flex items-center justify-center text-white text-[32px] font-bold">
+                ?
+              </div>
+            </div>
+            <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">Siz rostdan ham o'chirmoqchimisiz?</h3>
+            <div className="flex items-center justify-center gap-4 w-full">
               <button 
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeletingId(null);
                 }}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                className="flex-1 py-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-sm font-medium"
               >
                 Bekor qilish
               </button>
               <button 
                 onClick={handleDeleteAdmin}
-                className="px-4 py-2 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
+                className="flex-1 py-3 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
               >
                 O'chirish
               </button>
@@ -585,6 +526,93 @@ export default function AdministratorsPage() {
           </div>
         </div>
       )}
-    </div>
+
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]">
+          <div className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center animate-in fade-in zoom-in duration-200">
+            <div className="w-[84px] h-[84px] rounded-full bg-[#E6F4EA] flex items-center justify-center mb-6">
+              <div className="w-[60px] h-[60px] rounded-full bg-[#137333] flex items-center justify-center text-white">
+                <Check size={32} strokeWidth={3} />
+              </div>
+            </div>
+            <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">Muvaffaqiyatli qo'shildi</h3>
+            <button 
+              onClick={() => setIsSuccessModalOpen(false)}
+              className="px-8 py-3 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
+            >
+              Yopish
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* View Admin Modal */}
+      {isViewModalOpen && viewingAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px] p-4">
+          <div className="bg-white rounded-[16px] shadow-xl w-full max-w-[600px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200 relative">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-[20px] font-bold text-gray-900">Administrator haqida</h2>
+              <button 
+                onClick={() => setIsViewModalOpen(false)}
+                className="text-gray-400 hover:text-gray-700 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {/* Profile Header */}
+              <div className="flex items-center gap-4 mb-8">
+                <img src={viewingAdmin.image} alt={viewingAdmin.name} className="w-[80px] h-[80px] rounded-full object-cover border border-gray-200" />
+                <div>
+                  <h3 className="text-[20px] font-bold text-gray-900 mb-1">{viewingAdmin.name}</h3>
+                  <p className="text-gray-500 text-[14px]">Administrator</p>
+                </div>
+              </div>
+              
+              <h4 className="text-[16px] font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">To'liq ma'lumotlar</h4>
+              
+              <div className="flex flex-col gap-5 mb-8">
+                <div>
+                  <p className="text-[12px] text-gray-500 mb-1">Telefon raqami</p>
+                  <p className="text-[15px] font-bold text-gray-900">{viewingAdmin.phone}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] text-gray-500 mb-1">Rol</p>
+                  <p className="text-[15px] font-bold text-gray-900">{viewingAdmin.role}</p>
+                </div>
+                <div>
+                  <p className="text-[12px] text-gray-500 mb-1">Ro'yxatdan o'tgan vaqti</p>
+                  <p className="text-[15px] font-bold text-gray-900">{viewingAdmin.date}</p>
+                </div>
+              </div>
+              
+              <h4 className="text-[16px] font-bold text-gray-900 mb-4">Ijtimoiy tarmoq sahifalari:</h4>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Globe size={20} /></div>
+                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Send size={20} /></div>
+                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Camera size={20} /></div>
+                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Briefcase size={20} /></div>
+                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Code size={20} /></div>
+                  <div className="h-[42px] px-4 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[14px] hover:bg-gray-200 cursor-pointer transition-colors">Portfolio</div>
+                </div>
+                <button 
+                  onClick={() => {
+                    setIsViewModalOpen(false);
+                    openEditModal(viewingAdmin);
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors text-[14px]"
+                >
+                  <Pencil size={16} />
+                  Tahrirlash
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

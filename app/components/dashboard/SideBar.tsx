@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ChevronDown,
   LayoutGrid,
@@ -14,8 +16,8 @@ import { usePathname } from "next/navigation";
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
-  const [isUsersOpen, setIsUsersOpen] = useState(false);
-  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
+  const [isUsersOpen, setIsUsersOpen] = useState(pathname.includes('/dashboard/users'));
+  const [isCoursesOpen, setIsCoursesOpen] = useState(pathname.includes('/dashboard/courses'));
   const userSubLinks = ["administrators", "assistents", "mentors", "students"];
 
   return (
@@ -93,8 +95,12 @@ export default function Sidebar() {
                     setIsUsersOpen(!isUsersOpen);
                   }
                 }}
-                className={`w-full flex items-center justify-between py-2.5 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg group transition-all overflow-hidden ${
+                className={`w-full flex items-center justify-between py-2.5 rounded-lg group transition-all overflow-hidden ${
                   isOpen ? "px-3" : "justify-center px-0"
+                } ${
+                  pathname.includes('/dashboard/users') 
+                    ? "text-white" 
+                    : "text-gray-400 hover:bg-white/5 hover:text-white"
                 }`}
                 title="Foydalanuvchilar"
               >
@@ -127,15 +133,22 @@ export default function Sidebar() {
                 }`}
               >
                 <div className="pl-11 pr-3 py-1 space-y-1">
-                  {userSubLinks.map((link) => (
-                    <a
-                      key={link}
-                      href={`/dashboard/users/${link}`}
-                      className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg capitalize transition-colors"
-                    >
-                      {link}
-                    </a>
-                  ))}
+                  {userSubLinks.map((link) => {
+                    const isActive = pathname.includes(`/dashboard/users/${link}`);
+                    return (
+                      <Link
+                        key={link}
+                        href={`/dashboard/users/${link}`}
+                        className={`block px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
+                          isActive
+                            ? "bg-white/10 text-white font-medium"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        {link}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </div>

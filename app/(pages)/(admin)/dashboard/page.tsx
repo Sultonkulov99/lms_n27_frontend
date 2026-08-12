@@ -1,19 +1,11 @@
 "use client";
 
 import { ChevronRight } from "lucide-react";
-import Sidebar from "@/app/components/dashboard/SideBar";
-import Header from "@/app/components/dashboard/Header";
 
 export default function AdminDashboard() {
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] font-sans overflow-hidden text-gray-900">
-      {/* Sidebar Component */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header />
+    <>
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-8">
@@ -63,7 +55,6 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </>
   );
 }

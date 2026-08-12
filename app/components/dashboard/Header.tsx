@@ -15,7 +15,7 @@ export default function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
-    <header className="h-[88px] flex items-center justify-between px-8 shrink-0">
+    <header className="h-[88px] flex items-center justify-between px-8 shrink-0 bg-white border-b border-gray-100 shadow-sm z-10">
       <div className="flex items-center gap-2">
         <ShieldCheck size={20} className="text-gray-700" />
         <span className="font-semibold text-gray-800 text-lg">Admin</span>

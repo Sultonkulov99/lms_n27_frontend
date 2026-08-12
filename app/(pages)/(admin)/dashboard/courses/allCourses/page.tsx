@@ -17,7 +17,6 @@ import {
   Link as LinkIcon
 } from "lucide-react";
 import Link from "next/link";
-import Sidebar from "@/app/components/dashboard/SideBar";
 import Header from "@/app/components/dashboard/Header";
 
 export default function AllCoursesPage() {
@@ -49,10 +48,7 @@ export default function AllCoursesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] font-sans overflow-hidden text-gray-900">
-      {/* Sidebar Component */}
-      <Sidebar />
-
+    <>
       {/* Main Content */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         <Header />
@@ -664,6 +660,6 @@ export default function AllCoursesPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
