@@ -4,10 +4,6 @@ import Image, { StaticImageData } from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 6dbe5eb01aa10d1b59d95bd50a83b25d730ed8b3
 type CourseCardProps = {
   image: StaticImageData;
   tag?: string; // Agar rasmning o’zida teg bo’lsa, buni ishlatmaymiz

@@ -51,7 +51,7 @@ export default function Hero() {
           <div className="relative flex justify-center lg:justify-end">
             <div className="relative w-full max-w-[580px]">
               <Image
-                src="/hero.png"
+                src="/hero_purple.png"
                 alt="IT Live Academy Hero Illustration"
                 width={600}
                 height={450}
