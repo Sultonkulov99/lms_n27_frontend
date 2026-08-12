@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex h-[70vh] flex-col bg-white">
       <main className="flex flex-1 flex-col items-center justify-center">
         <div className="relative flex items-center justify-center">
           {/* Outer ping animation */}
