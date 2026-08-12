@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Sidebar from "@/app/components/dashboard/SideBar";
-import Header from "@/app/components/dashboard/Header";
 import Pagination from "@/app/components/dashboard/Pagination";
 import { Search, SlidersHorizontal, Plus, Pencil, Trash2, X, Check, HelpCircle } from "lucide-react";
 import { useCategoryStore, Category } from "@/app/store/useCategoryStore";
@@ -72,16 +70,9 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] font-sans text-gray-900 overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header />
-
+    <>
         {/* Dashboard Content */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8">
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Breadcrumb & Title */}
           <div className="mb-6">
             <div className="text-sm text-gray-500 mb-1 font-medium">
@@ -188,12 +179,17 @@ export default function CategoriesPage() {
             </div>
           </div>
         </div>
-      </main>
 
       {/* Add Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
+          onClick={() => setIsAddModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="text-[17px] font-bold text-gray-900">Qo'shish</h2>
               <button 
@@ -228,8 +224,14 @@ export default function CategoriesPage() {
 
       {/* Edit Modal */}
       {isEditModalOpen && editingCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
+          onClick={() => setIsEditModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-2xl shadow-xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="text-[17px] font-bold text-gray-900">Tahrirlash</h2>
               <button 
@@ -264,8 +266,14 @@ export default function CategoriesPage() {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
-          <div className="bg-white rounded-[24px] shadow-xl w-full max-w-[360px] p-8 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
+          onClick={() => setIsDeleteModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-[24px] shadow-xl w-full max-w-[360px] p-8 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="w-16 h-16 bg-[#EF4444] text-white rounded-full flex items-center justify-center mb-5 shadow-[0_8px_16px_rgba(239,68,68,0.25)]">
               <HelpCircle size={32} strokeWidth={2.5} />
             </div>
@@ -290,8 +298,14 @@ export default function CategoriesPage() {
 
       {/* Success Modal */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4">
-          <div className="bg-white rounded-[24px] shadow-xl w-full max-w-[360px] p-8 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
+          onClick={() => setIsSuccessModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-[24px] shadow-xl w-full max-w-[360px] p-8 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="w-16 h-16 bg-[#22C55E] text-white rounded-full flex items-center justify-center mb-5 shadow-[0_8px_16px_rgba(34,197,94,0.25)]">
               <Check size={36} strokeWidth={3} />
             </div>
@@ -305,6 +319,6 @@ export default function CategoriesPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

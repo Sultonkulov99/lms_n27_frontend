@@ -15,7 +15,6 @@ import {
   Link as LinkIcon
 } from "lucide-react";
 import Link from "next/link";
-import Sidebar from "@/app/components/dashboard/SideBar";
 import Header from "@/app/components/dashboard/Header";
 import { useCategoryStore } from "@/app/store/useCategoryStore";
 import { useCourseStore, Course } from "@/app/store/useCourseStore";
@@ -194,16 +193,9 @@ export default function AllCoursesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8F9FA] font-sans overflow-hidden text-gray-900">
-      {/* Sidebar Component */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header />
-
+    <>
         {/* Courses List Content */}
-        <div className="flex-1 overflow-y-auto p-8 pt-2">
+        <div className="flex-1 overflow-y-auto p-6">
           <div className="bg-white rounded-3xl shadow-[0_2px_12px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-7 flex flex-col min-h-full">
             {/* Box Header */}
             <div className="flex items-center justify-between mb-8">
@@ -403,12 +395,17 @@ export default function AllCoursesPage() {
 
           </div>
         </div>
-      </main>
 
       {/* Add/Edit Course Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-150 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setIsModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl shadow-xl w-full max-w-150 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">
@@ -545,8 +542,14 @@ export default function AllCoursesPage() {
 
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setIsDeleteModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl shadow-xl w-full max-w-100 p-8 text-center animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
               <span className="text-3xl font-bold">?</span>
             </div>
@@ -571,8 +574,14 @@ export default function AllCoursesPage() {
 
       {/* Success Modal */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setIsSuccessModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl shadow-xl w-full max-w-100 p-8 text-center animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
               <Check size={32} strokeWidth={3} />
             </div>
@@ -589,8 +598,14 @@ export default function AllCoursesPage() {
 
       {/* View Course Details Modal */}
       {isViewModalOpen && currentCourse && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-125 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setIsViewModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl shadow-xl w-full max-w-125 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">Batafsil</h2>
@@ -696,8 +711,14 @@ export default function AllCoursesPage() {
 
       {/* Assign Assistant Modal */}
       {isAssignModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setIsAssignModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-3xl shadow-xl w-full max-w-100 flex flex-col animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">Assistent biriktirish</h2>
               <button 
@@ -731,6 +752,6 @@ export default function AllCoursesPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
