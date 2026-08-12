@@ -19,7 +19,27 @@ interface LanguageContextType {
   t: (path: string) => string;
 }
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+// Default fallback — LanguageProvider bo'lmasa ham xato otmaydi
+const defaultT = (path: string): string => {
+  const keys = path.split(".");
+  let current: any = translations["O'z"];
+  for (const key of keys) {
+    if (current && current[key]) {
+      current = current[key];
+    } else {
+      return path;
+    }
+  }
+  return current;
+};
+
+const defaultContextValue: LanguageContextType = {
+  selectedLang: "O'z",
+  setSelectedLang: () => {},
+  t: defaultT,
+};
+
+const LanguageContext = createContext<LanguageContextType>(defaultContextValue);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [selectedLang, setSelectedLang] = useState<Language>("O'z");
@@ -59,9 +79,5 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useLanguage() {
-  const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error("useLanguage must be used within a LanguageProvider");
-  }
-  return context;
+  return useContext(LanguageContext);
 }
