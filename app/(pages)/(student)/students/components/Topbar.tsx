@@ -1,7 +1,24 @@
+"use client";
+
 import Image from "next/image";
 import ismatxurshidov from "../../../../assets/ismatxurshidov.png";
+import { useState, useRef, useEffect } from "react";
 
 export default function Topbar() {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <header className="h-14 bg-white border-b border-[#e5e7eb] flex items-center justify-between px-6">
       <div className="flex items-center gap-2 text-sm font-medium text-[#1a1a1a]">
@@ -37,21 +54,64 @@ export default function Topbar() {
           </svg>
         </button>
 
-        <div className="flex items-center gap-2 pl-2 border-l border-[#e5e7eb]">
-          <Image
-            src={ismatxurshidov}
-            alt="Ismat Xurshidov"
-            width={32}
-            height={32}
-            className="rounded-full object-cover"
-          />
-          <div className="leading-tight">
-            <p className="text-sm font-semibold text-[#1a1a1a]">Ismat Xurshidov</p>
-            <p className="text-xs text-[#9ca3af]">Administrator</p>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
+        <div className="relative pl-2 border-l border-[#e5e7eb]" ref={dropdownRef}>
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <Image
+              src={ismatxurshidov}
+              alt="Ismat Xurshidov"
+              width={32}
+              height={32}
+              className="rounded-full object-cover"
+            />
+            <div className="leading-tight">
+              <p className="text-sm font-semibold text-[#1a1a1a]">Ismat Xurshidov</p>
+              <p className="text-xs text-[#9ca3af]">Administrator</p>
+            </div>
+            <svg 
+              width="14" 
+              height="14" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="#9ca3af" 
+              strokeWidth="2"
+              className={`transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-[#e5e7eb] py-2 z-50">
+              <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3f4f6] transition-colors text-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                </svg>
+                <span className="text-sm text-[#1a1a1a]">Saytga qaytish</span>
+              </button>
+              
+              <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#f3f4f6] transition-colors text-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span className="text-sm text-[#1a1a1a]">Profil ma&apos;lumotlari</span>
+              </button>
+              
+              <div className="h-px bg-[#e5e7eb] my-1"></div>
+              
+              <button className="w-full flex items-center gap-3 px-4 py-3 hover:bg-red-50 transition-colors text-left">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                <span className="text-sm text-[#ef4444]">Profildan chiqish</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
