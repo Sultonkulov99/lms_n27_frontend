@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLanguage } from "../context/LanguageContext"; // To'g'ri path ko'rsatilganiga ishonch hosil qiling
 
 interface Course {
   id: string;
@@ -16,11 +17,12 @@ interface Course {
   rating: number;
   ratingCount: string;
   price: string;
-  description: string;
+  descriptionKey: string; // Static matn o'rniga tarjima kalitidan foydalanamiz
   category: string;
 }
 
 export default function PopularCourses() {
+  const { t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("all");
   const [likedCourses, setLikedCourses] = useState<Record<string, boolean>>({});
 
@@ -29,14 +31,14 @@ export default function PopularCourses() {
   };
 
   const categories = [
-    { id: "all", label: "Barcha kurslar" },
-    { id: "design", label: "Dizayn" },
-    { id: "frontend", label: "Frontend" },
-    { id: "backend", label: "Backend" },
-    { id: "mobile", label: "Mobil" },
-    { id: "fullstack", label: "Full Stack" },
-    { id: "ai", label: "Sun'iy intellekt" },
-    { id: "other", label: "Boshqalar" },
+    { id: "all", label: t("courses.categories.all") },
+    { id: "design", label: t("courses.categories.design") },
+    { id: "frontend", label: t("courses.categories.frontend") },
+    { id: "backend", label: t("courses.categories.backend") },
+    { id: "mobile", label: t("courses.categories.mobile") },
+    { id: "fullstack", label: t("courses.categories.fullstack") },
+    { id: "ai", label: t("courses.categories.ai") },
+    { id: "other", label: t("courses.categories.other") },
   ];
 
   const courses: Course[] = [
@@ -50,7 +52,7 @@ export default function PopularCourses() {
       rating: 4.5,
       ratingCount: "(4.5)",
       price: "250 000 uzs",
-      description: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
+      descriptionKey: "courses.card_description",
       category: "backend",
     },
     {
@@ -63,7 +65,7 @@ export default function PopularCourses() {
       rating: 4.5,
       ratingCount: "(4.5)",
       price: "250 000 uzs",
-      description: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
+      descriptionKey: "courses.card_description",
       category: "frontend",
     },
     {
@@ -76,7 +78,7 @@ export default function PopularCourses() {
       rating: 4.5,
       ratingCount: "(4.5)",
       price: "250 000 uzs",
-      description: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
+      descriptionKey: "courses.card_description",
       category: "other",
     },
     {
@@ -89,7 +91,7 @@ export default function PopularCourses() {
       rating: 4.5,
       ratingCount: "(4.5)",
       price: "250 000 uzs",
-      description: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
+      descriptionKey: "courses.card_description",
       category: "backend",
     },
   ];
@@ -103,7 +105,7 @@ export default function PopularCourses() {
     <section id="courses" className="pt-8 pb-16 bg-[#F8FAFC]">
       <div className="container">
 
-        {/* Heading — 48px / 700 / 60px line-height */}
+        {/* Heading */}
         <h2
           className="text-center"
           style={{
@@ -116,10 +118,10 @@ export default function PopularCourses() {
             marginBottom: "32px",
           }}
         >
-          Ommabop kurslar
+          {t("courses.title")}
         </h2>
 
-        {/* Subtitle — 20px / 500 / 30px line-height / #636C79 */}
+        {/* Subtitle */}
         <p
           className="text-center"
           style={{
@@ -132,33 +134,26 @@ export default function PopularCourses() {
             marginBottom: "32px",
           }}
         >
-          Kasbga yo&#39;nalitirilgan praktikumlar yordamida eng tez va samarali yo&#39;llar bilan mutaxassislar qatoriga qo&#39;shiling. Har bir praktikum
-          <br />
-          soha mutaxassislari tomonidan eng zamoaviy o&#39;quv reja asosida tayyorlangan
+          {t("courses.subtitle")}
         </p>
 
-        {/* Kategoriya filtrlari — 32px gap pastdan */}
+        {/* Kategoriya filtrlari */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 mb-8">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-4 py-2 rounded-[10px] text-sm font-medium transition-all duration-200 border cursor-pointer ${
-                activeCategory === cat.id
+              className={`px-4 py-2 rounded-[10px] text-sm font-medium transition-all duration-200 border cursor-pointer ${activeCategory === cat.id
                   ? "bg-blue-600 text-white border-blue-600 shadow-xs"
                   : "bg-white text-slate-600 border-blue-100 hover:border-blue-300 hover:text-blue-600"
-              }`}
+                }`}
             >
               {cat.label}
             </button>
           ))}
         </div>
 
-        {/*
-          Grid:
-          - gap: 32px
-          - Card: width=405px, height=515px (262+253), border-radius=4px
-        */}
+        {/* Grid Card-lar */}
         <div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8"
           style={{ gap: "32px" }}
@@ -236,11 +231,10 @@ export default function PopularCourses() {
                       aria-label="Sevimlilarga qo'shish"
                     >
                       <svg
-                        className={`w-5 h-5 ${
-                          likedCourses[course.id]
+                        className={`w-5 h-5 ${likedCourses[course.id]
                             ? "fill-red-500 text-red-500"
                             : "fill-none"
-                        }`}
+                          }`}
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={1.8}
@@ -261,7 +255,7 @@ export default function PopularCourses() {
 
                   {/* Tavsif */}
                   <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                    {course.description}
+                    {t(course.descriptionKey)}
                   </p>
 
                   {/* Reyting yulduzlari */}
@@ -283,7 +277,9 @@ export default function PopularCourses() {
 
                 {/* Narxi */}
                 <div>
-                  <div className="text-[11px] text-slate-400 mb-0.5">Kurs narxi:</div>
+                  <div className="text-[11px] text-slate-400 mb-0.5">
+                    {t("courses.price_label")}
+                  </div>
                   <div className="text-base font-bold text-slate-900">
                     {course.price}
                   </div>
@@ -299,7 +295,7 @@ export default function PopularCourses() {
             href="/courses"
             className="inline-flex items-center justify-center px-8 py-3 rounded-[10px] bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition-all cursor-pointer shadow-xs"
           >
-            Barcha kurslarni ko&#39;rish
+            {t("courses.view_all")}
           </Link>
         </div>
 

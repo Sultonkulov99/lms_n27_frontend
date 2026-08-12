@@ -4,14 +4,17 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/app/components/landing/context/LanguageContext"; // Loyihangizdagi context yo'li
 
 export default function Navbar() {
   const pathname = usePathname();
   const langRef = useRef<HTMLDivElement>(null);
 
+  // Til Context-dan olinadi
+  const { selectedLang, setSelectedLang, t } = useLanguage();
+
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState("O'z");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -22,7 +25,7 @@ export default function Navbar() {
     { title: "Python", href: "/courses/python" },
   ];
 
-  const languages = ["O'z", "Рус", "Eng"];
+  const languages: Array<"O'z" | "Рус" | "Eng"> = ["O'z", "Рус", "Eng"];
 
   // 1. Sahifa (route) o'zgarganda barcha menyu/dropdownlarni avtomatik yopish
   useEffect(() => {
@@ -79,7 +82,7 @@ export default function Navbar() {
           <nav className="hidden lg:flex items-center gap-8 text-[15px]">
             {/* Asosiy */}
             <Link href="/" className={getLinkStyle("/")}>
-              Asosiy
+              {t("Navbar.home")}
             </Link>
 
             {/* Kurslar Dropdown */}
@@ -92,13 +95,12 @@ export default function Navbar() {
                 href="/courses"
                 className={`flex items-center gap-1.5 ${getLinkStyle("/courses")}`}
               >
-                <span>Kurslar</span>
+                <span>{t("Navbar.courses")}</span>
                 <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    coursesDropdownOpen
+                  className={`w-4 h-4 transition-transform duration-200 ${coursesDropdownOpen
                       ? "rotate-180 text-blue-600"
                       : "text-slate-400"
-                  }`}
+                    }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -132,12 +134,12 @@ export default function Navbar() {
 
             {/* Biz haqimizda */}
             <Link href="/about" className={getLinkStyle("/about")}>
-              Biz haqimizda
+              {t("Navbar.about")}
             </Link>
 
             {/* Bog'lanish */}
             <Link href="/contact" className={getLinkStyle("/contact")}>
-              Bog&#39;lanish
+              {t("Navbar.contact")}
             </Link>
           </nav>
         </div>
@@ -152,9 +154,8 @@ export default function Navbar() {
             >
               <span>{selectedLang}</span>
               <svg
-                className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
-                  langDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`w-3.5 h-3.5 text-slate-500 transition-transform ${langDropdownOpen ? "rotate-180" : ""
+                  }`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -177,11 +178,10 @@ export default function Navbar() {
                       setSelectedLang(lang);
                       setLangDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-                      selectedLang === lang
+                    className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${selectedLang === lang
                         ? "text-blue-600 font-semibold"
                         : "text-slate-700 hover:bg-slate-50"
-                    }`}
+                      }`}
                   >
                     {lang}
                   </button>
@@ -198,11 +198,11 @@ export default function Navbar() {
           >
             {isDarkMode ? (
               <svg className="w-4 h-4 fill-current text-yellow-500" viewBox="0 0 24 24">
-                <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
+                <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
               </svg>
             ) : (
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
             )}
           </button>
@@ -225,7 +225,7 @@ export default function Navbar() {
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
               />
             </svg>
-            <span>Kirish / Ro&#39;yxatdan o&#39;tish</span>
+            <span>{t("Navbar.login")}</span>
           </Link>
         </div>
 
@@ -256,14 +256,14 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className={isActive("/") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
-              Asosiy
+              {t("Navbar.home")}
             </Link>
             <Link
               href="/courses"
               onClick={() => setMobileMenuOpen(false)}
               className={isActive("/courses") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
-              Kurslar
+              {t("Navbar.courses")}
             </Link>
             <div className="pl-4 space-y-2 border-l-2 border-slate-100">
               {courseCategories.map((c) => (
@@ -282,14 +282,14 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className={isActive("/about") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
-              Biz haqimizda
+              {t("Navbar.about")}
             </Link>
             <Link
               href="/contact"
               onClick={() => setMobileMenuOpen(false)}
               className={isActive("/contact") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
-              Bog&#39;lanish
+              {t("Navbar.contact")}
             </Link>
           </nav>
 
@@ -301,11 +301,10 @@ export default function Navbar() {
                   <button
                     key={l}
                     onClick={() => setSelectedLang(l)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                      selectedLang === l
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${selectedLang === l
                         ? "bg-blue-600 text-white"
                         : "bg-slate-100 text-slate-700"
-                    }`}
+                      }`}
                   >
                     {l}
                   </button>
@@ -318,7 +317,7 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className="w-full text-center py-2.5 rounded-[10px] bg-blue-600 text-white font-medium text-sm shadow-xs"
             >
-              Kirish / Ro&#39;yxatdan o&#39;tish
+              {t("Navbar.login")}
             </Link>
           </div>
         </div>
