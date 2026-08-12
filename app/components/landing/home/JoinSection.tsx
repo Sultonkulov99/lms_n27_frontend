@@ -54,7 +54,7 @@ export default function JoinSection() {
         {/* Two-Column Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[23px]">
 
-          {/* ── Card 1: O'quvchimisiz? ─────────────────────────────── */}
+          {/* ── Card 1: O’quvchimisiz? ─────────────────────────────── */}
           <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col gap-4">
             <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] m-0">
               O&#39;quvchimisiz?

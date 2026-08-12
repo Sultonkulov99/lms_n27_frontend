@@ -36,7 +36,7 @@ export default function Hero() {
               isbotlaymiz. Hammasi o&#39;zingizga bog&#39;liq.
             </p>
 
-            {/* Ko'k Tugma */}
+            {/* Ko’k Tugma */}
             <div className="pt-2">
               <Link
                 href="/courses"
@@ -47,7 +47,7 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* O'ng ustun: Hero Rasmi (public/hero.png) */}
+          {/* O’ng ustun: Hero Rasmi (public/hero.png) */}
           <div className="relative flex justify-center lg:justify-end">
             <div className="relative w-full max-w-[580px]">
               <Image

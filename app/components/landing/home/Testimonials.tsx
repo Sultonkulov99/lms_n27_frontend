@@ -12,21 +12,21 @@ export default function Testimonials() {
     {
       id: "1",
       name: "Xurshid Istamov",
-      role: "Frontend kursi o'quvchisi",
+      role: "Frontend kursi o’quvchisi",
       comment:
         "Lorem ipsum dolor sit amet consectetur. Sit in eget posuere facilisis elementum. Est semper aenean erat est etiam sit. Auctor risus semper ultrices eleifend vel at. Pharetra turpis fames cursus sit in faucibus.",
     },
     {
       id: "2",
       name: "Xurshid Istamov",
-      role: "Frontend kursi o'quvchisi",
+      role: "Frontend kursi o’quvchisi",
       comment:
         "Lorem ipsum dolor sit amet consectetur. In mattis ullamcorper faucibus amet libero. Et varius lorem magna non ultricies dictum duis. Quis imperdiet parturient leo orci libero gravida. Tortor malesuada quam.",
     },
     {
       id: "3",
       name: "Xurshid Istamov",
-      role: "Frontend kursi o'quvchisi",
+      role: "Frontend kursi o’quvchisi",
       comment:
         "Lorem ipsum dolor sit amet consectetur. Lectus placerat convallis vel mauris. Donec nunc tincidunt mattis enim rhoncus viverra libero enim nulla. Faucibus eleifend commodo sollicitudin eu turpis risus vitae.",
     },
@@ -35,7 +35,6 @@ export default function Testimonials() {
   return (
     <section id="testimonials" className="py-20 bg-white">
       <div className="container">
-        
         {/* Title — 48px, 700, 60px line-height */}
         <h2 className="text-center font-bold text-[48px] leading-[60px] tracking-normal text-[#0F172A] mb-3">
           Izohlar
@@ -88,7 +87,6 @@ export default function Testimonials() {
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

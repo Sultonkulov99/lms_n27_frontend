@@ -13,7 +13,7 @@ const filters = [
   "Backend",
   "Mobil",
   "Full Stack",
-  "Sun'iy intellekt",
+  "Sun’iy intellekt",
   "Boshqalar",
 ];
 
@@ -118,7 +118,7 @@ export default function KurslarPage() {
             Bizning...
           </h1>
           <p className="text-xs text-gray-400 mt-1">
-            O'zingizga mos yo'nalishni tanlang va o'rganishni boshlang
+            O’zingizga mos yo’nalishni tanlang va o’rganishni boshlang
           </p>
         </div>
         <button
@@ -156,7 +156,7 @@ export default function KurslarPage() {
         ) : (
           <div className="text-center py-16 border border-dashed border-gray-200 rounded-2xl w-full max-w-xl mx-auto">
             <p className="text-sm text-gray-400">
-              Bu yo'nalishda hozircha kurslar mavjud emas.
+              Bu yo’nalishda hozircha kurslar mavjud emas.
             </p>
           </div>
         )}

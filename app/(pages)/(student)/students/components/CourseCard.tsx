@@ -38,16 +38,18 @@ export default function CourseCard({
               height={22}
               className="rounded-full object-cover"
             />
-            <span className="text-xs font-medium text-[#1a1a1a]">{instructor}</span>
+            <span className="text-xs font-medium text-[#1a1a1a]">
+              {instructor}
+            </span>
           </div>
-          <button 
+          <button
             onClick={() => setIsLiked(!isLiked)}
-            aria-label="Sevimlilarga qo'shish"
+            aria-label="Sevimlilarga qo’shish"
           >
-            <svg 
-              width="18" 
-              height="18" 
-              viewBox="0 0 24 24" 
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
               fill={isLiked ? "#ef4444" : "none"}
               stroke={isLiked ? "#ef4444" : "#9ca3af"}
               strokeWidth="1.8"

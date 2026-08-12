@@ -28,7 +28,7 @@ export default function Error({
         </div>
         <h2 className="mb-4 text-3xl font-extrabold text-[#141518]">Xatolik yuz berdi</h2>
         <p className="mb-8 max-w-[500px] text-lg text-slate-600">
-          Sahifani yuklashda kutilmagan texnik muammo yuzaga keldi. Iltimos, qayta urinib ko'ring yoki bosh sahifaga qayting.
+          Sahifani yuklashda kutilmagan texnik muammo yuzaga keldi. Iltimos, qayta urinib ko’ring yoki bosh sahifaga qayting.
         </p>
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <button

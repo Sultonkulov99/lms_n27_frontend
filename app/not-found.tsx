@@ -11,8 +11,8 @@ export default function NotFound() {
         <h2 className="mb-4 text-8xl font-extrabold text-[#0047FF]">404</h2>
         <h3 className="mb-4 text-3xl font-bold text-[#141518]">Sahifa topilmadi</h3>
         <p className="mb-10 max-w-[500px] text-lg text-slate-600">
-          Siz qidirayotgan sahifa mavjud emas, o'chirilgan yoki manzilda xatolik bo'lishi mumkin. 
-          Manzilni to'g'ri yozganingizga ishonch hosil qiling.
+          Siz qidirayotgan sahifa mavjud emas, o’chirilgan yoki manzilda xatolik bo’lishi mumkin. 
+          Manzilni to’g’ri yozganingizga ishonch hosil qiling.
         </p>
         <Link
           href="/"

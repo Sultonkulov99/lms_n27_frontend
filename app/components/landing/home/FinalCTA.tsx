@@ -82,7 +82,7 @@ function VideoModal({ onClose }: VideoModalProps) {
         <div className="flex items-center gap-3 px-4 py-3 bg-neutral-900">
           <button
             onClick={togglePlay}
-            aria-label={playing ? "To'xtatish" : "Ijro etish"}
+            aria-label={playing ? "To’xtatish" : "Ijro etish"}
             className="flex h-7 w-7 shrink-0 items-center justify-center text-white cursor-pointer"
           >
             {playing ? (
@@ -109,11 +109,19 @@ export default function FinalCTA() {
   return (
     <div className="bg-white py-16 text-center border-t border-slate-100">
       <div className="container max-w-4xl mx-auto flex flex-col items-center gap-6">
-
         {/* ── KOiDA Brand Logo ────────────────────────────────────────────── */}
         <div className="flex items-center justify-center font-black text-3xl tracking-tight select-none">
           <span className="text-[#0F172A] font-sans">KO</span>
-          <span style={{ color: "#FF3B30", fontFamily: "Georgia, serif", fontStyle: "italic", margin: "0 1px" }}>i</span>
+          <span
+            style={{
+              color: "#FF3B30",
+              fontFamily: "Georgia, serif",
+              fontStyle: "italic",
+              margin: "0 1px",
+            }}
+          >
+            i
+          </span>
           <span className="text-[#0F172A] font-sans">DA</span>
         </div>
 
@@ -146,12 +154,16 @@ export default function FinalCTA() {
               strokeLinejoin="round"
             >
               <circle cx="12" cy="12" r="10" />
-              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
+              <polygon
+                points="10 8 16 12 10 16 10 8"
+                fill="currentColor"
+                stroke="none"
+              />
             </svg>
             <span>Intro video</span>
           </button>
 
-          {/* O'ngdagi ko'k button: Bog'lanish (#3B81F4) */}
+          {/* O’ngdagi ko’k button: Bog’lanish (#3B81F4) */}
           <Link
             href="/contact"
             className="inline-flex items-center justify-center w-[214px] h-[48px] rounded-[8px] bg-[#3B81F4] hover:bg-blue-600 text-white font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
@@ -159,7 +171,6 @@ export default function FinalCTA() {
             Bog&#39;lanish
           </Link>
         </div>
-
       </div>
 
       {showVideo && <VideoModal onClose={() => setShowVideo(false)} />}
