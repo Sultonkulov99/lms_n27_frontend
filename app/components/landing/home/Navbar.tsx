@@ -24,7 +24,7 @@ export default function Navbar() {
     { title: "Python", href: "/courses/python" }, 
   ];
 
-  const languages: Array<"O'z" | "Рус" | "Eng"> = ["O'z", "Рус", "Eng"];
+  const languages: Array<"O’z" | "Рус" | "Eng"> = ["O’z", "Рус", "Eng"];
 
   // 1. Sahifa (route) o’zgarganda barcha menyu/dropdownlarni avtomatik yopish
   useEffect(() => {
