@@ -9,9 +9,9 @@ export const baseAPI = axios.create({
 });
 
 async function getToken() {
-  const token = await cookieStore.get('accessToken')
+  const token = await cookieStore.get("accessToken");
 
-  return token?.value
+  return token?.value;
 }
 
 // // Add a request interceptor

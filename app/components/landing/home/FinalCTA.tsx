@@ -3,12 +3,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, X } from "lucide-react";
 import Link from "next/link";
+import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface VideoModalProps {
   onClose: () => void;
 }
 
 function VideoModal({ onClose }: VideoModalProps) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -49,7 +51,7 @@ function VideoModal({ onClose }: VideoModalProps) {
       >
         <button
           onClick={onClose}
-          aria-label="Yopish"
+          aria-label={t("finalCta.close")}
           className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors cursor-pointer"
         >
           <X size={16} />
@@ -69,7 +71,7 @@ function VideoModal({ onClose }: VideoModalProps) {
           {!playing && (
             <button
               onClick={togglePlay}
-              aria-label="Video ijro etish"
+              aria-label={t("finalCta.playVideo")}
               className="absolute inset-0 flex items-center justify-center cursor-pointer"
             >
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
@@ -82,7 +84,7 @@ function VideoModal({ onClose }: VideoModalProps) {
         <div className="flex items-center gap-3 px-4 py-3 bg-neutral-900">
           <button
             onClick={togglePlay}
-            aria-label={playing ? "To’xtatish" : "Ijro etish"}
+            aria-label={playing ? t("finalCta.pause") : t("finalCta.play")}
             className="flex h-7 w-7 shrink-0 items-center justify-center text-white cursor-pointer"
           >
             {playing ? (
@@ -104,6 +106,7 @@ function VideoModal({ onClose }: VideoModalProps) {
 }
 
 export default function FinalCTA() {
+  const { t } = useLanguage();
   const [showVideo, setShowVideo] = useState(false);
 
   return (
@@ -127,17 +130,17 @@ export default function FinalCTA() {
 
         {/* ── Heading ────────────────────────────────────────────────────── */}
         <h2 className="font-bold text-[32px] leading-[120%] text-[#0F172A] m-0">
-          Biz bilan muvaffaqiyatga erishing
+          {t("finalCta.title")}
         </h2>
 
         {/* ── Subtitle ───────────────────────────────────────────────────── */}
         <p className="font-medium text-[16px] leading-[140%] text-[#636C79] m-0">
-          Eng kuchlilar biz bilan qoladi!
+          {t("finalCta.subtitle")}
         </p>
 
         {/* ── Action Buttons ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-center gap-4 pt-2">
-          {/* Chapdagi oq button: Intro video */}
+          {/* Intro video button */}
           <button
             onClick={() => setShowVideo(true)}
             type="button"
@@ -160,15 +163,15 @@ export default function FinalCTA() {
                 stroke="none"
               />
             </svg>
-            <span>Intro video</span>
+            <span>{t("finalCta.introVideo")}</span>
           </button>
 
-          {/* O’ngdagi ko’k button: Bog’lanish (#3B81F4) */}
+          {/* Contact button */}
           <Link
             href="/contact"
             className="inline-flex items-center justify-center w-[214px] h-[48px] rounded-[8px] bg-[#3B81F4] hover:bg-blue-600 text-white font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
           >
-            Bog&#39;lanish
+            {t("finalCta.contact")}
           </Link>
         </div>
       </div>
