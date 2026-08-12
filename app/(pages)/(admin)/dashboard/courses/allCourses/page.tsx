@@ -235,7 +235,7 @@ export default function AllCoursesPage() {
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-6">
               {/* Search */}
-              <div className="relative w-85">
+              <div className="relative w-[340px]">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Search size={16} className="text-gray-400" />
                 </div>
@@ -251,17 +251,60 @@ export default function AllCoursesPage() {
                 </div>
               </div>
 
-              {/* Just spacing, pagination is moved to bottom now */}
-              <div></div>
+              {/* Top Pagination Controls */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-[13px] text-gray-700 font-medium relative group">
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="appearance-none bg-transparent outline-none cursor-pointer pr-5"
+                  >
+                    <option value={10}>Bir sahifada 10</option>
+                    <option value={20}>Bir sahifada 20</option>
+                    <option value={50}>Bir sahifada 50</option>
+                  </select>
+                  <ChevronDown size={14} className="text-gray-500 absolute right-0 pointer-events-none" />
+                </div>
+
+                <div className="flex items-center gap-1 ml-4">
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const page = idx + 1;
+                    if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-7 h-7 flex items-center justify-center rounded text-[13px] font-medium transition-colors ${currentPage === page ? "bg-white border border-gray-200 shadow-sm text-gray-900" : "text-gray-600 hover:bg-gray-50"}`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return <span key={page} className="text-gray-400 px-1 font-medium text-xs">...</span>;
+                    }
+                    return null;
+                  })}
+                  <button
+                    onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="px-2.5 h-7 flex items-center justify-center rounded bg-white border border-gray-200 shadow-sm text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition-colors ml-1 disabled:opacity-50"
+                  >
+                    Keyingi
+                  </button>
+                </div>
+              </div>
             </div>
 
-            {/* Table (Excel Style Borders) */}
-            <div className="bg-white rounded-t-xl shadow-sm overflow-hidden flex-1 mb-6 border border-gray-200 border-b-0">
+            {/* Table */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden flex-1 mb-6 border border-gray-100">
               <div className="overflow-x-auto h-full">
-                <table className="w-full text-left border-collapse border border-gray-200 min-w-[1000px]">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
                   <thead>
-                    <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
-                      <th className="px-5 py-4 w-12 text-center border border-gray-200">
+                    <tr className="bg-white text-[13px] text-gray-900 font-bold tracking-wide border-b border-gray-100">
+                      <th className="px-5 py-4 w-12 text-center">
                         <input 
                           type="checkbox" 
                           onChange={handleSelectAll}
@@ -269,44 +312,44 @@ export default function AllCoursesPage() {
                           className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
                         />
                       </th>
-                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
                         <div className="flex items-center justify-center gap-2 cursor-pointer group">
                           Banner <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                         </div>
                       </th>
-                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
                         Kurs nomi
                       </th>
-                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
                         <div className="flex items-center justify-center gap-2 cursor-pointer group">
                           Darajasi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                         </div>
                       </th>
-                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
                         <div className="flex items-center justify-center gap-2 cursor-pointer group">
                           Narxi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                         </div>
                       </th>
-                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
                         <div className="flex items-center justify-center gap-2 cursor-pointer group">
                           Kategoriya <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                         </div>
                       </th>
-                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
                         <div className="flex items-center gap-2 justify-center cursor-pointer group">
                           Holati <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                         </div>
                       </th>
-                      <th className="px-5 py-4 font-medium whitespace-nowrap text-center border border-gray-200">
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap text-center">
                         Amallar
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="text-[14px] text-gray-800">
+                  <tbody className="text-[14px] text-gray-800 divide-y divide-gray-100">
                     {currentCourses.length > 0 ? (
                       currentCourses.map((course) => (
-                        <tr key={course.id} className={`${selectedRows.includes(course.id) ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-gray-50/50"} transition-colors group`}>
-                          <td className="px-5 py-4 text-center border border-gray-200">
+                        <tr key={course.id} className={`${selectedRows.includes(course.id) ? "bg-blue-50/50 hover:bg-blue-50/70" : "bg-white hover:bg-gray-50"} transition-colors group`}>
+                          <td className="px-5 py-4 text-center">
                             <input 
                               type="checkbox" 
                               checked={selectedRows.includes(course.id)}
@@ -314,25 +357,25 @@ export default function AllCoursesPage() {
                               className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
                             />
                           </td>
-                          <td className="px-5 py-4 border border-gray-200">
+                          <td className="px-5 py-4">
                             <div className={`w-[52px] h-[32px] mx-auto rounded ${course.cover || 'bg-gray-200'} shadow-sm`}></div>
                           </td>
-                          <td className="px-5 py-4 font-medium text-gray-900 border border-gray-200">
+                          <td className="px-5 py-4 font-medium text-gray-900">
                             <Link href={`/dashboard/courses/allCourses/${course.id}`} className="hover:text-blue-600 hover:underline transition-colors">
                               {course.title}
                             </Link>
                           </td>
-                          <td className="px-5 py-4 text-gray-600 font-medium capitalize border border-gray-200 text-center">{course.level}</td>
-                          <td className="px-5 py-4 text-gray-900 font-medium border border-gray-200 text-center">{(course.price).toLocaleString()}</td>
-                          <td className="px-5 py-4 text-gray-600 border border-gray-200 text-center">{getCategoryName(course.categoryId)}</td>
-                          <td className="px-5 py-4 text-center border border-gray-200">
+                          <td className="px-5 py-4 text-gray-600 font-medium capitalize text-center">{course.level}</td>
+                          <td className="px-5 py-4 text-gray-900 font-medium text-center">{(course.price).toLocaleString()}</td>
+                          <td className="px-5 py-4 text-gray-600 text-center">{getCategoryName(course.categoryId)}</td>
+                          <td className="px-5 py-4 text-center">
                             {course.status === 'active' ? (
                               <span className="text-green-600 font-medium text-[13px]">Faol</span>
                             ) : (
                               <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
                             )}
                           </td>
-                          <td className="px-5 py-4 border border-gray-200">
+                          <td className="px-5 py-4">
                             <div className="flex items-center justify-center gap-3 text-gray-400">
                               <button 
                                 onClick={() => {
@@ -364,7 +407,7 @@ export default function AllCoursesPage() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={8} className="p-8 text-center text-gray-500 border border-gray-200">
+                        <td colSpan={8} className="p-8 text-center text-gray-500">
                           Ma'lumot topilmadi
                         </td>
                       </tr>
