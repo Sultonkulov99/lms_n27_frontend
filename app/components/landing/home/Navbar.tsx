@@ -2,9 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useLanguage } from "@/app/components/landing/context/LanguageContext"; // Loyihangizdagi context yo’li
+import { useLanguage } from "@/app/components/landing/context/LanguageContext"; // Loyihangizdagi context yo'li
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -25,7 +24,7 @@ export default function Navbar() {
     { title: "Python", href: "/courses/python" },
   ];
 
-  const languages: Array<"O’z" | "Рус" | "Eng"> = ["O’z", "Рус", "Eng"];
+  const languages: Array<"O'z" | "Рус" | "Eng"> = ["O'z", "Рус", "Eng"];
 
   // 1. Sahifa (route) o’zgarganda barcha menyu/dropdownlarni avtomatik yopish
   useEffect(() => {
@@ -54,28 +53,48 @@ export default function Navbar() {
     return pathname?.startsWith(path);
   };
 
-  // Aktiv linklar uchun matnga bevosita yaqin ko’k chiziq
+  // Aktiv linklar uchun matnga bevosita yaqin ko'k chiziq
   const getLinkStyle = (path: string) => {
     return isActive(path)
-      ? "text-slate-900 font-semibold relative pb-1 after:content-[’’] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-blue-600"
+      ? "text-slate-900 font-semibold relative pb-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-blue-600"
       : "text-[#2F3641] font-medium hover:text-blue-600 transition-colors pb-1";
   };
 
   return (
-    <header className="w-full bg-white border-b border-slate-100 sticky top-0 z-50">
+    <header
+      className={`w-full sticky top-0 z-50 transition-colors duration-300 ${isDarkMode
+          ? "bg-[#151B26] border-b border-[#222A3A]"
+          : "bg-white border-b border-slate-100"
+        }`}
+    >
       <div className="container h-[80px] flex items-center justify-between">
         {/* Chap tomon: Logo va Navigatsiya */}
         <div className="flex items-center gap-10 xl:gap-14">
-          {/* Logo */}
+          {/* KOiDA Brand Logo - Oq fondan xoli, tiniq vektor ko'rinishida */}
           <Link href="/" className="flex items-center">
-            <Image
-              src="/images.png"
-              alt="IT Live Academy"
-              width={120}
-              height={40}
-              priority
-              className="h-auto w-[120px] object-contain"
-            />
+            <div className="flex items-center font-black text-2xl xl:text-3xl tracking-tight select-none">
+              <span
+                className={
+                  isDarkMode
+                    ? "text-[#3B81F4] font-sans"
+                    : "text-[#0038A8] font-sans"
+                }
+              >
+                KO
+              </span>
+              <span className="text-[#FF7A00] font-serif italic text-3xl xl:text-4xl mx-[0.5px]">
+                i
+              </span>
+              <span
+                className={
+                  isDarkMode
+                    ? "text-[#3B81F4] font-sans"
+                    : "text-[#0038A8] font-sans"
+                }
+              >
+                DA
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigatsiya Linklari */}
@@ -97,11 +116,10 @@ export default function Navbar() {
               >
                 <span>{t("Navbar.courses")}</span>
                 <svg
-                  className={`w-4 h-4 transition-transform duration-200 ${
-                    coursesDropdownOpen
-                      ? "rotate-180 text-blue-600"
-                      : "text-slate-400"
-                  }`}
+                  className={`w-4 h-4 transition-transform duration-200 ${coursesDropdownOpen
+                    ? "rotate-180 text-blue-600"
+                    : "text-slate-400"
+                    }`}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -118,12 +136,20 @@ export default function Navbar() {
               {/* Kurslar Popup */}
               {coursesDropdownOpen && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 animate-fadeIn">
-                  <div className="w-[135px] bg-white rounded-[10px] shadow-lg border border-slate-100 p-3 flex flex-col gap-[6px]">
+                  <div
+                    className={`w-[135px] rounded-[10px] shadow-lg border p-3 flex flex-col gap-[6px] ${isDarkMode
+                        ? "bg-[#181F2B] border-[#222A3A]"
+                        : "bg-white border-slate-100"
+                      }`}
+                  >
                     {courseCategories.map((item) => (
                       <Link
                         key={item.title}
                         href={item.href}
-                        className="text-[15px] font-medium text-[#2F3641] hover:text-blue-600 transition-colors leading-none py-1"
+                        className={`text-[15px] font-medium transition-colors leading-none py-1 ${isDarkMode
+                            ? "text-slate-200 hover:text-blue-400"
+                            : "text-[#2F3641] hover:text-blue-600"
+                          }`}
                       >
                         {item.title}
                       </Link>
@@ -147,17 +173,19 @@ export default function Navbar() {
 
         {/* O’ng tomon: Til tanlash, Dark Mode va Kirish tugmasi */}
         <div className="hidden lg:flex items-center gap-4">
-          {/* Language Selector (Click Outside bilan ta’minlandi) */}
+          {/* Language Selector (Click Outside bilan ta'minlandi) */}
           <div className="relative" ref={langRef}>
             <button
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer ${isDarkMode
+                  ? "bg-[#1B2230] text-[#CBD5E1] hover:bg-[#222A3A]"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                }`}
             >
               <span>{selectedLang}</span>
               <svg
-                className={`w-3.5 h-3.5 text-slate-500 transition-transform ${
-                  langDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`w-3.5 h-3.5 text-slate-500 transition-transform ${langDropdownOpen ? "rotate-180" : ""
+                  }`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -172,7 +200,12 @@ export default function Navbar() {
             </button>
 
             {langDropdownOpen && (
-              <div className="absolute right-0 top-full mt-2 w-20 bg-white rounded-[10px] shadow-md border border-slate-100 py-1 z-50 animate-fadeIn">
+              <div
+                className={`absolute right-0 top-full mt-2 w-20 rounded-[10px] shadow-md border py-1 z-50 animate-fadeIn ${isDarkMode
+                    ? "bg-[#181F2B] border-[#222A3A]"
+                    : "bg-white border-slate-100"
+                  }`}
+              >
                 {languages.map((lang) => (
                   <button
                     key={lang}
@@ -180,11 +213,10 @@ export default function Navbar() {
                       setSelectedLang(lang);
                       setLangDropdownOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-                      selectedLang === lang
-                        ? "text-blue-600 font-semibold"
-                        : "text-slate-700 hover:bg-slate-50"
-                    }`}
+                    className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${selectedLang === lang
+                      ? "text-blue-600 font-semibold"
+                      : "text-slate-700 hover:bg-slate-50"
+                      }`}
                   >
                     {lang}
                   </button>
@@ -195,8 +227,11 @@ export default function Navbar() {
 
           {/* Dark Mode Icon Button */}
           <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+            onClick={toggleDarkMode}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer ${isDarkMode
+                ? "bg-[#1B2230] text-yellow-400 hover:bg-[#222A3A]"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
             aria-label="Toggle dark mode"
           >
             {isDarkMode ? (
@@ -248,7 +283,10 @@ export default function Navbar() {
         {/* Mobil Menyu Trigger */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 focus:outline-none cursor-pointer"
+          className={`lg:hidden p-2 rounded-lg transition-colors cursor-pointer ${isDarkMode
+              ? "bg-[#1B2230] text-slate-200 hover:bg-[#222A3A]"
+              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
           aria-label="Menu"
         >
           {mobileMenuOpen ? (
@@ -285,37 +323,35 @@ export default function Navbar() {
 
       {/* Mobil Menyu Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-white border-b border-slate-200 px-6 pt-4 pb-6 space-y-4 shadow-lg animate-fadeIn">
-          <nav className="flex flex-col space-y-3 font-medium text-[#2F3641]">
+        <div
+          className={`lg:hidden border-b px-6 pt-4 pb-6 space-y-4 shadow-lg animate-fadeIn ${isDarkMode
+              ? "bg-[#151B26] border-[#222A3A] text-slate-200"
+              : "bg-white border-slate-200 text-[#2F3641]"
+            }`}
+        >
+          <nav className="flex flex-col space-y-3 font-medium">
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               {t("Navbar.home")}
             </Link>
             <Link
               href="/courses"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/courses")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/courses") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               {t("Navbar.courses")}
             </Link>
-            <div className="pl-4 space-y-2 border-l-2 border-slate-100">
+            <div className={`pl-4 space-y-2 border-l-2 ${isDarkMode ? "border-[#222A3A]" : "border-slate-100"}`}>
               {courseCategories.map((c) => (
                 <Link
                   key={c.title}
                   href={c.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block text-sm text-slate-600 hover:text-blue-600"
+                  className={`block text-sm hover:text-blue-500 ${isDarkMode ? "text-slate-400" : "text-slate-600"
+                    }`}
                 >
                   {c.title}
                 </Link>
@@ -324,40 +360,33 @@ export default function Navbar() {
             <Link
               href="/about"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/about")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/about") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               {t("Navbar.about")}
             </Link>
             <Link
               href="/contact"
               onClick={() => setMobileMenuOpen(false)}
-              className={
-                isActive("/contact")
-                  ? "text-blue-600 font-semibold"
-                  : "hover:text-blue-600"
-              }
+              className={isActive("/contact") ? "text-blue-600 font-semibold" : "hover:text-blue-600"}
             >
               {t("Navbar.contact")}
             </Link>
           </nav>
 
-          <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+          <div className={`pt-4 border-t flex flex-col gap-3 ${isDarkMode ? "border-[#222A3A]" : "border-slate-100"}`}>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-500">Til:</span>
+              <span className={`text-sm font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Til:</span>
               <div className="flex gap-2">
                 {languages.map((l) => (
                   <button
                     key={l}
                     onClick={() => setSelectedLang(l)}
-                    className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${
-                      selectedLang === l
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold cursor-pointer ${selectedLang === l
                         ? "bg-blue-600 text-white"
-                        : "bg-slate-100 text-slate-700"
-                    }`}
+                        : isDarkMode
+                          ? "bg-[#1B2230] text-slate-300"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
                   >
                     {l}
                   </button>
