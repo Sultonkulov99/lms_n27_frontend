@@ -1,3 +1,4 @@
+import ToastAndModal from "@/components/toast";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -28,12 +29,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="uz" className="scroll-smooth" suppressHydrationWarning>
+    <html lang="uz" className="scroll-smooth min-h-full" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={`${inter.className} min-h-screen antialiased flex flex-col selection:bg-blue-600 selection:text-white`}
       >
         {children}
+        <ToastAndModal />
       </body>
     </html>
   );

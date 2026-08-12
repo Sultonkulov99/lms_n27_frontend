@@ -8,12 +8,15 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
   const [isUsersOpen, setIsUsersOpen] = useState(false);
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
-  const userSubLinks = ["adminstrators", "assistents", "mentors", "students"];
+  const userSubLinks = ["administrators", "assistents", "mentors", "students"];
 
   return (
     <aside
@@ -58,14 +61,18 @@ export default function Sidebar() {
             Boshqaruv Paneli
           </div>
           <nav className={`space-y-1 ${isOpen ? "px-3" : "px-2"}`}>
-            <a
-              href="#"
-              className={`flex items-center py-2.5 bg-white/10 rounded-lg text-white transition-all overflow-hidden ${
+            <Link
+              href="/dashboard"
+              className={`flex items-center py-2.5 rounded-lg transition-all overflow-hidden ${
+                pathname === "/dashboard" 
+                  ? "bg-white/10 text-white" 
+                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+              } ${
                 isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"
               }`}
               title="Asosiy"
             >
-              <LayoutGrid size={20} className="text-white shrink-0" />
+              <LayoutGrid size={20} className="shrink-0" />
               <span
                 className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${
                   isOpen ? "opacity-100" : "opacity-0 w-0"
@@ -73,7 +80,7 @@ export default function Sidebar() {
               >
                 Asosiy
               </span>
-            </a>
+            </Link>
 
             {/* Foydalanuvchilar Accordion */}
             <div>
@@ -179,21 +186,24 @@ export default function Sidebar() {
               >
                 <div className="pl-11 pr-3 py-1 space-y-1">
                   {[
-                    "Barcha kurslar",
-                    "Kategoriyalar",
-                  ].map((link, idx) => (
-                    <a
-                      key={link}
-                      href="#"
-                      className={`block px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
-                        idx === 0
-                          ? "bg-white/10 text-white font-medium"
-                          : "text-gray-400 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      {link}
-                    </a>
-                  ))}
+                    { name: "Barcha kurslar", href: "/dashboard/courses/allCourses" },
+                    { name: "Kategoriyalar", href: "#" },
+                  ].map((link) => {
+                    const isActive = pathname === link.href;
+                    return (
+                      <Link
+                        key={link.name}
+                        href={link.href}
+                        className={`block px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
+                          isActive
+                            ? "bg-white/10 text-white font-medium"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        {link.name}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </div>
