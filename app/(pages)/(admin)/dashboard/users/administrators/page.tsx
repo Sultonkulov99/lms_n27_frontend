@@ -229,7 +229,7 @@ export default function AdministratorsPage() {
   return (
     <>
 
-        <div className="flex-1 overflow-y-auto p-8 pt-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Top Page Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
             <div>
@@ -359,9 +359,13 @@ export default function AdministratorsPage() {
 
       {/* Add/Edit Modal Overlay */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[10px] p-4">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[10px] p-4"
+          onClick={() => setIsModalOpen(false)}
+        >
           <div 
             className="bg-white relative flex flex-col w-full max-w-[673px] max-h-[95vh] rounded-[10px] p-[16px_24px] overflow-hidden"
+            onClick={e => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4 shrink-0">
@@ -498,8 +502,14 @@ export default function AdministratorsPage() {
 
       {/* Custom Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]">
-          <div className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center animate-in fade-in zoom-in duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]"
+          onClick={() => setIsDeleteModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center animate-in fade-in zoom-in duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="w-[84px] h-[84px] rounded-full bg-[#FFF0F0] flex items-center justify-center mb-6">
               <div className="w-[60px] h-[60px] rounded-full bg-[#FF4D4F] flex items-center justify-center text-white text-[32px] font-bold">
                 ?
@@ -529,8 +539,14 @@ export default function AdministratorsPage() {
 
       {/* Success Modal */}
       {isSuccessModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]">
-          <div className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center animate-in fade-in zoom-in duration-200">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]"
+          onClick={() => setIsSuccessModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center animate-in fade-in zoom-in duration-200"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="w-[84px] h-[84px] rounded-full bg-[#E6F4EA] flex items-center justify-center mb-6">
               <div className="w-[60px] h-[60px] rounded-full bg-[#137333] flex items-center justify-center text-white">
                 <Check size={32} strokeWidth={3} />
@@ -549,8 +565,14 @@ export default function AdministratorsPage() {
 
       {/* View Admin Modal */}
       {isViewModalOpen && viewingAdmin && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px] p-4">
-          <div className="bg-white rounded-[16px] shadow-xl w-full max-w-[600px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200 relative">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px] p-4"
+          onClick={() => setIsViewModalOpen(false)}
+        >
+          <div 
+            className="bg-white rounded-[16px] shadow-xl w-full max-w-[600px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200 relative"
+            onClick={e => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-[20px] font-bold text-gray-900">Administrator haqida</h2>
               <button 

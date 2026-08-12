@@ -26,7 +26,7 @@ import {
   Menu,
 } from "lucide-react";
 
-import Sidebar from "@/app/components/dashboard/SideBar";
+
 
 /* =========================================================
    TYPES
@@ -192,11 +192,6 @@ export default function MentorsPage() {
   const [showCourses, setShowCourses] =
     useState(false);
 
-  const [isProfileOpen, setIsProfileOpen] =
-    useState(false);
-
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] =
-    useState(false);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -433,230 +428,8 @@ export default function MentorsPage() {
   ========================================================= */
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8F9FA] font-sans text-[#151515]">
-
-      {/* =====================================================
-          SIDEBAR
-      ====================================================== */}
-
-      <div
-        className={`fixed inset-y-0 left-0 z-[60] transition-transform duration-300 lg:static lg:block lg:translate-x-0 ${
-          isMobileSidebarOpen
-            ? "translate-x-0"
-            : "-translate-x-full"
-        }`}
-      >
-        <Sidebar />
-      </div>
-
-      {/* MOBILE OVERLAY */}
-
-      {isMobileSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={() =>
-            setIsMobileSidebarOpen(false)
-          }
-          className="fixed inset-0 z-50 bg-black/30 lg:hidden"
-        />
-      )}
-
-      {/* =====================================================
-          RIGHT SIDE
-      ====================================================== */}
-
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-
-        {/* ===================================================
-            TOP NAVBAR
-        ==================================================== */}
-
-        <header className="flex h-[88px] shrink-0 items-center justify-between px-5 md:px-8">
-
-          {/* LEFT NAVBAR */}
-
-          <div className="flex items-center gap-3">
-
-            {/* MOBILE MENU */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setIsMobileSidebarOpen(true)
-              }
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-600 shadow-sm lg:hidden"
-            >
-              <Menu size={19} />
-            </button>
-
-            <div className="flex items-center gap-2">
-              <ShieldCheck
-                size={20}
-                className="text-gray-700"
-              />
-
-              <span className="text-lg font-semibold text-gray-800">
-                Admin
-              </span>
-            </div>
-          </div>
-
-          {/* RIGHT NAVBAR */}
-
-          <div className="flex items-center gap-2 md:gap-4">
-
-            {/* NOTIFICATION + SETTINGS */}
-
-            <div className="hidden items-center gap-4 rounded-full border border-gray-100 bg-white px-4 py-2.5 text-gray-500 shadow-sm sm:flex">
-
-              <button
-                type="button"
-                className="relative transition hover:text-gray-700"
-              >
-                <Bell size={20} />
-
-                <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full border-2 border-white bg-red-500" />
-              </button>
-
-              <div className="h-5 w-px bg-gray-200" />
-
-              <button
-                type="button"
-                className="transition hover:text-gray-700"
-              >
-                <Settings size={20} />
-              </button>
-            </div>
-
-            {/* LANGUAGE */}
-
-            <button
-              type="button"
-              className="hidden items-center gap-2 rounded-full border border-gray-100 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm sm:flex"
-            >
-              <span>O'zbek (Lotin)</span>
-
-              <ChevronDown
-                size={16}
-                className="text-gray-400"
-              />
-            </button>
-
-            {/* PROFILE */}
-
-            <div className="relative">
-
-              <button
-                type="button"
-                onClick={() =>
-                  setIsProfileOpen(
-                    (prev) => !prev,
-                  )
-                }
-                className="flex items-center gap-2 rounded-full border border-gray-100 bg-white p-1 pr-3 shadow-sm transition hover:shadow-md md:gap-3 md:pr-4"
-              >
-
-                <img
-                  src="https://i.pravatar.cc/150?u=admin"
-                  alt="Profile"
-                  className="h-9 w-9 rounded-full bg-gray-100 object-cover"
-                />
-
-                <div className="hidden flex-col md:flex">
-                  <span className="mb-0.5 text-sm font-bold leading-none text-gray-900">
-                    Inomov Xurshid
-                  </span>
-
-                  <span className="text-[11px] leading-none text-gray-500">
-                    Administrator
-                  </span>
-                </div>
-
-                <ChevronDown
-                  size={16}
-                  className={`text-gray-400 transition-transform ${
-                    isProfileOpen
-                      ? "rotate-180"
-                      : ""
-                  }`}
-                />
-              </button>
-
-              {/* PROFILE DROPDOWN */}
-
-              <div
-                className={`absolute right-0 top-12 z-[70] w-56 origin-top-right rounded-xl border border-gray-100 bg-white py-1 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] transition-all duration-200 ${
-                  isProfileOpen
-                    ? "visible translate-y-0 scale-100 opacity-100"
-                    : "invisible -translate-y-2 scale-95 opacity-0"
-                }`}
-              >
-
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <User
-                      size={16}
-                      className="text-gray-400"
-                    />
-
-                    <span className="font-medium">
-                      Profilga o'tish
-                    </span>
-                  </div>
-
-                  <ChevronRightIcon />
-                </button>
-
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <Settings
-                      size={16}
-                      className="text-gray-400"
-                    />
-
-                    <span className="font-medium">
-                      Profil sozlamalari
-                    </span>
-                  </div>
-
-                  <ChevronRightIcon />
-                </button>
-
-                <button
-                  type="button"
-                  className="mt-1 flex w-full items-center justify-between border-t border-gray-50 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                  <div className="flex items-center gap-2.5">
-                    <LogOut
-                      size={16}
-                      className="text-gray-400"
-                    />
-
-                    <span className="font-medium">
-                      Tizimdan chiqish
-                    </span>
-                  </div>
-
-                  <ChevronRightIcon />
-                </button>
-
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* ===================================================
-            CONTENT
-        ==================================================== */}
-
-        <div className="flex-1 overflow-y-auto px-4 pb-6 md:px-8">
+    <>
+        <div className="flex-1 overflow-y-auto p-6">
 
           {!showCourses ? (
             <>
@@ -994,7 +767,6 @@ export default function MentorsPage() {
           )}
 
         </div>
-      </main>
 
       {/* =====================================================
           ADD / EDIT MODAL
@@ -1583,7 +1355,7 @@ export default function MentorsPage() {
         </Modal>
       )}
 
-    </div>
+    </>
   );
 }
 

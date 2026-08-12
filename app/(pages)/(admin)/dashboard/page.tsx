@@ -8,7 +8,7 @@ export default function AdminDashboard() {
     <>
 
         {/* Dashboard Content */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-6">
           {/* Page Header */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Asosiy</h1>
