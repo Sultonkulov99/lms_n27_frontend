@@ -16,7 +16,7 @@ function VideoModal({ onClose }: VideoModalProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
+    const handleKey = (e: KeyboardEvent) => { 
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKey);

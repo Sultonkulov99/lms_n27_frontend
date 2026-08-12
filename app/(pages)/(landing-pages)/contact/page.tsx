@@ -250,7 +250,7 @@ export default function ContactPage() {
                   : "bg-white border-slate-100/80 shadow-sm hover:shadow-md hover:border-slate-200"
               }`}
             >
-              <div>
+              <div> 
                 <div className="w-10 h-10 rounded-xl bg-[#3B81F4] flex items-center justify-center text-white mb-4 transition-transform group-hover:scale-105">
                   <Phone className="w-5 h-5" />
                 </div>
