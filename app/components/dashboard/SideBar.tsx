@@ -226,7 +226,7 @@ export default function Sidebar() {
               className={`flex items-center py-2.5 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg transition-all overflow-hidden ${
                 isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"
               }`}
-              title="To'lovlar"
+              title="To’lovlar"
             >
               <CreditCard size={20} className="shrink-0" />
               <span
@@ -234,7 +234,7 @@ export default function Sidebar() {
                   isOpen ? "opacity-100" : "opacity-0 w-0"
                 }`}
               >
-                To'lovlar
+                To’lovlar
               </span>
             </a>
 

@@ -36,7 +36,7 @@ export default function Header() {
 
         {/* Language Selector Box */}
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white px-4 py-2.5 rounded-full border border-gray-100 shadow-sm cursor-pointer">
-          <span>O'zbek (Lotin)</span>
+          <span>O’zbek (Lotin)</span>
           <ChevronDown size={16} className="text-gray-400" />
         </div>
 
@@ -73,7 +73,7 @@ export default function Header() {
             <button className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-2.5">
                 <User size={16} className="text-gray-400" />
-                <span className="font-medium">Profilga o'tish</span>
+                <span className="font-medium">Profilga o’tish</span>
               </div>
               <ChevronRight size={16} className="text-gray-400" />
             </button>

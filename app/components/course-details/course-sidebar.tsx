@@ -41,7 +41,7 @@ export function CourseSidebar({
             {formattedPrice} UZS
           </div>
           <p className="text-xs text-gray-500 leading-relaxed">
-            Asosiy tushunchalarning mustahkam poydevoriga ega bo'ling va
+            Asosiy tushunchalarning mustahkam poydevoriga ega bo’ling va
             qiziqarli va foydali ilovalar yarating!
           </p>
         </div>
@@ -79,7 +79,7 @@ export function CourseSidebar({
         <div className="grid grid-cols-3 gap-2 px-3">
           <div>
             <div className="font-bold text-gray-800 text-sm">100</div>
-            <div className="text-[10px] text-gray-400">O'quvchilar</div>
+            <div className="text-[10px] text-gray-400">O’quvchilar</div>
           </div>
           <div className="border-x border-gray-100 px-2">
             <div className="font-bold text-gray-800 text-sm">2</div>
@@ -87,7 +87,7 @@ export function CourseSidebar({
           </div>
           <div>
             <div className="font-bold text-gray-800 text-sm">245</div>
-            <div className="text-[10px] text-gray-400">Ko'rishlar</div>
+            <div className="text-[10px] text-gray-400">Ko’rishlar</div>
           </div>
         </div>
       </div>

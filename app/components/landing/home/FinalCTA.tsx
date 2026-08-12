@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, X } from "lucide-react";
 import Link from "next/link";
-import { useLanguage } from "../context/LanguageContext"; // Path to'g'riligiga ishonch hosil qiling
+import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface VideoModalProps {
   onClose: () => void;
@@ -112,11 +112,19 @@ export default function FinalCTA() {
   return (
     <div className="bg-white py-16 text-center border-t border-slate-100">
       <div className="container max-w-4xl mx-auto flex flex-col items-center gap-6">
-
         {/* ── KOiDA Brand Logo ────────────────────────────────────────────── */}
         <div className="flex items-center justify-center font-black text-3xl tracking-tight select-none">
           <span className="text-[#0F172A] font-sans">KO</span>
-          <span style={{ color: "#FF3B30", fontFamily: "Georgia, serif", fontStyle: "italic", margin: "0 1px" }}>i</span>
+          <span
+            style={{
+              color: "#FF3B30",
+              fontFamily: "Georgia, serif",
+              fontStyle: "italic",
+              margin: "0 1px",
+            }}
+          >
+            i
+          </span>
           <span className="text-[#0F172A] font-sans">DA</span>
         </div>
 
@@ -149,7 +157,11 @@ export default function FinalCTA() {
               strokeLinejoin="round"
             >
               <circle cx="12" cy="12" r="10" />
-              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
+              <polygon
+                points="10 8 16 12 10 16 10 8"
+                fill="currentColor"
+                stroke="none"
+              />
             </svg>
             <span>{t("finalCta.introVideo")}</span>
           </button>
@@ -162,7 +174,6 @@ export default function FinalCTA() {
             {t("finalCta.contact")}
           </Link>
         </div>
-
       </div>
 
       {showVideo && <VideoModal onClose={() => setShowVideo(false)} />}

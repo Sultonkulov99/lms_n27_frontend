@@ -43,7 +43,7 @@ export default function AdminDashboard() {
             <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center">
               <span className="text-3xl font-bold text-gray-900 mb-1">400</span>
               <span className="text-sm text-gray-500 font-medium">
-                Jami O'quvchilar
+                Jami O’quvchilar
               </span>
             </div>
 

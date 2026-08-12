@@ -92,7 +92,7 @@ export default function AllCoursesPage() {
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm"
                 >
                   <Plus size={18} />
-                  Qo'shish
+                  Qo’shish
                 </button>
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function AllCoursesPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h2 className="text-xl font-bold text-gray-900">
-                {modalMode === "add" ? "Qo'shish" : "Tahrirlash"}
+                {modalMode === "add" ? "Qo’shish" : "Tahrirlash"}
               </h2>
               <button 
                 onClick={() => setIsModalOpen(false)}
@@ -397,7 +397,7 @@ export default function AllCoursesPage() {
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">Kurs haqida</label>
                 <textarea 
                   rows={3}
-                  defaultValue={modalMode === "edit" ? "Bu kursda siz noldan boshlab frontend dasturlashni o'rganasiz..." : ""}
+                  defaultValue={modalMode === "edit" ? "Bu kursda siz noldan boshlab frontend dasturlashni o’rganasiz..." : ""}
                   placeholder="Kiriting" 
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm placeholder:text-gray-400 transition-shadow resize-none"
                 />
@@ -455,7 +455,7 @@ export default function AllCoursesPage() {
               <button 
                 onClick={() => {
                   setIsModalOpen(false);
-                  setSuccessMessage(modalMode === "add" ? "Muvaffaqiyatli qo'shildi" : "Muvaffaqiyatli o'zgartirildi");
+                  setSuccessMessage(modalMode === "add" ? "Muvaffaqiyatli qo’shildi" : "Muvaffaqiyatli o’zgartirildi");
                   setIsSuccessModalOpen(true);
                 }}
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm"
@@ -475,7 +475,7 @@ export default function AllCoursesPage() {
             <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center mx-auto mb-5 shadow-sm">
               <span className="text-3xl font-bold">?</span>
             </div>
-            <h2 className="text-lg font-bold text-gray-900 mb-8">Siz rostdan ham o'chirmoqchimisiz?</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-8">Siz rostdan ham o’chirmoqchimisiz?</h2>
             <div className="flex items-center justify-center gap-4">
               <button 
                 onClick={() => setIsDeleteModalOpen(false)}
@@ -487,7 +487,7 @@ export default function AllCoursesPage() {
                 onClick={() => setIsDeleteModalOpen(false)}
                 className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors shadow-sm"
               >
-                O'chirish
+                O’chirish
               </button>
             </div>
           </div>
@@ -565,7 +565,7 @@ export default function AllCoursesPage() {
                 </div>
                 <div>
                   <p className="text-[12px] font-semibold text-gray-500 mb-1">Narxi</p>
-                  <p className="text-sm font-medium text-gray-900">250 000 so'm</p>
+                  <p className="text-sm font-medium text-gray-900">250 000 so’m</p>
                 </div>
                 
                 <div>
@@ -609,7 +609,7 @@ export default function AllCoursesPage() {
                 </div>
                 
                 <div>
-                  <p className="text-[12px] font-semibold text-gray-500 mb-1">O'quvchilar soni</p>
+                  <p className="text-[12px] font-semibold text-gray-500 mb-1">O’quvchilar soni</p>
                   <p className="text-sm font-medium text-gray-900">113</p>
                 </div>
               </div>
