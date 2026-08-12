@@ -21,7 +21,7 @@ export default function Navbar() {
     { title: "UI/UX Dizayn", href: "/courses/ui-ux" },
     { title: "Frontend", href: "/courses/frontend" },
     { title: "Backend", href: "/courses/backend" },
-    { title: "Python", href: "/courses/python" },
+    { title: "Python", href: "/courses/python" }, 
   ];
 
   const languages: Array<"O'z" | "Рус" | "Eng"> = ["O'z", "Рус", "Eng"];
@@ -287,7 +287,7 @@ export default function Navbar() {
               ? "bg-[#1B2230] text-slate-200 hover:bg-[#222A3A]"
               : "bg-slate-100 text-slate-700 hover:bg-slate-200"
             }`}
-          aria-label="Menu"
+          aria-label="Menu" 
         >
           {mobileMenuOpen ? (
             <svg
