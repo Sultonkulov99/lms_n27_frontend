@@ -144,10 +144,10 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
           <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl px-2 py-1 shadow-sm">
             <Pagination
               currentPage={currentPage}
-              totalPages={15}
+              totalPages={Math.ceil(sections.length / itemsPerPage) || 1}
               totalItems={sections.length}
-              startIndex={0}
-              endIndex={Math.min(10, sections.length)}
+              startIndex={Math.min((currentPage - 1) * itemsPerPage, sections.length)}
+              endIndex={Math.min(currentPage * itemsPerPage, sections.length)}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
               onItemsPerPageChange={(limit) => {
