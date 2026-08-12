@@ -1,0 +1,86 @@
+"use client";
+
+import { useLanguage } from "../context/LanguageContext";
+
+const btnStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "214px",
+  height: "48px",
+  minHeight: "48px",
+  maxHeight: "48px",
+  borderRadius: "8px",
+  paddingTop: "20px",
+  paddingBottom: "20px",
+  paddingLeft: "24px",
+  paddingRight: "24px",
+  gap: "10px",
+  backgroundColor: "#3B81F4",
+  color: "#FFFFFF",
+  fontFamily: "Inter, sans-serif",
+  fontWeight: 500,
+  fontSize: "15px",
+  lineHeight: "100%",
+  letterSpacing: 0,
+  textDecoration: "none",
+  cursor: "pointer",
+  boxSizing: "border-box",
+  flexShrink: 0,
+};
+
+export default function JoinSection() {
+  const { t } = useLanguage();
+
+  return (
+    <section id="join-us" className="bg-[#FAFAFA] py-[60px]">
+      <div className="container">
+
+        {/* Section Header */}
+        <h2 className="font-bold text-[32px] leading-none tracking-normal text-[#0F172A] mb-[23px]">
+          {t("join.title")}
+        </h2>
+
+        {/* Subtitle */}
+        <p className="font-medium text-[15px] leading-none tracking-normal text-[#636C79] mb-[23px]">
+          {t("join.subtitle")}
+        </p>
+
+        {/* Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[23px]">
+
+          {/* Card 1: Student */}
+          <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col gap-4">
+            <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] m-0">
+              {t("join.studentTitle")}
+            </h3>
+
+            <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] m-0">
+              {t("join.studentDesc")}
+            </p>
+
+            <a href="#courses" style={btnStyle}>
+              {t("join.studentBtn")}
+            </a>
+          </div>
+
+          {/* Card 2: Mentor */}
+          <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col gap-4">
+            <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] m-0">
+              {t("join.mentorTitle")}
+            </h3>
+
+            <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] m-0">
+              {t("join.mentorDesc")}
+            </p>
+
+            <a href="#mentor-apply" style={btnStyle}>
+              {t("join.mentorBtn")}
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  );
+}
