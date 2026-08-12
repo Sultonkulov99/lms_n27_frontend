@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, useEffect } from "react";
 import { 
   Plus, 
   Filter,
@@ -11,9 +11,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Pagination from "@/app/components/dashboard/Pagination";
+import { useCourseStore } from "@/app/store/useCourseStore";
 
 export default function CourseSectionsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: courseId } = use(params);
+  const { courses } = useCourseStore();
+  const currentCourse = courses.find((c) => c.id.toString() === courseId);
+  const courseTitle = currentCourse?.title || "Frontend dasturlash";
+  const isBackend = courseTitle.toLowerCase().includes("backend");
   
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -26,6 +31,21 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
     { id: 1, name: "Veb dasturlashga kirish" },
     { id: 2, name: "CSS asoslari" }
   ]);
+
+  // Set initial sections based on course type
+  useEffect(() => {
+    if (isBackend) {
+      setSections([
+        { id: 1, name: "Node JS" },
+        { id: 2, name: "SQL asoslari" }
+      ]);
+    } else {
+      setSections([
+        { id: 1, name: "Veb dasturlashga kirish" },
+        { id: 2, name: "CSS asoslari" }
+      ]);
+    }
+  }, [isBackend]);
 
   const [newSectionName, setNewSectionName] = useState("");
   const [editingSection, setEditingSection] = useState<{ id: number; name: string } | null>(null);
@@ -63,7 +83,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
             <div className="flex items-center text-[13px] font-medium gap-2">
               <Link href="/dashboard/courses/allCourses" className="text-gray-500 hover:text-gray-700 transition-colors">Kurslar</Link>
               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-              <span className="text-gray-500">Frontend dasturlash</span>
+              <span className="text-gray-500">{courseTitle}</span>
               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
               <span className="text-gray-900">Bo'limlar</span>
             </div>
@@ -74,31 +94,31 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
           </button>
         </div>
 
-        {/* Table Container */}
-        <div className="bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 border-b-0 flex flex-col">
+        {/* Table Container (Transparent, no borders) */}
+        <div className="flex-1 flex flex-col">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr className="bg-white text-[13px] text-gray-900 font-bold tracking-wide border-b border-gray-200">
-                  <th className="px-6 py-4 font-semibold whitespace-nowrap border border-gray-200">
+                <tr className="text-[13px] text-gray-900 font-bold tracking-wide border-b border-gray-200">
+                  <th className="px-6 py-4 font-semibold whitespace-nowrap">
                     <div className="flex items-center gap-2 cursor-pointer group">
                       Bo'lim nomi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-semibold whitespace-nowrap text-right w-32 border border-gray-200">
+                  <th className="px-6 py-4 font-semibold whitespace-nowrap text-right w-32">
                     Amallar
                   </th>
                 </tr>
               </thead>
               <tbody className="text-[14px] text-gray-800">
                 {sections.length > 0 ? sections.map((section) => (
-                  <tr key={section.id} className="bg-white hover:bg-gray-50 transition-colors group">
-                    <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
+                  <tr key={section.id} className="hover:bg-black/5 transition-colors group border-b border-gray-200">
+                    <td className="px-6 py-4 font-medium text-gray-900">
                       <Link href={`/dashboard/courses/allCourses/${courseId}/sections/${section.id}/lessons`} className="hover:text-blue-600 transition-colors cursor-pointer block w-full">
                         {section.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 text-right border border-gray-200">
+                    <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-3 text-gray-400">
                         <button onClick={() => { setEditingSection(section); setIsEditModalOpen(true); }} className="p-1 hover:text-blue-600 transition-colors">
                           <Pen size={16} />
@@ -111,7 +131,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={2} className="px-6 py-8 text-center text-gray-500 border border-gray-200">
+                    <td colSpan={2} className="px-6 py-8 text-center text-gray-500 border-b border-gray-200">
                       Bo'limlar mavjud emas
                     </td>
                   </tr>
@@ -121,20 +141,22 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
           </div>
           
           {/* Pagination */}
-          <Pagination
-            currentPage={currentPage}
-            totalPages={15}
-            totalItems={sections.length}
-            startIndex={0}
-            endIndex={Math.min(10, sections.length)}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={(limit) => {
-              setItemsPerPage(limit);
-              setCurrentPage(1);
-            }}
-            onDownloadXLS={() => {}}
-          />
+          <div className="mt-4">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={15}
+              totalItems={sections.length}
+              startIndex={0}
+              endIndex={Math.min(10, sections.length)}
+              itemsPerPage={itemsPerPage}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={(limit) => {
+                setItemsPerPage(limit);
+                setCurrentPage(1);
+              }}
+              onDownloadXLS={() => {}}
+            />
+          </div>
         </div>
 
       </div>
@@ -152,7 +174,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">Biriktirilgan kurs</label>
-                <input type="text" disabled value="Veb dasturlash" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-[14px] cursor-not-allowed" />
+                <input type="text" disabled value={courseTitle} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-[14px] cursor-not-allowed" />
               </div>
               <div>
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">Bo'lim nomi</label>
