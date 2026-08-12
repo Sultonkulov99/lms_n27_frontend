@@ -130,7 +130,7 @@ export default function Sidebar() {
                   {userSubLinks.map((link) => (
                     <a
                       key={link}
-                      href={`/dashboard/${link}`}
+                      href={`/dashboard/users/${link}`}
                       className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg capitalize transition-colors"
                     >
                       {link}
