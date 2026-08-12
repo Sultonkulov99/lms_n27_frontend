@@ -3,11 +3,13 @@
 import Image from "next/image";
 import { useState } from "react";
 
+import { StaticImageData } from "next/image";
+
 type CourseCardProps = {
-  image: string;
+  image: string | StaticImageData;
   tag: string;
   instructor: string;
-  instructorAvatar: string;
+  instructorAvatar: string | StaticImageData;
   title: string;
   progress: number;
 };
