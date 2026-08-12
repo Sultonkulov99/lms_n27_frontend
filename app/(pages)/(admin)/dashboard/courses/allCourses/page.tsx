@@ -362,7 +362,7 @@ export default function AllCoursesPage() {
                             <div className={`w-[52px] h-[32px] mx-auto rounded ${course.cover || 'bg-gray-200'} shadow-sm`}></div>
                           </td>
                           <td className="px-5 py-4 font-medium text-gray-900">
-                            <Link href={`/dashboard/courses/allCourses/${course.id}`} className="hover:text-blue-600 hover:underline transition-colors">
+                            <Link href={`/dashboard/courses/allCourses/${course.id}/sections`} className="hover:text-blue-600 hover:underline transition-colors">
                               {course.title}
                             </Link>
                           </td>
