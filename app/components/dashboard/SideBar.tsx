@@ -187,7 +187,7 @@ export default function Sidebar() {
                 <div className="pl-11 pr-3 py-1 space-y-1">
                   {[
                     { name: "Barcha kurslar", href: "/dashboard/courses/allCourses" },
-                    { name: "Kategoriyalar", href: "#" },
+                    { name: "Kategoriyalar", href: "/dashboard/courses/categories" },
                   ].map((link) => {
                     const isActive = pathname === link.href;
                     return (
