@@ -94,31 +94,31 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
           </button>
         </div>
 
-        {/* Table Container (Transparent, no borders) */}
+        {/* Table Container */}
         <div className="flex-1 flex flex-col">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px]">
-              <thead>
-                <tr className="text-[13px] text-gray-900 font-bold tracking-wide border-b border-gray-200">
-                  <th className="px-6 py-4 font-semibold whitespace-nowrap">
+          <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
+            <table className="w-full text-left border-collapse min-w-[800px] bg-white">
+              <thead className="bg-gray-50">
+                <tr className="text-[13px] text-gray-900 font-bold tracking-wide">
+                  <th className="px-6 py-4 font-semibold whitespace-nowrap border border-gray-200">
                     <div className="flex items-center gap-2 cursor-pointer group">
                       Bo'lim nomi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                     </div>
                   </th>
-                  <th className="px-6 py-4 font-semibold whitespace-nowrap text-right w-32">
+                  <th className="px-6 py-4 font-semibold whitespace-nowrap text-right w-32 border border-gray-200">
                     Amallar
                   </th>
                 </tr>
               </thead>
               <tbody className="text-[14px] text-gray-800">
                 {sections.length > 0 ? sections.map((section) => (
-                  <tr key={section.id} className="hover:bg-black/5 transition-colors group border-b border-gray-200">
-                    <td className="px-6 py-4 font-medium text-gray-900">
+                  <tr key={section.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
                       <Link href={`/dashboard/courses/allCourses/${courseId}/sections/${section.id}/lessons`} className="hover:text-blue-600 transition-colors cursor-pointer block w-full">
                         {section.name}
                       </Link>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right border border-gray-200">
                       <div className="flex items-center justify-end gap-3 text-gray-400">
                         <button onClick={() => { setEditingSection(section); setIsEditModalOpen(true); }} className="p-1 hover:text-blue-600 transition-colors">
                           <Pen size={16} />
@@ -131,7 +131,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={2} className="px-6 py-8 text-center text-gray-500 border-b border-gray-200">
+                    <td colSpan={2} className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white">
                       Bo'limlar mavjud emas
                     </td>
                   </tr>
@@ -141,7 +141,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
           </div>
           
           {/* Pagination */}
-          <div className="mt-4">
+          <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl px-2 py-1 shadow-sm">
             <Pagination
               currentPage={currentPage}
               totalPages={15}
