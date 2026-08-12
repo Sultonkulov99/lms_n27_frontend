@@ -1,8 +1,13 @@
 "use client";
 
 import Image, { StaticImageData } from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6dbe5eb01aa10d1b59d95bd50a83b25d730ed8b3
 type CourseCardProps = {
   image: StaticImageData;
   tag?: string; // Agar rasmning o’zida teg bo’lsa, buni ishlatmaymiz
@@ -10,6 +15,7 @@ type CourseCardProps = {
   instructorAvatar: StaticImageData;
   title: string;
   progress: number;
+  href: string; // Dars sahifasiga o'tish uchun manzil
 };
 
 export default function CourseCard({
@@ -18,6 +24,7 @@ export default function CourseCard({
   instructorAvatar,
   title,
   progress,
+  href,
 }: CourseCardProps) {
   const [isLiked, setIsLiked] = useState(false);
 
@@ -76,9 +83,11 @@ export default function CourseCard({
         </div>
 
         {/* Tugma */}
-        <button className="w-full bg-[#3b82f6] hover:bg-[#2563eb] transition-colors text-white text-xs font-semibold py-2.5 rounded-xl">
-          Ko&apos;rishni boshlash
-        </button>
+        <Link href={href} className="block">
+          <button className="w-full bg-[#3b82f6] hover:bg-[#2563eb] transition-colors text-white text-xs font-semibold py-2.5 rounded-xl">
+            Ko&apos;rishni boshlash
+          </button>
+        </Link>
       </div>
     </div>
   );

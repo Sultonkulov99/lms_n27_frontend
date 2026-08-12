@@ -25,6 +25,7 @@ export default function StudentMain() {
               instructorAvatar={oybeksafarov}
               title="UI/UX Dizayn"
               progress={40}
+              href="/students/ui-ux-dizayn"
             />
           </div>
         </main>

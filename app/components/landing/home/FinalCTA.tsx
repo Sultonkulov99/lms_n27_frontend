@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, X } from "lucide-react";
 import Link from "next/link";
-import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
+import { useLanguage } from "../context/LanguageContext"; // Path to'g'riligiga ishonch hosil qiling
 
 interface VideoModalProps {
   onClose: () => void;
@@ -16,7 +16,7 @@ function VideoModal({ onClose }: VideoModalProps) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
+    const handleKey = (e: KeyboardEvent) => { 
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKey);
@@ -105,36 +105,39 @@ function VideoModal({ onClose }: VideoModalProps) {
   );
 }
 
-export default function FinalCTA() {
+export default function FinalCTA({ isDarkMode }: { isDarkMode?: boolean }) {
   const { t } = useLanguage();
   const [showVideo, setShowVideo] = useState(false);
 
   return (
-    <div className="bg-white py-16 text-center border-t border-slate-100">
+    <div
+      className={`py-16 text-center border-t transition-colors duration-300 ${isDarkMode
+          ? "bg-[#151B26] border-[#222A3A]"
+          : "bg-white border-slate-100"
+        }`}
+    >
       <div className="container max-w-4xl mx-auto flex flex-col items-center gap-6">
+
         {/* ── KOiDA Brand Logo ────────────────────────────────────────────── */}
         <div className="flex items-center justify-center font-black text-3xl tracking-tight select-none">
           <span className="text-[#0F172A] font-sans">KO</span>
-          <span
-            style={{
-              color: "#FF3B30",
-              fontFamily: "Georgia, serif",
-              fontStyle: "italic",
-              margin: "0 1px",
-            }}
-          >
-            i
-          </span>
+          <span style={{ color: "#FF3B30", fontFamily: "Georgia, serif", fontStyle: "italic", margin: "0 1px" }}>i</span>
           <span className="text-[#0F172A] font-sans">DA</span>
         </div>
 
         {/* ── Heading ────────────────────────────────────────────────────── */}
-        <h2 className="font-bold text-[32px] leading-[120%] text-[#0F172A] m-0">
+        <h2
+          className={`font-bold text-[32px] leading-[120%] m-0 ${isDarkMode ? "text-white" : "text-[#0F172A]"
+            }`}
+        >
           {t("finalCta.title")}
         </h2>
 
         {/* ── Subtitle ───────────────────────────────────────────────────── */}
-        <p className="font-medium text-[16px] leading-[140%] text-[#636C79] m-0">
+        <p
+          className={`font-medium text-[16px] leading-[140%] m-0 ${isDarkMode ? "text-[#8A99AD]" : "text-[#636C79]"
+            }`}
+        >
           {t("finalCta.subtitle")}
         </p>
 
@@ -144,7 +147,10 @@ export default function FinalCTA() {
           <button
             onClick={() => setShowVideo(true)}
             type="button"
-            className="inline-flex items-center justify-center gap-2 w-[214px] h-[48px] rounded-[8px] border border-slate-200 bg-white text-[#1C232C] hover:bg-slate-50 font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
+            className={`inline-flex items-center justify-center gap-2 w-[214px] h-[48px] rounded-[8px] border font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border ${isDarkMode
+                ? "border-[#222A3A] bg-[#1B2230] text-slate-200 hover:bg-[#222A3A]"
+                : "border-slate-200 bg-white text-[#1C232C] hover:bg-slate-50"
+              }`}
           >
             <svg
               width="18"
