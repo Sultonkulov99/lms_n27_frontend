@@ -204,27 +204,24 @@ export default function AllCoursesPage() {
                 <div className="flex items-center text-[13px] font-medium gap-2">
                   <span className="text-gray-500">Kurslar</span>
                   <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                  <span className="text-blue-500">Barcha kurslar</span>
                 </div>
               </div>
               <div className="flex items-center gap-6">
-                {selectedRows.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-[13px] font-medium text-gray-700">
-                      {selectedAreActive ? "Faol qilingan" : "Nofaol qilingan"}
-                    </span>
-                    <button 
-                      onClick={handleBulkToggle}
-                      className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${
-                        selectedAreActive ? "bg-blue-600" : "bg-gray-300"
-                      }`}
-                    >
-                      <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
-                        selectedAreActive ? "translate-x-4" : "translate-x-0"
-                      }`}></div>
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  <span className="text-[13px] font-medium text-gray-700">
+                    Faollashtirilgan
+                  </span>
+                  <button 
+                    onClick={handleBulkToggle}
+                    className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${
+                      selectedAreActive && selectedRows.length > 0 ? "bg-blue-600" : "bg-gray-300"
+                    }`}
+                  >
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
+                      selectedAreActive && selectedRows.length > 0 ? "translate-x-4" : "translate-x-0"
+                    }`}></div>
+                  </button>
+                </div>
                 <button 
                   onClick={openAddModal}
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm"
@@ -258,121 +255,123 @@ export default function AllCoursesPage() {
               <div></div>
             </div>
 
-            {/* Table */}
-            <div className="border border-gray-100 rounded-xl overflow-x-auto mb-6 flex-1">
-              <table className="w-full text-left border-collapse min-w-[800px]">
-                <thead>
-                  <tr className="bg-gray-50/50 text-[13px] text-gray-500 border-b border-gray-100">
-                    <th className="p-4 w-12 text-center">
-                      <input 
-                        type="checkbox" 
-                        onChange={handleSelectAll}
-                        checked={isAllSelected}
-                        className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
-                      />
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Banner <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      Kurs nomi
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Darajasi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Narxi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Kategoriya <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 justify-center cursor-pointer group">
-                        Holati <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap text-center">
-                      Amallar
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y divide-gray-50">
-                  {currentCourses.length > 0 ? (
-                    currentCourses.map((course) => (
-                      <tr key={course.id} className={`${selectedRows.includes(course.id) ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-gray-50/50"} transition-colors group`}>
-                        <td className="p-4 text-center">
-                          <input 
-                            type="checkbox" 
-                            checked={selectedRows.includes(course.id)}
-                            onChange={() => handleSelectRow(course.id)}
-                            className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
-                          />
-                        </td>
-                        <td className="p-4">
-                          <div className={`w-15 h-9 rounded-lg ${course.cover || 'bg-gray-200'} shadow-sm`}></div>
-                        </td>
-                        <td className="p-4 font-medium text-gray-900">
-                          <Link href={`/dashboard/courses/allCourses/${course.id}`} className="hover:text-blue-600 hover:underline transition-colors">
-                            {course.title}
-                          </Link>
-                        </td>
-                        <td className="p-4 text-gray-600 font-medium capitalize">{course.level}</td>
-                        <td className="p-4 text-gray-900 font-medium">{(course.price).toLocaleString()}</td>
-                        <td className="p-4 text-gray-600">{getCategoryName(course.categoryId)}</td>
-                        <td className="p-4 text-center">
-                          {course.status === 'active' ? (
-                            <span className="text-green-600 font-medium text-[13px]">Faol</span>
-                          ) : (
-                            <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center justify-center gap-3 text-gray-400">
-                            <button 
-                              onClick={() => {
-                                setCurrentCourse(course);
-                                setIsViewModalOpen(true);
-                              }}
-                              className="hover:text-blue-600 transition-colors"
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button 
-                              onClick={() => openEditModal(course)}
-                              className="hover:text-blue-600 transition-colors"
-                            >
-                              <Pen size={16} />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setCurrentCourse(course);
-                                setIsDeleteModalOpen(true);
-                              }}
-                              className="hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+            {/* Table (Excel Style Borders) */}
+            <div className="bg-white rounded-t-xl shadow-sm overflow-hidden flex-1 mb-6 border border-gray-200 border-b-0">
+              <div className="overflow-x-auto h-full">
+                <table className="w-full text-left border-collapse border border-gray-200 min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
+                      <th className="px-5 py-4 w-12 text-center border border-gray-200">
+                        <input 
+                          type="checkbox" 
+                          onChange={handleSelectAll}
+                          checked={isAllSelected}
+                          className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
+                        />
+                      </th>
+                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Banner <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                        Kurs nomi
+                      </th>
+                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Darajasi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Narxi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Kategoriya <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-medium whitespace-nowrap border border-gray-200">
+                        <div className="flex items-center gap-2 justify-center cursor-pointer group">
+                          Holati <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-medium whitespace-nowrap text-center border border-gray-200">
+                        Amallar
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[14px] text-gray-800">
+                    {currentCourses.length > 0 ? (
+                      currentCourses.map((course) => (
+                        <tr key={course.id} className={`${selectedRows.includes(course.id) ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-gray-50/50"} transition-colors group`}>
+                          <td className="px-5 py-4 text-center border border-gray-200">
+                            <input 
+                              type="checkbox" 
+                              checked={selectedRows.includes(course.id)}
+                              onChange={() => handleSelectRow(course.id)}
+                              className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
+                            />
+                          </td>
+                          <td className="px-5 py-4 border border-gray-200">
+                            <div className={`w-[52px] h-[32px] mx-auto rounded ${course.cover || 'bg-gray-200'} shadow-sm`}></div>
+                          </td>
+                          <td className="px-5 py-4 font-medium text-gray-900 border border-gray-200">
+                            <Link href={`/dashboard/courses/allCourses/${course.id}`} className="hover:text-blue-600 hover:underline transition-colors">
+                              {course.title}
+                            </Link>
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 font-medium capitalize border border-gray-200 text-center">{course.level}</td>
+                          <td className="px-5 py-4 text-gray-900 font-medium border border-gray-200 text-center">{(course.price).toLocaleString()}</td>
+                          <td className="px-5 py-4 text-gray-600 border border-gray-200 text-center">{getCategoryName(course.categoryId)}</td>
+                          <td className="px-5 py-4 text-center border border-gray-200">
+                            {course.status === 'active' ? (
+                              <span className="text-green-600 font-medium text-[13px]">Faol</span>
+                            ) : (
+                              <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4 border border-gray-200">
+                            <div className="flex items-center justify-center gap-3 text-gray-400">
+                              <button 
+                                onClick={() => {
+                                  setCurrentCourse(course);
+                                  setIsViewModalOpen(true);
+                                }}
+                                className="hover:text-blue-600 transition-colors"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button 
+                                onClick={() => openEditModal(course)}
+                                className="hover:text-blue-600 transition-colors"
+                              >
+                                <Pen size={16} />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setCurrentCourse(course);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                className="hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-gray-500 border border-gray-200">
+                          Ma'lumot topilmadi
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-gray-500">
-                        Ma'lumot topilmadi
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Footer Pagination */}
