@@ -1,0 +1,88 @@
+{
+    "Navbar": {
+        "home": "Asosiy",
+        "courses": "Kurslar",
+        "about": "Biz haqimizda",
+        "contact": "Bog'lanish",
+        "login": "Kirish / Ro'yxatdan o'tish"
+    },
+    "hero": {
+        "title_gradient": "Kelajak kasblarini",
+        "title_part1": "biz",
+        "title_part2": "bilan o'rganing!",
+        "subtitle": "Tekinga o'qib, pul ishlashga nima deysiz? Ishonmayapsizmi? Biz buni isbotlaymiz. Hammasi o'zingizga bog'liq.",
+        "button": "Kurslar bilan tanishish"
+    },
+    "courses": {
+        "title": "Ommabop kurslar",
+        "subtitle": "Kasbga yo'nalitirilgan praktikumlar yordamida eng tez va samarali yo'llar bilan mutaxassislar qatoriga qo'shiling. Har bir praktikum soha mutaxassislari tomonidan eng zamonaviy o'quv reja asosida tayyorlangan",
+        "price_label": "Kurs narxi:",
+        "view_all": "Barcha kurslarni ko'rish",
+        "card_description": "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
+        "categories": {
+            "all": "Barcha kurslar",
+            "design": "Dizayn",
+            "frontend": "Frontend",
+            "backend": "Backend",
+            "mobile": "Mobil",
+            "fullstack": "Full Stack",
+            "ai": "Sun'iy intellekt",
+            "other": "Boshqalar"
+        }
+    },
+    "cta": {
+        "title": "Istalgan nuqtadan onlayn o'qish imkoniyati",
+        "subtitle": "Biz sizga bu imkoniyatni taqdim qilamiz",
+        "registerBtn": "Ro'yxatdan o'tish"
+    },
+    "join": {
+        "title": "Bizga qo'shiling",
+        "subtitle": "Bizning safimizga nafaqat o'rganuvchi balki yetarkucha tajribangiz bo'lsa mentor sifatida ham qo'shilishingiz mumkin",
+        "studentTitle": "O'quvchimisiz?",
+        "studentDesc": "Agarda o'quvchi bo'lsangiz bizning xalqaro darajadagi tajribali mentorlarimizga shogird bo'ling",
+        "studentBtn": "Boshlash",
+        "mentorTitle": "Mentormisiz?",
+        "mentorDesc": "Bizning mualliflar jamoamizga qo'shilib, o'z tajribangizni boshqalar bilan oson va qulay platforma orqali ulashing",
+        "mentorBtn": "Qo'shilish"
+    },
+    "finalCta": {
+        "title": "Biz bilan muvaffaqiyatga erishing",
+        "subtitle": "Eng kuchlilar biz bilan qoladi!",
+        "introVideo": "Intro video",
+        "contact": "Bog'lanish",
+        "close": "Yopish",
+        "playVideo": "Video ijro etish",
+        "pause": "To'xtatish",
+        "play": "Ijro etish"
+    },
+    "mentors": {
+        "title": "Tajribali Mentorlar",
+        "subtitle": "Barcha kurslarimiz tajribali mentorlar tomonidan tayyorlangan",
+        "roles": {
+            "frontend": "Frontend Dasturchi",
+            "backend": "Backend Mutaxassisi",
+            "uiux": "UI/UX Dizayner",
+            "pm": "Mahsulot Menejeri",
+            "dataScientist": "Data Scientist",
+            "mobile": "Mobil Dasturchi"
+        }
+    },
+    "testimonials": {
+        "title": "Izohlar",
+        "subtitle": "O'quvchilarimiz tomonidan qoldirilgan izohlar",
+        "items": {
+            "1": {
+                "role": "Frontend kursi o'quvchisi",
+                "comment": "Lorem ipsum dolor sit amet consectetur. Sit in eget posuere facilisis elementum. Est semper aenean erat est etiam sit. Auctor risus semper ultrices eleifend vel at. Pharetra turpis fames cursus sit in faucibus."
+            },
+            "2": {
+                "role": "Frontend kursi o'quvchisi",
+                "comment": "Lorem ipsum dolor sit amet consectetur. In mattis ullamcorper faucibus amet libero. Et varius lorem magna non ultricies dictum duis. Quis imperdiet parturient leo orci libero gravida. Tortor malesuada quam."
+            },
+            "3": {
+                "role": "Frontend kursi o'quvchisi",
+                "comment": "Lorem ipsum dolor sit amet consectetur. Lectus placerat convallis vel mauris. Donec nunc tincidunt mattis enim rhoncus viverra libero enim nulla. Faucibus eleifend commodo sollicitudin eu turpis risus vitae."
+            }
+        }
+    }
+}
