@@ -6,12 +6,18 @@ import { useState, useRef, useEffect } from "react";
 
 export default function Topbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("O'zbek tili");
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+      }
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setIsLangDropdownOpen(false);
       }
     }
 
@@ -51,12 +57,63 @@ export default function Topbar() {
         </button>
 
         {/* Language selector */}
-        <button className="flex items-center gap-1.5 text-sm text-[#1a1a1a] font-medium px-3 py-1.5">
-          O&apos;zbek tili
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2">
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
+        <div className="relative" ref={langDropdownRef}>
+          <button 
+            onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+            className="flex items-center gap-1.5 text-sm text-[#1a1a1a] font-medium px-3 py-1.5"
+          >
+            {selectedLang}
+            <svg 
+              width="14" 
+              height="14" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="#1a1a1a" 
+              strokeWidth="2"
+              className={`transition-transform duration-200 ${isLangDropdownOpen ? 'rotate-180' : ''}`}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+
+          {isLangDropdownOpen && (
+            <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              <button 
+                onClick={() => {
+                  setSelectedLang("O'zbek tili");
+                  setIsLangDropdownOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                  selectedLang === "O'zbek tili" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
+                }`}
+              >
+                O&apos;zbek tili
+              </button>
+              <button 
+                onClick={() => {
+                  setSelectedLang("Русский");
+                  setIsLangDropdownOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                  selectedLang === "Русский" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
+                }`}
+              >
+                Русский
+              </button>
+              <button 
+                onClick={() => {
+                  setSelectedLang("English");
+                  setIsLangDropdownOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
+                  selectedLang === "English" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
+                }`}
+              >
+                English
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* User profile */}
         <div className="relative pl-4 border-l border-gray-200" ref={dropdownRef}>

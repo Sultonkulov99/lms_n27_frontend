@@ -44,8 +44,27 @@ const modules: ModuleItem[] = [
       },
     ],
   },
-  ...Array.from({ length: 7 }).map((_, i) => ({
-    id: `react-framework-${i + 1}`,
+  {
+    id: "react-framework-1",
+    title: "React framework",
+    duration: "2 soat 20 daqiqa",
+    lessons: [
+      {
+        id: "r1",
+        title: "React nima?",
+        duration: "15 daqiqa",
+        status: "upcoming",
+      },
+      {
+        id: "r2",
+        title: "Components va Props",
+        duration: "25 daqiqa",
+        status: "upcoming",
+      },
+    ],
+  },
+  ...Array.from({ length: 6 }).map((_, i) => ({
+    id: `react-framework-${i + 2}`,
     title: "React framework",
     duration: "2 soat 20 daqiqa",
   })),
@@ -91,39 +110,32 @@ export default function CourseSidebar({
   };
 
   return (
-    <aside className="w-[280px] shrink-0 bg-white rounded-xl border border-gray-200 p-4 h-fit max-h-[calc(100vh-200px)] overflow-y-auto">
-      <h2 className="text-base font-bold text-[#1a1a1a] mb-1 px-2">{courseTitle}</h2>
-      <p className="text-sm text-[#64748B] mb-4 px-2">30 daqiqa</p>
+    <aside className="w-[320px] shrink-0 bg-white rounded-xl border border-gray-200 h-[calc(100vh-120px)] overflow-hidden flex flex-col">
+      <div className="p-4 border-b border-gray-100">
+        <h2 className="text-base font-bold text-[#1a1a1a] mb-1">{courseTitle}</h2>
+        <p className="text-sm text-[#64748B]">30 daqiqa</p>
+      </div>
 
-      <div className="flex flex-col gap-1">
-        {modules.map((mod) => {
-          const isOpen = openModuleId === mod.id;
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex flex-col">
+          {modules.map((mod) => {
+            const isOpen = openModuleId === mod.id;
 
-          return (
-            <div key={mod.id} className="rounded-lg">
-              <button
-                onClick={() => setOpenModuleId(isOpen ? "" : mod.id)}
-                className="w-full flex items-center justify-between px-3 py-3 hover:bg-gray-50 rounded-lg transition-colors text-left group"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  {mod.lessons && (
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                      mod.id === "kirish" ? "bg-[#4F7FFF]" : "bg-gray-200"
-                    }`}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="white">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
+            return (
+              <div key={mod.id} className="border-b border-gray-100">
+                <button
+                  onClick={() => setOpenModuleId(isOpen ? "" : mod.id)}
+                  className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-bold text-[#1a1a1a] truncate">{mod.title}</p>
+                      <p className="text-xs text-[#94A3B8] mt-0.5">{mod.duration}</p>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-[#1a1a1a] truncate">{mod.title}</p>
-                    <p className="text-xs text-[#94A3B8]">{mod.duration}</p>
                   </div>
-                </div>
-                {mod.lessons && (
                   <svg
-                    width="16"
-                    height="16"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="#94A3B8"
@@ -132,49 +144,83 @@ export default function CourseSidebar({
                   >
                     <path d="M9 18l6-6-6-6" />
                   </svg>
-                )}
-              </button>
+                </button>
 
-              {isOpen && mod.lessons && (
-                <div className="flex flex-col gap-0.5 ml-4 mt-1 mb-2">
-                  {mod.lessons.map((lesson) => {
-                    const isActive = lesson.id === activeLessonId;
+                {isOpen && (
+                  mod.lessons ? (
+                    <div className="flex flex-col">
+                      {mod.lessons.map((lesson) => {
+                        const isActive = lesson.id === activeLessonId;
 
-                    return (
-                      <button
-                        key={lesson.id}
-                        aria-current={isActive ? "true" : undefined}
-                        onClick={() => handleLessonClick(lesson.id)}
-                        className={`w-full flex items-center justify-between gap-2 pl-3 pr-3 py-2.5 rounded-lg text-left transition-all ${
-                          isActive 
-                            ? "bg-blue-50 border-l-2 border-[#4F7FFF]" 
-                            : "hover:bg-gray-50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                            isActive ? "bg-[#4F7FFF]" : "bg-gray-300"
-                          }`} />
-                          <div className="min-w-0">
-                            <p
-                              className={`text-xs truncate ${
-                                isActive ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a] font-medium"
-                              }`}
+                        return (
+                          <button
+                            key={lesson.id}
+                            aria-current={isActive ? "true" : undefined}
+                            onClick={() => handleLessonClick(lesson.id)}
+                            className={`w-full flex items-center justify-between gap-2 px-4 py-3 text-left transition-all border-b border-gray-100 last:border-b-0 ${
+                              isActive 
+                                ? "bg-blue-50" 
+                                : "hover:bg-gray-50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
+                                lesson.status === "completed" 
+                                  ? "bg-green-100" 
+                                  : lesson.status === "current"
+                                  ? "bg-red-500"
+                                  : "bg-gray-100"
+                              }`}>
+                                {lesson.status === "completed" ? (
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5">
+                                    <path d="M20 6L9 17l-5-5" />
+                                  </svg>
+                                ) : (
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill={lesson.status === "current" ? "white" : "#94A3B8"}>
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                )}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p
+                                  className={`text-sm font-medium truncate ${
+                                    isActive ? "text-[#4F7FFF]" : "text-[#1a1a1a]"
+                                  }`}
+                                >
+                                  {lesson.title}
+                                </p>
+                                <p className="text-xs text-[#94A3B8]">{lesson.duration}</p>
+                              </div>
+                            </div>
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#D1D5DB"
+                              strokeWidth="2"
+                              className="shrink-0"
                             >
-                              {lesson.title}
-                            </p>
-                            <p className="text-xs text-[#94A3B8]">{lesson.duration}</p>
-                          </div>
-                        </div>
-                        <StatusIcon status={lesson.status} />
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                              <path d="M9 18l6-6-6-6" />
+                            </svg>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="px-4 py-8 text-center">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1.5" className="mx-auto mb-3">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                      </svg>
+                      <p className="text-sm text-[#94A3B8] font-medium">Darslik mavjud emas</p>
+                      <p className="text-xs text-[#CBD5E1] mt-1">Tez orada qo&apos;shiladi</p>
+                    </div>
+                  )
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </aside>
   );

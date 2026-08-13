@@ -103,7 +103,7 @@ export default function LessonMain() {
         <Topbar />
 
         <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-6">
-          <div className="flex gap-6 items-start max-w-[1600px] mx-auto">
+          <div className="flex gap-5 items-start max-w-[1600px] mx-auto">
             <CourseSidebar 
               courseTitle="Frontend dasturlash" 
               activeLessonId={activeLessonId}
