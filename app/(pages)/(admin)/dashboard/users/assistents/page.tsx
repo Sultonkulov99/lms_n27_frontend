@@ -34,7 +34,7 @@ export default function AssistentsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [viewingAdmin, setViewingAdmin] = useState<any>(null);
+  const [viewingAssistent, setViewingAssistent] = useState<any>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -58,7 +58,7 @@ export default function AssistentsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  const [admins, setAdmins] = useState([
+  const [assistents, setAssistents] = useState([
     {
       id: 2458,
       image: "https://i.pravatar.cc/150?u=2458",
@@ -172,18 +172,18 @@ export default function AssistentsPage() {
   ]);
 
   // Derived state
-  const filteredAdmins = useMemo(() => {
-    return admins.filter(
-      (admin) =>
-        admin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        admin.phone.includes(searchQuery),
+  const filteredAssistents = useMemo(() => {
+    return assistents.filter(
+      (assistent) =>
+        assistent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        assistent.phone.includes(searchQuery),
     );
-  }, [admins, searchQuery]);
+  }, [assistents, searchQuery]);
 
-  const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredAssistents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, filteredAdmins.length);
-  const currentAdmins = filteredAdmins.slice(startIndex, endIndex);
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredAssistents.length);
+  const currentAssistents = filteredAssistents.slice(startIndex, endIndex);
 
   const handleDownloadXLS = () => {
     const headers = [
@@ -194,7 +194,7 @@ export default function AssistentsPage() {
       "Rol",
       "Holati",
     ];
-    const rows = admins.map((a) =>
+    const rows = assistents.map((a) =>
       [a.id, a.name, a.phone, a.role, a.status].join(","),
     );
     const csvContent =
@@ -203,7 +203,7 @@ export default function AssistentsPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "administratorlar.csv");
+    link.setAttribute("download", "assistentlar.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -241,14 +241,14 @@ export default function AssistentsPage() {
     setIsModalOpen(true);
   };
 
-  const openEditModal = (admin: any) => {
-    setEditingId(admin.id);
-    setName(admin.name);
-    setPhone(admin.phone);
-    setCourse(admin.course || "");
+  const openEditModal = (assistent: any) => {
+    setEditingId(assistent.id);
+    setName(assistent.name);
+    setPhone(assistent.phone);
+    setCourse(assistent.course || "");
     setPassword("");
     setImageFile(null);
-    setImagePreview(admin.image); // Show current image in edit mode
+    setImagePreview(assistent.image); // Show current image in edit mode
     setNameError(false);
     setPhoneError(false);
     setCourseError(false);
@@ -262,10 +262,10 @@ export default function AssistentsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteAdmin = () => {
+  const handleDeleteAssistent = () => {
     if (deletingId) {
-      setAdmins(admins.filter((a) => a.id !== deletingId));
-      if (currentAdmins.length === 1 && currentPage > 1) {
+      setAssistents(assistents.filter((a) => a.id !== deletingId));
+      if (currentAssistents.length === 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }
       setIsDeleteModalOpen(false);
@@ -282,7 +282,7 @@ export default function AssistentsPage() {
     }
   };
 
-  const handleSaveAdmin = () => {
+  const handleSaveAssistent = () => {
     let hasError = false;
 
     if (!imagePreview) {
@@ -326,22 +326,22 @@ export default function AssistentsPage() {
     if (hasError) return;
 
     if (editingId) {
-      setAdmins(
-        admins.map((admin) => {
-          if (admin.id === editingId) {
+      setAssistents(
+        assistents.map((assistent) => {
+          if (assistent.id === editingId) {
             return {
-              ...admin,
+              ...assistent,
               name,
               phone,
               course,
-              image: imagePreview || admin.image,
+              image: imagePreview || assistent.image,
             };
           }
-          return admin;
+          return assistent;
         }),
       );
     } else {
-      const newAdmin = {
+      const newAssistent = {
         id: Math.floor(1000 + Math.random() * 9000),
         image: imagePreview || `https://i.pravatar.cc/150?u=${Date.now()}`,
         name: name,
@@ -351,7 +351,7 @@ export default function AssistentsPage() {
         date: new Date().toISOString().replace("T", " ").substring(0, 19),
         status: "Faol",
       };
-      setAdmins([newAdmin, ...admins]);
+      setAssistents([newAssistent, ...assistents]);
     }
 
     setIsModalOpen(false);
@@ -444,13 +444,6 @@ export default function AssistentsPage() {
                     />
                   </th>
                   <th className="px-5 py-4 border border-gray-200">
-                    Rol{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
                     Yaratilgan vaqt{" "}
                     <ChevronDown
                       size={14}
@@ -470,59 +463,56 @@ export default function AssistentsPage() {
                 </tr>
               </thead>
               <tbody className="text-[14px] text-gray-800">
-                {currentAdmins.map((admin) => (
+                {currentAssistents.map((assistent) => (
                   <tr
-                    key={admin.id}
+                    key={assistent.id}
                     className="hover:bg-gray-50 transition-colors group"
                   >
                     <td className="px-5 py-4 font-medium border border-gray-200">
-                      {admin.id}
+                      {assistent.id}
                     </td>
                     <td className="px-5 py-4 border border-gray-200">
                       <div
                         className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
                         onClick={() => {
-                          setViewingAdmin(admin);
+                          setViewingAssistent(assistent);
                           setIsViewModalOpen(true);
                         }}
                       >
                         <img
-                          src={admin.image}
-                          alt={admin.name}
+                          src={assistent.image}
+                          alt={assistent.name}
                           className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
                         />
                         <span className="font-semibold text-[13px]">
-                          {admin.name}
+                          {assistent.name}
                         </span>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                      {admin.course}
+                      {assistent.course}
                     </td>
                     <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                      {admin.phone}
+                      {assistent.phone}
                     </td>
                     <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                      {admin.role}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                      {admin.date}
+                      {assistent.date}
                     </td>
                     <td className="px-5 py-4 border border-gray-200">
                       <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
-                        {admin.status}
+                        {assistent.status}
                       </span>
                     </td>
                     <td className="px-5 py-4 border border-gray-200">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => openEditModal(admin)}
+                          onClick={() => openEditModal(assistent)}
                           className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
                         >
                           <Pencil size={14} />
                         </button>
                         <button
-                          onClick={() => confirmDelete(admin.id)}
+                          onClick={() => confirmDelete(assistent.id)}
                           className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
                         >
                           <Trash2 size={14} />
@@ -531,7 +521,7 @@ export default function AssistentsPage() {
                     </td>
                   </tr>
                 ))}
-                {currentAdmins.length === 0 && (
+                {currentAssistents.length === 0 && (
                   <tr>
                     <td
                       colSpan={8}
@@ -551,7 +541,7 @@ export default function AssistentsPage() {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
-            totalItems={filteredAdmins.length}
+            totalItems={filteredAssistents.length}
             startIndex={startIndex}
             endIndex={endIndex}
             itemsPerPage={itemsPerPage}
@@ -755,7 +745,7 @@ export default function AssistentsPage() {
             {/* Save Button */}
             <div className="mt-4 flex justify-start shrink-0">
               <button
-                onClick={handleSaveAdmin}
+                onClick={handleSaveAssistent}
                 className="flex items-center justify-center bg-[#407BFF] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm"
                 style={{
                   width: "129px",
@@ -795,7 +785,7 @@ export default function AssistentsPage() {
                 Bekor qilish
               </button>
               <button
-                onClick={handleDeleteAdmin}
+                onClick={handleDeleteAssistent}
                 className="px-4 py-2 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
               >
                 O’chirish
@@ -833,8 +823,8 @@ export default function AssistentsPage() {
         </div>
       )}
 
-      {/* View Admin Modal */}
-      {isViewModalOpen && viewingAdmin && (
+      {/* View Assistent Modal */}
+      {isViewModalOpen && viewingAssistent && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px] p-4"
           onClick={() => setIsViewModalOpen(false)}
@@ -845,7 +835,7 @@ export default function AssistentsPage() {
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-[20px] font-bold text-gray-900">
-                Administrator haqida
+                Assistent haqida
               </h2>
               <button
                 onClick={() => setIsViewModalOpen(false)}
@@ -859,15 +849,15 @@ export default function AssistentsPage() {
               {/* Profile Header */}
               <div className="flex items-center gap-4 mb-8">
                 <img
-                  src={viewingAdmin.image}
-                  alt={viewingAdmin.name}
+                  src={viewingAssistent.image}
+                  alt={viewingAssistent.name}
                   className="w-[80px] h-[80px] rounded-full object-cover border border-gray-200"
                 />
                 <div>
                   <h3 className="text-[20px] font-bold text-gray-900 mb-1">
-                    {viewingAdmin.name}
+                    {viewingAssistent.name}
                   </h3>
-                  <p className="text-gray-500 text-[14px]">Administrator</p>
+                  <p className="text-gray-500 text-[14px]">Assistent</p>
                 </div>
               </div>
 
@@ -881,13 +871,13 @@ export default function AssistentsPage() {
                     Telefon raqami
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAdmin.phone}
+                    {viewingAssistent.phone}
                   </p>
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-500 mb-1">Rol</p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAdmin.role}
+                    {viewingAssistent.role}
                   </p>
                 </div>
                 <div>
@@ -895,7 +885,7 @@ export default function AssistentsPage() {
                     Ro'yxatdan o'tgan vaqti
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAdmin.date}
+                    {viewingAssistent.date}
                   </p>
                 </div>
               </div>
@@ -927,7 +917,7 @@ export default function AssistentsPage() {
                 <button
                   onClick={() => {
                     setIsViewModalOpen(false);
-                    openEditModal(viewingAdmin);
+                    openEditModal(viewingAssistent);
                   }}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors text-[14px]"
                 >
