@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   ShieldCheck,
   Bell,
@@ -64,19 +65,26 @@ export default function Header() {
 
           {/* Profile Dropdown Menu */}
           <div
-            className={`absolute right-0 top-14 w-56 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-1 z-50 origin-top-right transition-all duration-200 ease-out ${
-              isProfileOpen
+            className={`absolute right-0 top-14 w-56 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-1 z-50 origin-top-right transition-all duration-200 ease-out ${isProfileOpen
                 ? "opacity-100 scale-100 translate-y-0 visible"
                 : "opacity-0 scale-95 -translate-y-2 invisible"
-            }`}
+              }`}
           >
-            <button className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <Link
+              href="/dashboard/profile"
+              onClick={() => setIsProfileOpen(false)}
+              className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
               <div className="flex items-center gap-2.5">
                 <User size={16} className="text-gray-400" />
-                <span className="font-medium">Profilga o’tish</span>
+
+                <span className="font-medium">
+                  Profilga o’tish
+                </span>
               </div>
+
               <ChevronRight size={16} className="text-gray-400" />
-            </button>
+            </Link>
             <button className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors">
               <div className="flex items-center gap-2.5">
                 <Settings size={16} className="text-gray-400" />
