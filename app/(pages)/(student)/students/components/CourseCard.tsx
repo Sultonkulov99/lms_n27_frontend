@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import avatar from "@/app/assets/bekzodsafarov.jpg"
 
 type CourseCardProps = {
   image: string;
@@ -32,11 +33,9 @@ export default function CourseCard({
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Image
-              src={instructorAvatar}
+              src={avatar}
               alt={instructor}
-              width={22}
-              height={22}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover h-[25px] w-[25px]"
             />
             <span className="text-xs font-medium text-[#1a1a1a]">{instructor}</span>
           </div>
