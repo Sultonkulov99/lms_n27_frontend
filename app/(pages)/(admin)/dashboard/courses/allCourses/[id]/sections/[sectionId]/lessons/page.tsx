@@ -46,14 +46,37 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
-  const [lessons, setLessons] = useState<Lesson[]>([
-    { 
-      id: 1, 
-      title: "Veb dasturlashga kirish", 
-      description: "Frontend dasturlash veb dasturlashning bir qismi hisoblanadi",
-      video: { name: "Kirish.mp4", size: "4.2 MB" }
+  const [lessons, setLessons] = useState<Lesson[]>(() => {
+    let initialTitle = "Asosiy dars";
+    let initialDesc = "Dars haqida ma'lumot";
+    
+    if (isBackend) {
+      if (sectionId === "1") {
+        initialTitle = "Node JS ga kirish";
+        initialDesc = "Node JS orqali server yozishni o'rganamiz";
+      } else {
+        initialTitle = "Ma'lumotlar bazasi bilan ishlash";
+        initialDesc = "SQL so'rovlarini tuzish va ma'lumotlarni boshqarish";
+      }
+    } else {
+      if (sectionId === "1") {
+        initialTitle = "Veb dasturlashga kirish";
+        initialDesc = "Frontend dasturlash veb dasturlashning bir qismi hisoblanadi";
+      } else {
+        initialTitle = "CSS selektorlari va xossalari";
+        initialDesc = "CSS orqali veb sahifaga uslub berish asoslari";
+      }
     }
-  ]);
+    
+    return [
+      { 
+        id: parseInt(sectionId) * 10 + 1, 
+        title: initialTitle, 
+        description: initialDesc,
+        video: { name: "video_2026-08-10_11-15-10.mp4", size: "15.4 MB" }
+      }
+    ];
+  });
 
   const [newLesson, setNewLesson] = useState<{ title: string; description: string; video: { name: string; size: string; progress: number } | null }>({
     title: "",
@@ -63,16 +86,22 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
 
   const [editingLesson, setEditingLesson] = useState<(Lesson & { videoProgress?: number }) | null>(null);
   const [deletingLessonId, setDeletingLessonId] = useState<number | null>(null);
+  const [titleError, setTitleError] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setNewLesson({ title: "", description: "", video: null });
     setEditingLesson(null);
+    setTitleError(false);
   };
 
   const handleAddLesson = () => {
-    if (!newLesson.title.trim()) return;
+    if (!newLesson.title.trim()) {
+      setTitleError(true);
+      return;
+    }
     setLessons([
       ...lessons, 
       { 
@@ -87,7 +116,10 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
   };
 
   const handleEditLesson = () => {
-    if (!editingLesson || !editingLesson.title.trim()) return;
+    if (!editingLesson || !editingLesson.title.trim()) {
+      setTitleError(true);
+      return;
+    }
     setLessons(lessons.map(l => l.id === editingLesson.id ? { 
       ...l, 
       title: editingLesson.title.trim(), 
@@ -164,6 +196,7 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
 
   const openEditModal = (lesson: Lesson) => {
     setEditingLesson({ ...lesson, videoProgress: lesson.video ? 100 : undefined });
+    setTitleError(false);
     setIsEditModalOpen(true);
   };
 
@@ -178,20 +211,24 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
           <input type="text" disabled value={sectionName} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-[14px] cursor-not-allowed" />
         </div>
         <div>
-          <label className="block text-[13px] font-semibold text-gray-700 mb-2">Dars nomi</label>
+          <label className="block text-[13px] font-semibold text-gray-700 mb-2">
+            Dars nomi <span className="text-red-500">*</span>
+          </label>
           <input 
             type="text" 
             placeholder="Kiriting" 
             value={isEdit ? (editingLesson?.title || "") : newLesson.title}
             onChange={(e) => {
+              setTitleError(false);
               if (isEdit && editingLesson) {
                 setEditingLesson({ ...editingLesson, title: e.target.value });
               } else {
                 setNewLesson({ ...newLesson, title: e.target.value });
               }
             }}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]" 
+            className={`w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] ${titleError ? "border-red-500 bg-red-50/50" : "border-gray-200"}`} 
           />
+          {titleError && <p className="text-red-500 text-[12px] mt-1.5 font-medium">Dars mavzusi kiritilishi shart</p>}
         </div>
         <div>
           <label className="block text-[13px] font-semibold text-gray-700 mb-2">Dars haqida</label>
@@ -289,7 +326,7 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
             <div className="flex items-center text-[13px] font-medium gap-2">
               <Link href="/dashboard/courses/allCourses" className="text-gray-500 hover:text-gray-700 transition-colors">Kurslar</Link>
               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-              <Link href={`/dashboard/courses/allCourses/${courseId}`} className="text-gray-500 hover:text-gray-700 transition-colors">{courseTitle}</Link>
+              <Link href={`/dashboard/courses/allCourses/${courseId}/sections`} className="text-gray-500 hover:text-gray-700 transition-colors">{courseTitle}</Link>
               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
               <Link href={`/dashboard/courses/allCourses/${courseId}/sections`} className="text-gray-500 hover:text-gray-700 transition-colors">Bo&apos;limlar</Link>
               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
@@ -354,7 +391,7 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
                     </td>
                     <td className="px-6 py-4 border border-gray-200">
                       {lesson.video ? (
-                        <button className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-[13px] font-medium">
+                        <button onClick={() => setIsPlayingVideo(true)} className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-[13px] font-medium cursor-pointer">
                           <Play size={14} className="fill-blue-600" />
                           Video
                         </button>
@@ -441,6 +478,22 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
                 O&apos;chirish
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Video Player Modal */}
+      {isPlayingVideo && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setIsPlayingVideo(false)}>
+          <div className="relative w-full max-w-3xl bg-black rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setIsPlayingVideo(false)} className="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors">
+              <X size={18} />
+            </button>
+            <video 
+              className="w-full aspect-video object-cover" 
+              controls 
+              autoPlay 
+              src="/video_2026-08-10_11-15-10.mp4" 
+            />
           </div>
         </div>
       )}
