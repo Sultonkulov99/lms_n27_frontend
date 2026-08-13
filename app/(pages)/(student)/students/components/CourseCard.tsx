@@ -3,8 +3,6 @@
 import Image, { StaticImageData } from "next/image";
 import { useState } from "react";
 
-import { StaticImageData } from "next/image";
-
 type CourseCardProps = {
   image: StaticImageData;
   tag?: string; // Agar rasmning o'zida teg bo'lsa, buni ishlatmaymiz

@@ -1,11 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import uz from "@/app/components/landing/messages/uz.json";
-import ru from "@/app/components/landing/messages/ru.json";
-import en from "@/app/components/landing/messages/en.json";
+import uz from "@/app/messages/uz.json";
+import ru from "@/app/messages/ru.json";
+import en from "@/app/messages/en.json";
 
-type Language = "O’z" | "Рус" | "Eng";
+
+export type Language = "O’z" | "Рус" | "Eng";
 
 const translations: Record<Language, any> = {
   "O’z": uz,

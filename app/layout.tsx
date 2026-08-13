@@ -1,4 +1,5 @@
 import ToastAndModal from "@/components/toast";
+import ThemeRegistry from "@/app/components/ThemeRegistry";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -12,7 +13,7 @@ interface RootLayoutProps {
 export const metadata: Metadata = {
   title: "IT Live Academy — Zamonaviy IT Kasblar Maktabi",
   description:
-    "Dasturlash, UI/UX Dizayn, Kiberxavfsizlik va Data Science bo’yicha amaliy IT kurslar va karyera markazi.",
+    "Dasturlash, UI/UX Dizayn, Kiberxavfsizlik va Data Science bo'yicha amaliy IT kurslar va karyera markazi.",
   keywords: [
     "IT Live Academy",
     "Dasturlash kursi",
@@ -32,10 +33,12 @@ export default function RootLayout({
     <html lang="uz" className="scroll-smooth min-h-full" suppressHydrationWarning>
       <body
         suppressHydrationWarning
-        className={`${inter.className} min-h-screen antialiased flex flex-col selection:bg-blue-600 selection:text-white`}
+        className={`${inter.className} min-h-screen antialiased flex flex-col selection:bg-blue-600 selection:text-white bg-white dark:bg-[#0A0E17] transition-colors duration-200`}
       >
-        {children}
-        <ToastAndModal />
+        <ThemeRegistry>
+          {children}
+          <ToastAndModal />
+        </ThemeRegistry>
       </body>
     </html>
   );
