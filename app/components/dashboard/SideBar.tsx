@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
@@ -24,7 +25,7 @@ export default function Sidebar() {
     <aside
       className={`${
         isOpen ? "w-70" : "w-20"
-      } bg-[#0F172A] text-white flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-20`}
+      } bg-blue-950 text-white flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-20`}
     >
       {/* Logo Area */}
       <div
@@ -33,11 +34,17 @@ export default function Sidebar() {
         }`}
       >
         <div
-          className={`text-2xl font-bold flex items-center tracking-tight whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          className={`flex items-center overflow-hidden transition-all duration-300 ${
             isOpen ? "w-auto opacity-100" : "w-0 opacity-0"
           }`}
         >
-          <span className="text-blue-500">i</span>TLive
+          <Image 
+            src="/Kebyu_logo_purple.png" 
+            alt="Kebyu" 
+            width={160} 
+            height={48} 
+            className="h-10 w-auto object-contain brightness-0 invert" 
+          />
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}

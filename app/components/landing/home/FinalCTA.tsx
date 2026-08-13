@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface VideoModalProps {
@@ -112,20 +113,15 @@ export default function FinalCTA() {
   return (
     <div className="bg-white py-16 text-center border-t border-slate-100">
       <div className="container max-w-4xl mx-auto flex flex-col items-center gap-6">
-        {/* ── KOiDA Brand Logo ────────────────────────────────────────────── */}
-        <div className="flex items-center justify-center font-black text-3xl tracking-tight select-none">
-          <span className="text-[#0F172A] font-sans">KO</span>
-          <span
-            style={{
-              color: "#FF3B30",
-              fontFamily: "Georgia, serif",
-              fontStyle: "italic",
-              margin: "0 1px",
-            }}
-          >
-            i
-          </span>
-          <span className="text-[#0F172A] font-sans">DA</span>
+        {/* ── Brand Logo ────────────────────────────────────────────── */}
+        <div className="flex items-center justify-center mb-2">
+          <Image
+            src="/Kebyu_logo_purple.png"
+            alt="Kebyu Logo"
+            width={160}
+            height={50}
+            className="h-auto w-[160px] object-contain"
+          />
         </div>
 
         {/* ── Heading ────────────────────────────────────────────────────── */}
@@ -169,7 +165,7 @@ export default function FinalCTA() {
           {/* Contact button */}
           <Link
             href="/contact"
-            className="inline-flex items-center justify-center w-[214px] h-[48px] rounded-[8px] bg-[#3B81F4] hover:bg-blue-600 text-white font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
+            className="inline-flex items-center justify-center w-[214px] h-[48px] rounded-[8px] bg-blue-600 hover:bg-blue-700 text-white font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
           >
             {t("finalCta.contact")}
           </Link>

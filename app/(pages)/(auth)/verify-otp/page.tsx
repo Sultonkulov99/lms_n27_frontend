@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import ImageLogin from "@/app/assets/register.png";
+import ImageLogin from "@/app/assets/register_purple.png";
 import { Copy, RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRegisterStore } from "@/store/useRegisterStore";
@@ -132,7 +132,7 @@ export default function VerificationPage() {
               <span>
                 Tasdiqlash kodi kiritilgan telefon raqamining telegram akkaunti
                 orqali telegram bot:{" "}
-                <a href="https://t.me/lms_n27_bot" className="text-[#3B82F6]">
+                <a href="https://t.me/lms_n27_bot" className="text-blue-600">
                   @lms_n27_bot
                 </a>{" "}
                 dan tasdiqlash kodini oling!
@@ -141,7 +141,7 @@ export default function VerificationPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 px-4 bg-[#3B82F6] hover:bg-blue-600 text-white font-medium text-sm rounded-full transition-colors shadow-sm"
+              className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-full transition-colors shadow-sm"
             >
               Davom etish
             </button>
