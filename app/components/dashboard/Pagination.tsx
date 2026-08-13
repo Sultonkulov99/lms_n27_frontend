@@ -35,7 +35,7 @@ export default function Pagination({
 
         <button
           onClick={onDownloadXLS}
-          className="flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-1.5 text-gray-700 hover:text-gray-900 transition-colors cursor-pointer"
         >
           <svg
             width="18"
