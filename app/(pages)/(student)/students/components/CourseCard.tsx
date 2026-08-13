@@ -3,6 +3,14 @@ import Link from "next/link";
 
 interface CourseCardProps {
   id: string;
+}
+import { useState } from "react";
+
+type CourseCardProps = {
+  image: StaticImageData;
+  tag?: string; // Agar rasmning o’zida teg bo’lsa, buni ishlatmaymiz
+  instructor: string;
+  instructorAvatar: StaticImageData;
   title: string;
   instructor: string;
   instructorAvatar: string;
@@ -42,6 +50,11 @@ export default function CourseCard({
           </span>
         </div>
       </Link>
+    <div className="w-[300px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm font-sans">
+      {/* Asosiy rasm qismi (Teg rasmning o’zida bo’lgani uchun ortiqcha span olib tashlandi) */}
+      <div className="relative w-full h-[160px] overflow-hidden">
+        <Image src={image} alt={title} fill className="object-cover" />
+      </div>
 
       {/* Course info */}
       <div className="p-4">

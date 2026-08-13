@@ -69,12 +69,12 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src="/images.png"
-              alt="IT Live Academy"
-              width={120}
-              height={40}
+              src="/Kebyu_logo_purple.png"
+              alt="Kebyu Logo"
+              width={140}
+              height={45}
               priority
-              className="h-auto w-[120px] object-contain"
+              className="h-auto w-[140px] object-contain"
             />
           </Link>
 

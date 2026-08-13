@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { Eye, EyeOff } from "lucide-react";
 
-import loginImage from "@/app/assets/login2.png";
+import loginImage from "@/app/assets/login2_purple.png";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -18,17 +18,7 @@ export default function LoginPage() {
 
                     {/* LOGO */}
                     <div className="absolute left-7 top-6">
-                        <span className="text-[24px] font-bold text-[#3478ed]">
-                            IT
-                        </span>
-
-                        <span className="text-[24px] font-bold text-[#202020]">
-                            Live
-                        </span>
-
-                        <span className="relative -top-2 text-[14px] font-bold text-[#3478ed]">
-                            °
-                        </span>
+                        <Image src="/Kebyu_logo_purple.png" alt="Kebyu Logo" width={140} height={40} className="object-contain" />
                     </div>
 
                     {/* LOGIN FORM */}
@@ -104,7 +94,7 @@ export default function LoginPage() {
                         <div className="mb-5 mt-3 text-right">
                             <button
                                 type="button"
-                                className="text-[10px] text-[#3478ed] hover:underline"
+                                className="text-[10px] text-blue-600 hover:underline"
                             >
                                 Parolni unutdingizmi?
                             </button>
@@ -113,7 +103,7 @@ export default function LoginPage() {
                         {/* LOGIN BUTTON */}
                         <button
                             type="button"
-                            className="h-[42px] w-full rounded-full bg-[#3d80ed] text-[11px] font-medium text-white transition hover:bg-[#286fe0] active:scale-[0.99]"
+                            className="h-[42px] w-full rounded-full bg-blue-600 text-[11px] font-medium text-white transition hover:bg-blue-700 active:scale-[0.99]"
                         >
                             Kirish
                         </button>
@@ -123,7 +113,7 @@ export default function LoginPage() {
                             Men hali ro&apos;yxatdan o&apos;tmadim!{" "}
                             <a
                                 href="/register"
-                                className="text-[#3478ed] hover:underline"
+                                className="text-blue-600 hover:underline"
                             >
                                 Ro&apos;yxatdan o&apos;tish
                             </a>
@@ -132,7 +122,7 @@ export default function LoginPage() {
 
                     {/* FOOTER */}
                     <div className="absolute bottom-5 left-7 text-[9px] text-[#666]">
-                        © IT Live Academy
+                        © 2026. Barcha huquqlar himoyalangan
                     </div>
                 </div>
 
@@ -141,7 +131,7 @@ export default function LoginPage() {
 
                     <Image
                         src={loginImage}
-                        alt="IT Live"
+                        alt="Kebyu LMS"
                         fill
                         loading="eager"
                         sizes="(max-width: 768px) 100vw, 50vw"

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import ImageLogin from "@/app/assets/register.png";
+import ImageLogin from "@/app/assets/register_purple.png";
 import Link from "next/link";
 import { User, Smartphone, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -72,10 +72,7 @@ export default function RegisterPage() {
                 /> 
             */}
             <div className="flex items-center gap-1 font-extrabold text-2xl tracking-wide">
-              <span className="text-black">IT</span>
-              <span className="bg-[#3B82F6] text-white px-2 py-0.5 rounded-md text-xl">
-                LIVE
-              </span>
+              <Image src="/Kebyu_logo_purple.png" alt="Kebyu Logo" width={140} height={40} className="object-contain" />
             </div>
           </div>
         </div>
@@ -174,7 +171,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 px-4 bg-[#3B82F6] hover:bg-blue-600 text-white font-medium text-sm rounded-full transition-colors shadow-sm mt-2"
+              className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-full transition-colors shadow-sm mt-2"
             >
               Davom etish
             </button>
