@@ -66,6 +66,20 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
     setIsDeleteModalOpen(false);
   };
 
+  const handleDownloadXLS = () => {
+    const headers = ["ID", "Bo'lim nomi"];
+    const rows = sections.map(s => [s.id, s.name].join(","));
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "bolimlar.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
       <div className="flex-1 overflow-y-auto p-6 flex flex-col h-full bg-transparent">
@@ -148,7 +162,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
                 setItemsPerPage(limit);
                 setCurrentPage(1);
               }}
-              onDownloadXLS={() => {}}
+              onDownloadXLS={handleDownloadXLS}
             />
           </div>
         </div>
