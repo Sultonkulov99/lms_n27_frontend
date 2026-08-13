@@ -3,12 +3,15 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface VideoModalProps {
   onClose: () => void;
 }
 
 function VideoModal({ onClose }: VideoModalProps) {
+  const { t } = useLanguage();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -49,7 +52,7 @@ function VideoModal({ onClose }: VideoModalProps) {
       >
         <button
           onClick={onClose}
-          aria-label="Yopish"
+          aria-label={t("finalCta.close")}
           className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white hover:bg-black/60 transition-colors cursor-pointer"
         >
           <X size={16} />
@@ -69,7 +72,7 @@ function VideoModal({ onClose }: VideoModalProps) {
           {!playing && (
             <button
               onClick={togglePlay}
-              aria-label="Video ijro etish"
+              aria-label={t("finalCta.playVideo")}
               className="absolute inset-0 flex items-center justify-center cursor-pointer"
             >
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
@@ -82,7 +85,7 @@ function VideoModal({ onClose }: VideoModalProps) {
         <div className="flex items-center gap-3 px-4 py-3 bg-neutral-900">
           <button
             onClick={togglePlay}
-            aria-label={playing ? "To'xtatish" : "Ijro etish"}
+            aria-label={playing ? t("finalCta.pause") : t("finalCta.play")}
             className="flex h-7 w-7 shrink-0 items-center justify-center text-white cursor-pointer"
           >
             {playing ? (
@@ -104,32 +107,36 @@ function VideoModal({ onClose }: VideoModalProps) {
 }
 
 export default function FinalCTA() {
+  const { t } = useLanguage();
   const [showVideo, setShowVideo] = useState(false);
 
   return (
     <div className="bg-white py-16 text-center border-t border-slate-100">
       <div className="container max-w-4xl mx-auto flex flex-col items-center gap-6">
-
-        {/* ── KOiDA Brand Logo ────────────────────────────────────────────── */}
-        <div className="flex items-center justify-center font-black text-3xl tracking-tight select-none">
-          <span className="text-[#0F172A] font-sans">KO</span>
-          <span style={{ color: "#FF3B30", fontFamily: "Georgia, serif", fontStyle: "italic", margin: "0 1px" }}>i</span>
-          <span className="text-[#0F172A] font-sans">DA</span>
+        {/* ── Brand Logo ────────────────────────────────────────────── */}
+        <div className="flex items-center justify-center mb-2">
+          <Image
+            src="/Kebyu_logo_purple.png"
+            alt="Kebyu Logo"
+            width={160}
+            height={50}
+            className="h-auto w-[160px] object-contain"
+          />
         </div>
 
         {/* ── Heading ────────────────────────────────────────────────────── */}
         <h2 className="font-bold text-[32px] leading-[120%] text-[#0F172A] m-0">
-          Biz bilan muvaffaqiyatga erishing
+          {t("finalCta.title")}
         </h2>
 
         {/* ── Subtitle ───────────────────────────────────────────────────── */}
         <p className="font-medium text-[16px] leading-[140%] text-[#636C79] m-0">
-          Eng kuchlilar biz bilan qoladi!
+          {t("finalCta.subtitle")}
         </p>
 
         {/* ── Action Buttons ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-center gap-4 pt-2">
-          {/* Chapdagi oq button: Intro video */}
+          {/* Intro video button */}
           <button
             onClick={() => setShowVideo(true)}
             type="button"
@@ -146,20 +153,23 @@ export default function FinalCTA() {
               strokeLinejoin="round"
             >
               <circle cx="12" cy="12" r="10" />
-              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
+              <polygon
+                points="10 8 16 12 10 16 10 8"
+                fill="currentColor"
+                stroke="none"
+              />
             </svg>
-            <span>Intro video</span>
+            <span>{t("finalCta.introVideo")}</span>
           </button>
 
-          {/* O'ngdagi ko'k button: Bog'lanish (#3B81F4) */}
+          {/* Contact button */}
           <Link
             href="/contact"
-            className="inline-flex items-center justify-center w-[214px] h-[48px] rounded-[8px] bg-[#3B81F4] hover:bg-blue-600 text-white font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
+            className="inline-flex items-center justify-center w-[214px] h-[48px] rounded-[8px] bg-blue-600 hover:bg-blue-700 text-white font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
           >
-            Bog&#39;lanish
+            {t("finalCta.contact")}
           </Link>
         </div>
-
       </div>
 
       {showVideo && <VideoModal onClose={() => setShowVideo(false)} />}

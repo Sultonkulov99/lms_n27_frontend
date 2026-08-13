@@ -1,10 +1,7 @@
 "use client";
 
-/* ─── Button style token ─────────────────────────────────────────────────────
-   width: 214px | height: 48px | border-radius: 8px (corner-radius-2 = 2×4px)
-   padding: 20px top/bottom, 24px left/right | gap: 10px | bg: #3B81F4
-   font: Inter 500 15px / 100% line-height
-──────────────────────────────────────────────────────────────────────────── */
+import { useLanguage } from "../context/LanguageContext";
+
 const btnStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -13,13 +10,12 @@ const btnStyle: React.CSSProperties = {
   height: "48px",
   minHeight: "48px",
   maxHeight: "48px",
-  borderRadius: "8px",           /* corner-radius-2 = 2 × 4px = 8px */
-  paddingTop: "20px",            /* size-5 */
-  paddingBottom: "20px",         /* size-5 */
-  paddingLeft: "24px",           /* size-6 */
-  paddingRight: "24px",          /* size-6 */
+  borderRadius: "8px",
+  paddingTop: "20px",
+  paddingBottom: "20px",
+  paddingLeft: "24px",
+  paddingRight: "24px",
   gap: "10px",
-  backgroundColor: "#3B81F4",
   color: "#FFFFFF",
   fontFamily: "Inter, sans-serif",
   fontWeight: 500,
@@ -33,56 +29,52 @@ const btnStyle: React.CSSProperties = {
 };
 
 export default function JoinSection() {
+  const { t } = useLanguage();
+
   return (
-    <section
-      id="join-us"
-      className="bg-[#FAFAFA] py-[60px]"
-    >
+    <section id="join-us" className="bg-[#FAFAFA] py-[60px]">
       <div className="container">
 
-        {/* ── Section Header ─────────────────────────────────────────── */}
+        {/* Section Header */}
         <h2 className="font-bold text-[32px] leading-none tracking-normal text-[#0F172A] mb-[23px]">
-          Bizga qo&#39;shiling
+          {t("join.title")}
         </h2>
 
-        {/* Subtitle — 15px / 500 */}
+        {/* Subtitle */}
         <p className="font-medium text-[15px] leading-none tracking-normal text-[#636C79] mb-[23px]">
-          Bizning safimizga nafaqat o&#39;rganuvchi balki yetarkucha tajribangiz
-          bo&#39;lsa mentor sifatida ham qo&#39;shilishingiz mumkin
+          {t("join.subtitle")}
         </p>
 
-        {/* Two-Column Cards */}
+        {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[23px]">
 
-          {/* ── Card 1: O'quvchimisiz? ─────────────────────────────── */}
+          {/* Card 1: Student */}
           <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col gap-4">
             <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] m-0">
-              O&#39;quvchimisiz?
+              {t("join.studentTitle")}
             </h3>
 
             <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] m-0">
-              Agarda o&#39;quvchi bo&#39;lsangiz bizning xalqaro darajadagi tajribali
-              mentorlarimizga shogird bo&#39;ling
+              {t("join.studentDesc")}
             </p>
 
-            <a href="#courses" style={btnStyle}>
-              Boshlash
+            <a href="#courses" style={btnStyle} className="bg-blue-600 hover:bg-blue-700 transition-colors">
+              {t("join.studentBtn")}
             </a>
           </div>
 
-          {/* ── Card 2: Mentormisiz? ────────────────────────────────── */}
+          {/* Card 2: Mentor */}
           <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col gap-4">
             <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] m-0">
-              Mentormisiz?
+              {t("join.mentorTitle")}
             </h3>
 
             <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] m-0">
-              Bizning mualliflar jamoamizga qo&#39;shilib, o&#39;z tajribangizni
-              boshqalar bilan oson va qulay platforma orqali ulashing
+              {t("join.mentorDesc")}
             </p>
 
-            <a href="#mentor-apply" style={btnStyle}>
-              Qo&#39;shilish
+            <a href="#mentor-apply" style={btnStyle} className="bg-blue-600 hover:bg-blue-700 transition-colors">
+              {t("join.mentorBtn")}
             </a>
           </div>
 
