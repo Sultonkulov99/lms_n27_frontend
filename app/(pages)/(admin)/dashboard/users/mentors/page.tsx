@@ -26,7 +26,7 @@ import {
   Menu,
 } from "lucide-react";
 
-
+import Pagination from "@/app/components/dashboard/Pagination";
 
 /* =========================================================
    TYPES
@@ -60,6 +60,7 @@ type Mentor = {
   instagram: string;
   github: string;
   avatar: string;
+  status: "Faol" | "Nofaol";
   courses: Course[];
 };
 
@@ -86,8 +87,10 @@ const initialMentors: Mentor[] = [
     instagram: "Instagram.com",
     github: "GitHub.com",
     avatar: "https://i.pravatar.cc/150?img=12",
+    status: "Faol",
     courses: [],
   },
+
   {
     id: 2,
     fullName: "Oybek Safarov",
@@ -106,6 +109,8 @@ const initialMentors: Mentor[] = [
     instagram: "Instagram.com",
     github: "GitHub.com",
     avatar: "https://i.pravatar.cc/150?img=11",
+    status: "Faol",
+
     courses: [
       {
         id: 1,
@@ -119,6 +124,7 @@ const initialMentors: Mentor[] = [
         description:
           "SMM sohasini 0 dan o‘rganing va faoliyatingizni eng yaxshi kompaniyada olib boring.",
       },
+
       {
         id: 2,
         title: "Grafik Dizayn",
@@ -131,6 +137,7 @@ const initialMentors: Mentor[] = [
         description:
           "Grafik dizaynni 0 dan o‘rganib professional dizayner bo‘ling.",
       },
+
       {
         id: 3,
         title: "Grafik Dizayn",
@@ -143,6 +150,7 @@ const initialMentors: Mentor[] = [
         description:
           "Zamonaviy grafik dizayn dasturlarini o‘rganing.",
       },
+
       {
         id: 4,
         title: "Grafik Dizayn",
@@ -168,11 +176,9 @@ export default function MentorsPage() {
     useState<Mentor[]>(initialMentors);
 
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  /*
-    successAdd  = qo'shilgandan keyingi modal
-    successDelete = o'chirilgandan keyingi modal
-  */
   const [modal, setModal] = useState<
     | "add"
     | "edit"
@@ -213,12 +219,27 @@ export default function MentorsPage() {
   ========================================================= */
 
   const filteredMentors = useMemo(() => {
-    return mentors.filter((mentor) =>
-      mentor.fullName
-        .toLowerCase()
-        .includes(search.toLowerCase()),
+    return mentors.filter(
+      (mentor) =>
+        mentor.fullName
+          .toLowerCase()
+          .includes(search.toLowerCase()) ||
+        mentor.phone.includes(search),
     );
   }, [mentors, search]);
+
+  const totalPages = Math.ceil(
+    filteredMentors.length / itemsPerPage,
+  );
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(
+    startIndex + itemsPerPage,
+    filteredMentors.length,
+  );
+  const currentMentors = filteredMentors.slice(
+    startIndex,
+    endIndex,
+  );
 
   /* =========================================================
      ADD MODAL
@@ -306,6 +327,46 @@ export default function MentorsPage() {
   };
 
   /* =========================================================
+     DOWNLOAD XLS
+  ========================================================= */
+
+  const handleDownloadXLS = () => {
+    const headers = [
+      "ID",
+      "F.I.Sh",
+      "Telefon raqam",
+      "Yaratilgan vaqt",
+      "Rol",
+      "Holati",
+    ];
+
+    const rows = mentors.map((mentor) =>
+      [
+        mentor.id,
+        mentor.fullName,
+        mentor.phone,
+        mentor.createdAt,
+        mentor.role,
+        mentor.status,
+      ].join(","),
+    );
+
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "mentorlar.csv");
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  /* =========================================================
      SAVE
   ========================================================= */
 
@@ -325,9 +386,7 @@ export default function MentorsPage() {
       return;
     }
 
-    /* =========================
-       ADD
-    ========================= */
+    /* ADD */
 
     if (modal === "add") {
       const newMentor: Mentor = {
@@ -350,6 +409,7 @@ export default function MentorsPage() {
         instagram: form.instagram,
         github: form.github,
         avatar: "https://i.pravatar.cc/150?img=13",
+        status: "Faol",
         courses: [],
       };
 
@@ -363,9 +423,7 @@ export default function MentorsPage() {
       return;
     }
 
-    /* =========================
-       EDIT
-    ========================= */
+    /* EDIT */
 
     if (modal === "edit" && selectedMentor) {
       setMentors((prev) =>
@@ -401,9 +459,6 @@ export default function MentorsPage() {
   const handleDelete = () => {
     if (!selectedMentor) return;
 
-    /*
-      Mentorni o'chiramiz
-    */
     setMentors((prev) =>
       prev.filter(
         (mentor) =>
@@ -411,15 +466,8 @@ export default function MentorsPage() {
       ),
     );
 
-    /*
-      Tanlangan mentorni tozalaymiz
-    */
     setSelectedMentor(null);
 
-    /*
-      MUHIM:
-      O'chirilgandan keyin success modal ochiladi
-    */
     setModal("successDelete");
   };
 
@@ -429,14 +477,17 @@ export default function MentorsPage() {
 
   return (
     <>
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-6 md:px-8">
 
           {!showCourses ? (
             <>
+
               {/* PAGE HEADER */}
 
               <div className="mb-5 flex items-center justify-between">
+
                 <div>
+
                   <h1 className="text-[24px] font-bold">
                     Mentorlar
                   </h1>
@@ -446,6 +497,7 @@ export default function MentorsPage() {
                     <span>•</span>
                     <span>Mentorlar</span>
                   </div>
+
                 </div>
 
                 <button
@@ -455,308 +507,181 @@ export default function MentorsPage() {
                   <Plus size={16} />
                   Qo‘shish
                 </button>
+
               </div>
 
-              {/* INFO */}
+              {/* SEARCH BAR */}
 
-              <div className="mb-3 flex flex-col gap-3 text-[12px] text-gray-600 md:flex-row md:items-center md:justify-between">
-
-                <div className="flex items-center gap-5">
-                  <span>
-                    Sahifada 0-10 gacha. Umumiy{" "}
-                    <b className="text-gray-800">
-                      {filteredMentors.length}ta
-                    </b>
-                  </span>
-
-                  <button className="text-green-600">
-                    ⬇ Yuklab olish .XLS
-                  </button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <span>
-                    Bir sahifada:
-
-                    <select className="ml-1 bg-transparent outline-none">
-                      <option>10</option>
-                      <option>20</option>
-                      <option>50</option>
-                    </select>
-                  </span>
-
-                  <button>1</button>
-                  <button>2</button>
-
-                  <button className="rounded bg-white px-2 py-1 shadow-sm">
-                    3
-                  </button>
-
-                  <span>...</span>
-
-                  <button>15</button>
-
-                  <button className="font-medium">
-                    Keyingi
-                  </button>
-                </div>
-              </div>
-
-              {/* SEARCH */}
-
-              <div className="mb-3 flex gap-2">
-                <div className="relative max-w-[350px] flex-1">
-
-                  <Search
-                    size={16}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="relative flex-1 max-w-[400px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
 
                   <input
-                    value={search}
-                    onChange={(e) =>
-                      setSearch(e.target.value)
-                    }
+                    type="text"
                     placeholder="Izlash..."
-                    className="h-10 w-full rounded-md border border-[#dfe3e8] bg-white pl-10 pr-3 text-[13px] outline-none transition focus:border-[#4385ee]"
+                    value={search}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500 transition-colors bg-white shadow-sm"
                   />
+
+                  {search && (
+                    <X
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
+                      size={16}
+                      onClick={() => {
+                        setSearch("");
+                        setCurrentPage(1);
+                      }}
+                    />
+                  )}
                 </div>
 
                 <button
                   type="button"
-                  className="rounded-md bg-[#4385ee] px-5 text-[13px] text-white"
+                  className="bg-[#407BFF] hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm"
                 >
                   Izlash
                 </button>
               </div>
 
-              {/* TABLE */}
+              {/* TABLE (Excel Style Borders) */}
 
-              <div className="overflow-hidden rounded-md border border-[#e3e5e8] bg-white">
+              <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-
-                  <table className="w-full min-w-[950px] border-collapse">
-
+                  <table className="w-full text-left border-collapse border border-gray-200 min-w-[1000px]">
                     <thead>
-                      <tr className="border-b bg-[#fafafa] text-left text-[11px] font-semibold text-gray-600">
-
-                        <th className="px-3 py-3">
-                          ID
+                      <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
+                        <th className="px-5 py-4 w-16 border border-gray-200">ID</th>
+                        <th className="px-5 py-4 border border-gray-200">
+                          F.I.Sh <ChevronDown size={14} className="inline-block text-gray-400 ml-1" />
                         </th>
-
-                        <th className="px-3 py-3">
-                          <div className="flex items-center gap-2">
-                            F.I.Sh
-                            <ChevronDown size={12} />
-                          </div>
+                        <th className="px-5 py-4 border border-gray-200">
+                          Telefon raqam <ChevronDown size={14} className="inline-block text-gray-400 ml-1" />
                         </th>
-
-                        <th className="px-3 py-3">
-                          Telefon raqam
+                        <th className="px-5 py-4 border border-gray-200">
+                          Yaratilgan vaqt <ChevronDown size={14} className="inline-block text-gray-400 ml-1" />
                         </th>
-
-                        <th className="px-3 py-3">
-                          Yaratilgan vaqt
+                        <th className="px-5 py-4 border border-gray-200">
+                          Rol <ChevronDown size={14} className="inline-block text-gray-400 ml-1" />
                         </th>
-
-                        <th className="px-3 py-3">
-                          Rol
+                        <th className="px-5 py-4 border border-gray-200">Parol</th>
+                        <th className="px-5 py-4 border border-gray-200">
+                          Holati <ChevronDown size={14} className="inline-block text-gray-400 ml-1" />
                         </th>
-
-                        <th className="px-3 py-3">
-                          Parol
-                        </th>
-
-                        <th className="px-3 py-3">
-                          Holat
-                        </th>
-
-                        <th className="px-3 py-3">
-                          Amallar
-                        </th>
-
+                        <th className="px-5 py-4 text-center border border-gray-200">Amallar</th>
                       </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody className="text-[14px] text-gray-800">
+                      {currentMentors.map((mentor) => (
+                        <tr key={mentor.id} className="hover:bg-gray-50 transition-colors group">
+                          <td className="px-5 py-4 font-medium border border-gray-200">
+                            {mentor.id}
+                          </td>
 
-                      {filteredMentors.map(
-                        (mentor) => (
-                          <tr
-                            key={mentor.id}
-                            className="border-b text-[12px] last:border-b-0 hover:bg-gray-50"
-                          >
-
-                            <td className="px-3 py-3">
-                              {mentor.id}
-                            </td>
-
-                            <td className="px-3 py-3">
-                              <div className="flex items-center gap-2">
-
-                                <img
-                                  src={mentor.avatar}
-                                  alt=""
-                                  className="h-7 w-7 rounded-full object-cover"
-                                />
-
-                                <span>
-                                  {mentor.fullName}
-                                </span>
-
-                              </div>
-                            </td>
-
-                            <td className="px-3 py-3">
-                              {mentor.phone}
-                            </td>
-
-                            <td className="px-3 py-3 text-gray-500">
-                              {mentor.createdAt}
-                            </td>
-
-                            <td className="px-3 py-3">
-                              {mentor.role}
-                            </td>
-
-                            <td className="px-3 py-3">
-
-                              <div className="flex items-center gap-2">
-
-                                <span>
-                                  ******
-                                </span>
-
-                                <EyeOff
-                                  size={14}
-                                  className="text-gray-500"
-                                />
-
-                              </div>
-
-                            </td>
-
-                            <td className="px-3 py-3">
-
-                              <span className="rounded-full bg-[#e8f7f0] px-3 py-1 text-[10px] font-semibold text-[#26a269]">
-                                Faol
+                          <td className="px-5 py-4 border border-gray-200">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={mentor.avatar}
+                                alt={mentor.fullName}
+                                className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
+                              />
+                              <span className="font-semibold text-[13px]">
+                                {mentor.fullName}
                               </span>
+                            </div>
+                          </td>
 
-                            </td>
+                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                            {mentor.phone}
+                          </td>
 
-                            <td className="px-3 py-3">
+                          <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                            {mentor.createdAt}
+                          </td>
 
-                              <div className="flex items-center gap-1">
+                          <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                            {mentor.role}
+                          </td>
 
-                                {/* VIEW */}
+                          <td className="px-5 py-4 text-gray-400 border border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <span>********</span>
+                              <EyeOff size={16} className="cursor-pointer hover:text-gray-600" />
+                            </div>
+                          </td>
 
-                                <button
-                                  onClick={() =>
-                                    openViewModal(
-                                      mentor,
-                                    )
-                                  }
-                                  className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
-                                  title="Ko‘rish"
-                                >
-                                  <Eye size={15} />
-                                </button>
+                          <td className="px-5 py-4 border border-gray-200">
+                            <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
+                              {mentor.status}
+                            </span>
+                          </td>
 
-                                {/* EDIT */}
+                          <td className="px-5 py-4 border border-gray-200">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => openViewModal(mentor)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                title="Ko‘rish"
+                              >
+                                <Eye size={14} />
+                              </button>
 
-                                <button
-                                  onClick={() =>
-                                    openEditModal(
-                                      mentor,
-                                    )
-                                  }
-                                  className="rounded p-1.5 text-gray-500 hover:bg-gray-100"
-                                  title="Tahrirlash"
-                                >
-                                  <Pencil size={15} />
-                                </button>
+                              <button
+                                onClick={() => openEditModal(mentor)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                title="Tahrirlash"
+                              >
+                                <Pencil size={14} />
+                              </button>
 
-                                {/* DELETE */}
+                              <button
+                                onClick={() => openDeleteModal(mentor)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                title="O‘chirish"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
 
-                                <button
-                                  onClick={() =>
-                                    openDeleteModal(
-                                      mentor,
-                                    )
-                                  }
-                                  className="rounded p-1.5 text-gray-500 hover:bg-red-50 hover:text-red-500"
-                                  title="O‘chirish"
-                                >
-                                  <Trash2 size={15} />
-                                </button>
-
-                              </div>
-
-                            </td>
-
-                          </tr>
-                        ),
-                      )}
-
-                      {filteredMentors.length === 0 && (
+                      {currentMentors.length === 0 && (
                         <tr>
-                          <td
-                            colSpan={8}
-                            className="py-10 text-center text-sm text-gray-400"
-                          >
-                            Mentor topilmadi
+                          <td colSpan={8} className="px-6 py-10 text-center text-gray-500 border border-gray-200">
+                            Ma'lumot topilmadi
                           </td>
                         </tr>
                       )}
-
                     </tbody>
-
                   </table>
-
                 </div>
               </div>
 
-              {/* PAGINATION */}
+              {/* BOTTOM PAGINATION COMPONENT */}
 
-              <div className="mt-4 flex flex-col gap-3 text-[12px] text-gray-600 md:flex-row md:items-center md:justify-between">
-
-                <div className="flex items-center gap-5">
-
-                  <span>
-                    Sahifada 0-10 gacha. Umumiy{" "}
-                    <b>
-                      {filteredMentors.length}ta
-                    </b>
-                  </span>
-
-                  <button className="text-green-600">
-                    ⬇ Yuklab olish .XLS
-                  </button>
-
-                </div>
-
-                <div className="flex items-center gap-4">
-
-                  <button>
-                    <ChevronLeft size={14} />
-                  </button>
-
-                  <button className="rounded bg-[#4385ee] px-2 py-1 text-white">
-                    1
-                  </button>
-
-                  <button>2</button>
-                  <button>3</button>
-
-                  <button>
-                    <ChevronRight size={14} />
-                  </button>
-
-                </div>
-
+              <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredMentors.length}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                  onItemsPerPageChange={setItemsPerPage}
+                  onDownloadXLS={handleDownloadXLS}
+                />
               </div>
+
             </>
+
           ) : (
+
             <MentorCourses
               mentor={selectedMentor}
               onBack={() => {
@@ -764,6 +689,7 @@ export default function MentorsPage() {
                 setSelectedMentor(null);
               }}
             />
+
           )}
 
         </div>
@@ -772,32 +698,38 @@ export default function MentorsPage() {
           ADD / EDIT MODAL
       ====================================================== */}
 
-      {(modal === "add" ||
-        modal === "edit") && (
+      {(modal === "add" || modal === "edit") && (
+
         <Modal onClose={() => setModal(null)}>
 
-          <div className="max-h-[95vh] overflow-y-auto">
+          <div className="max-h-[90vh] overflow-y-auto">
 
-            <div className="flex items-center justify-between border-b px-5 py-4">
+            {/* HEADER */}
 
-              <h2 className="text-[18px] font-bold">
+            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+
+              <h2 className="text-[17px] font-bold text-[#151515]">
                 {modal === "add"
                   ? "Qo‘shish"
                   : "Tahrirlash"}
               </h2>
 
               <button
+                type="button"
                 onClick={() => setModal(null)}
-                className="text-gray-600 hover:text-black"
+                className="text-gray-600 transition hover:text-black"
               >
-                <X size={20} />
+                <X size={19} />
               </button>
 
             </div>
 
-            <div className="grid grid-cols-1 gap-x-5 gap-y-4 p-5 md:grid-cols-2">
+            {/* FORM */}
+
+            <div className="grid grid-cols-1 gap-x-5 gap-y-3 px-5 py-4 md:grid-cols-2">
 
               <div className="md:col-span-2">
+
                 <Input
                   label="F.I.Sh"
                   name="fullName"
@@ -805,21 +737,24 @@ export default function MentorsPage() {
                   onChange={handleInput}
                   placeholder="Kiriting"
                 />
+
               </div>
 
-              <Input
-                label="Telefon raqami"
-                name="phone"
-                value={form.phone}
-                onChange={handleInput}
-                placeholder="+998"
-              />
+              <div className="md:col-span-2">
 
-              {/* PASSWORD */}
+                <Input
+                  label="Telefon raqami"
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleInput}
+                  placeholder="+998"
+                />
 
-              <div>
+              </div>
 
-                <label className="mb-1.5 block text-[12px] font-semibold">
+              <div className="md:col-span-2">
+
+                <label className="mb-1 block text-[11px] font-semibold">
                   Parol
                 </label>
 
@@ -835,7 +770,7 @@ export default function MentorsPage() {
                     value={form.password}
                     onChange={handleInput}
                     placeholder="******"
-                    className="h-10 w-full rounded-md border border-[#dfe3e8] px-3 pr-10 text-[12px] outline-none focus:border-[#4385ee]"
+                    className="h-[38px] w-full rounded-[3px] border border-[#dfe3e8] px-3 pr-10 text-[12px] outline-none transition focus:border-[#4385ee]"
                   />
 
                   <button
@@ -855,20 +790,23 @@ export default function MentorsPage() {
                   </button>
 
                 </div>
+
               </div>
 
-              {/* TITLES */}
+              <div className="border-b border-gray-200 pb-2 pt-2">
 
-              <div className="border-t pt-3">
-                <h3 className="text-[14px] font-bold">
+                <h3 className="text-[13px] font-bold">
                   Mentor haqida qisqacha ma’lumot
                 </h3>
+
               </div>
 
-              <div className="border-t pt-3">
-                <h3 className="text-[14px] font-bold">
+              <div className="border-b border-gray-200 pb-2 pt-2">
+
+                <h3 className="text-[13px] font-bold">
                   Ijtimoiy tarmoqlar
                 </h3>
+
               </div>
 
               <Input
@@ -885,7 +823,7 @@ export default function MentorsPage() {
                 value={form.facebook}
                 onChange={handleInput}
                 icon={
-                  <span className="font-bold text-[13px]">
+                  <span className="font-bold text-[12px]">
                     f
                   </span>
                 }
@@ -904,7 +842,7 @@ export default function MentorsPage() {
                 name="telegram"
                 value={form.telegram}
                 onChange={handleInput}
-                icon={<Send size={14} />}
+                icon={<Send size={13} />}
               />
 
               <Input
@@ -921,7 +859,7 @@ export default function MentorsPage() {
                 value={form.linkedin}
                 onChange={handleInput}
                 icon={
-                  <span className="font-bold text-[10px]">
+                  <span className="font-bold text-[9px]">
                     in
                   </span>
                 }
@@ -929,7 +867,7 @@ export default function MentorsPage() {
 
               <div>
 
-                <label className="mb-1.5 block text-[12px] font-semibold">
+                <label className="mb-1 block text-[11px] font-semibold">
                   Qisqacha
                 </label>
 
@@ -938,7 +876,7 @@ export default function MentorsPage() {
                   value={form.description}
                   onChange={handleInput}
                   placeholder="Kiriting"
-                  className="h-[85px] w-full resize-none rounded-md border border-[#dfe3e8] p-3 text-[12px] outline-none focus:border-[#4385ee]"
+                  className="h-[112px] w-full resize-none rounded-[3px] border border-[#dfe3e8] p-3 text-[12px] outline-none transition focus:border-[#4385ee]"
                 />
 
               </div>
@@ -951,7 +889,7 @@ export default function MentorsPage() {
                   value={form.instagram}
                   onChange={handleInput}
                   icon={
-                    <span className="font-bold text-[15px]">
+                    <span className="font-bold text-[14px]">
                       ◎
                     </span>
                   }
@@ -963,7 +901,7 @@ export default function MentorsPage() {
                   value={form.github}
                   onChange={handleInput}
                   icon={
-                    <span className="font-bold text-[9px]">
+                    <span className="font-bold text-[8px]">
                       GH
                     </span>
                   }
@@ -973,11 +911,14 @@ export default function MentorsPage() {
 
             </div>
 
-            <div className="px-5 pb-5">
+            {/* SAVE */}
+
+            <div className="px-5 pb-4">
 
               <button
+                type="button"
                 onClick={handleSave}
-                className="flex items-center gap-2 rounded-md bg-[#4385ee] px-5 py-2.5 text-[12px] font-medium text-white hover:bg-[#3476df]"
+                className="flex h-[38px] items-center gap-2 rounded-[4px] bg-[#4385ee] px-5 text-[12px] font-semibold text-white transition hover:bg-[#3476df]"
               >
                 <Check size={15} />
                 Saqlash
@@ -986,227 +927,211 @@ export default function MentorsPage() {
             </div>
 
           </div>
+
         </Modal>
+
       )}
 
       {/* =====================================================
           VIEW MODAL
       ====================================================== */}
 
-      {modal === "view" &&
-        selectedMentor && (
-          <Modal
-            onClose={() => setModal(null)}
-          >
+      {modal === "view" && selectedMentor && (
 
-            <div>
+        <Modal onClose={() => setModal(null)}>
 
-              <div className="flex items-center justify-between border-b px-5 py-4">
+          <div>
 
-                <h2 className="text-[16px] font-bold">
-                  Mentor haqida
-                </h2>
+            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
 
-                <button
-                  onClick={() =>
-                    setModal(null)
-                  }
-                >
-                  <X size={20} />
-                </button>
+              <h2 className="text-[17px] font-bold">
+                Mentor haqida
+              </h2>
 
-              </div>
+              <button
+                type="button"
+                onClick={() => setModal(null)}
+                className="text-gray-600 hover:text-black"
+              >
+                <X size={19} />
+              </button>
 
-              <div className="p-5">
+            </div>
 
-                {/* MENTOR */}
+            <div className="px-5 py-4">
 
-                <div className="flex items-center gap-3 border-b pb-4">
+              <div className="flex items-center gap-3 border-b border-gray-200 pb-4">
 
-                  <img
-                    src={selectedMentor.avatar}
-                    alt=""
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
+                <img
+                  src={selectedMentor.avatar}
+                  alt={selectedMentor.fullName}
+                  className="h-[60px] w-[60px] rounded-full object-cover"
+                />
 
-                  <div>
+                <div>
 
-                    <h3 className="font-bold">
-                      {selectedMentor.fullName}
-                    </h3>
+                  <h3 className="text-[18px] font-bold leading-tight">
+                    {selectedMentor.fullName}
+                  </h3>
 
-                    <p className="text-[11px] text-gray-500">
-                      {selectedMentor.profession}
-                    </p>
-
-                  </div>
+                  <p className="mt-1 text-[11px] font-medium text-gray-800">
+                    {selectedMentor.profession}
+                  </p>
 
                 </div>
 
-                {/* INFO */}
+              </div>
 
-                <section className="mt-5">
+              <section className="mt-4">
 
-                  <h3 className="border-b pb-2 text-[14px] font-bold">
-                    To‘liq ma’lumotlar
-                  </h3>
+                <h3 className="border-b border-gray-200 pb-2 text-[14px] font-bold">
+                  To‘liq ma’lumotlar
+                </h3>
 
-                  <div className="mt-3 grid grid-cols-2 gap-4">
+                <div className="space-y-2.5 pt-2">
 
-                    <Info
-                      label="Telefon raqami"
-                      value={
-                        selectedMentor.phone
-                      }
-                    />
+                  <Info
+                    label="Telefon raqami"
+                    value={selectedMentor.phone}
+                  />
 
-                    <Info
-                      label="Rol"
-                      value={
-                        selectedMentor.role
-                      }
-                    />
+                  <Info
+                    label="Rol"
+                    value={selectedMentor.role}
+                  />
 
-                    <Info
-                      label="Ro‘yxatdan o‘tgan vaqti"
-                      value={
-                        selectedMentor.createdAt
-                      }
-                    />
+                  <Info
+                    label="Ro’yxatdan o‘tgan vaqti"
+                    value={selectedMentor.createdAt}
+                  />
 
-                    <Info
-                      label="Ish tajribasi"
-                      value={
-                        selectedMentor.experience
-                      }
-                    />
+                  <Info
+                    label="Ish tajribasi"
+                    value={selectedMentor.experience}
+                  />
 
-                    <Info
-                      label="Kasb"
-                      value={
-                        selectedMentor.profession
-                      }
-                    />
+                  <Info
+                    label="Kasbi"
+                    value={selectedMentor.profession}
+                  />
 
-                    <Info
-                      label="Sayt"
-                      value={
-                        selectedMentor.website
-                      }
-                    />
+                  <Info
+                    label="Holati"
+                    value={selectedMentor.status}
+                  />
 
-                  </div>
+                </div>
 
-                </section>
+              </section>
 
-                {/* COURSES */}
+              <section className="mt-4">
 
-                <section className="mt-5">
+                <h3 className="border-b border-gray-200 pb-2 text-[14px] font-bold">
+                  Kurslar
+                </h3>
 
-                  <h3 className="border-b pb-2 text-[14px] font-bold">
-                    Kurslar
-                  </h3>
+                <div className="pt-2">
 
-                  <div className="mt-3">
+                  <p className="text-[10px] text-gray-500">
+                    Nomi
+                  </p>
 
-                    <button
-                      onClick={() => {
-                        setShowCourses(true);
-                        setModal(null);
-                      }}
-                      className="rounded-md bg-[#4385ee] px-4 py-2 text-[12px] text-white"
-                    >
-                      Kurslarni ko‘rish
-                    </button>
+                  <p className="mt-1 text-[12px] font-bold">
+                    {selectedMentor.courses[0]?.title ||
+                      "Kurs mavjud emas"}
+                  </p>
 
-                  </div>
+                </div>
 
-                </section>
+              </section>
 
-                {/* SOCIAL */}
+              <section className="mt-4">
 
-                <section className="mt-5">
+                <h3 className="border-b border-gray-200 pb-2 text-[14px] font-bold">
+                  Ijtimoiy tarmoq sahifalari:
+                </h3>
 
-                  <h3 className="border-b pb-2 text-[14px] font-bold">
-                    Ijtimoiy tarmoq sahifalari:
-                  </h3>
+                <div className="mt-2 flex items-center gap-2">
 
-                  <div className="mt-3 flex gap-2">
+                  <SocialButton
+                    icon={
+                      <span className="font-bold text-[20px]">
+                        f
+                      </span>
+                    }
+                  />
 
-                    <SocialButton
-                      icon={
-                        <span className="font-bold text-[14px]">
-                          f
-                        </span>
-                      }
-                    />
+                  <SocialButton
+                    icon={<Send size={18} />}
+                  />
 
-                    <SocialButton
-                      icon={<Send size={16} />}
-                    />
+                  <SocialButton
+                    icon={
+                      <span className="font-bold text-[20px]">
+                        ◎
+                      </span>
+                    }
+                  />
 
-                    <SocialButton
-                      icon={
-                        <span className="font-bold text-[15px]">
-                          ◎
-                        </span>
-                      }
-                    />
+                  <SocialButton
+                    icon={
+                      <span className="font-bold text-[13px]">
+                        in
+                      </span>
+                    }
+                  />
 
-                    <SocialButton
-                      icon={
-                        <span className="font-bold text-[10px]">
-                          in
-                        </span>
-                      }
-                    />
-
-                    <SocialButton
-                      icon={
-                        <span className="font-bold text-[9px]">
-                          GH
-                        </span>
-                      }
-                    />
-
-                    <button className="rounded-md bg-gray-100 px-4 text-[11px] font-semibold">
-                      Portfolio
-                    </button>
-
-                  </div>
-
-                </section>
-
-                {/* EDIT */}
-
-                <div className="mt-5 flex justify-end">
+                  <SocialButton
+                    icon={
+                      <span className="font-bold text-[11px]">
+                        GH
+                      </span>
+                    }
+                  />
 
                   <button
-                    onClick={() =>
-                      openEditModal(
-                        selectedMentor,
-                      )
-                    }
-                    className="flex items-center gap-2 rounded-md border px-4 py-2 text-[12px]"
+                    type="button"
+                    className="flex h-[44px] items-center justify-center rounded-[6px] bg-[#f1f2f4] px-5 text-[11px] font-bold hover:bg-gray-200"
                   >
-                    <Pencil size={14} />
-                    Tahrirlash
+                    Portfolio
                   </button>
 
                 </div>
 
+              </section>
+
+              <div className="mt-3 flex justify-end border-t border-gray-200 pt-3">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    openEditModal(
+                      selectedMentor,
+                    )
+                  }
+                  className="flex h-[38px] items-center gap-2 rounded-[6px] border border-[#dfe3e8] px-4 text-[11px] font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  <Pencil size={14} />
+                  Tahrirlash
+                </button>
+
               </div>
+
             </div>
 
-          </Modal>
-        )}
+          </div>
+
+        </Modal>
+
+      )}
 
       {/* =====================================================
-          DELETE CONFIRMATION MODAL
+          DELETE MODAL
       ====================================================== */}
 
       {modal === "delete" &&
         selectedMentor && (
+
           <Modal
             onClose={() => setModal(null)}
             small
@@ -1236,8 +1161,6 @@ export default function MentorsPage() {
 
               <div className="mt-5 flex justify-center gap-3">
 
-                {/* CANCEL */}
-
                 <button
                   onClick={() =>
                     setModal(null)
@@ -1246,8 +1169,6 @@ export default function MentorsPage() {
                 >
                   Bekor qilish
                 </button>
-
-                {/* DELETE */}
 
                 <button
                   onClick={handleDelete}
@@ -1261,13 +1182,15 @@ export default function MentorsPage() {
             </div>
 
           </Modal>
+
         )}
 
       {/* =====================================================
-          SUCCESS ADD MODAL
+          SUCCESS ADD
       ====================================================== */}
 
       {modal === "successAdd" && (
+
         <Modal
           onClose={() => setModal(null)}
           small
@@ -1278,7 +1201,9 @@ export default function MentorsPage() {
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
 
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-500 text-white">
+
                 <Check size={25} />
+
               </div>
 
             </div>
@@ -1303,13 +1228,15 @@ export default function MentorsPage() {
           </div>
 
         </Modal>
+
       )}
 
       {/* =====================================================
-          SUCCESS DELETE MODAL
+          SUCCESS DELETE
       ====================================================== */}
 
       {modal === "successDelete" && (
+
         <Modal
           onClose={() => setModal(null)}
           small
@@ -1317,29 +1244,23 @@ export default function MentorsPage() {
 
           <div className="p-6 text-center">
 
-            {/* GREEN CHECK */}
-
             <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-green-50">
 
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-green-500 text-white">
+
                 <Check size={25} />
+
               </div>
 
             </div>
-
-            {/* TITLE */}
 
             <h2 className="text-[14px] font-bold">
               Muvaffaqiyatli o‘chirildi
             </h2>
 
-            {/* DESCRIPTION */}
-
             <p className="mt-2 text-[12px] text-gray-500">
               Mentor muvaffaqiyatli o‘chirildi.
             </p>
-
-            {/* CLOSE */}
 
             <button
               onClick={() =>
@@ -1353,6 +1274,7 @@ export default function MentorsPage() {
           </div>
 
         </Modal>
+
       )}
 
     </>
@@ -1390,7 +1312,6 @@ function Modal({
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
       onClick={onClose}
     >
-
       <div
         onClick={(e) =>
           e.stopPropagation()
@@ -1403,7 +1324,6 @@ function Modal({
       >
         {children}
       </div>
-
     </div>
   );
 }
@@ -1432,7 +1352,7 @@ function Input({
   return (
     <div>
 
-      <label className="mb-1.5 block text-[12px] font-semibold">
+      <label className="mb-1 block text-[11px] font-semibold">
         {label}
       </label>
 
@@ -1441,7 +1361,7 @@ function Input({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="h-10 w-full rounded-md border border-[#dfe3e8] px-3 text-[12px] outline-none focus:border-[#4385ee]"
+        className="h-[38px] w-full rounded-[3px] border border-[#dfe3e8] px-3 text-[12px] outline-none transition focus:border-[#4385ee]"
       />
 
     </div>
@@ -1472,7 +1392,7 @@ function SocialInput({
   return (
     <div>
 
-      <label className="mb-1.5 block text-[12px] font-semibold">
+      <label className="mb-1 block text-[11px] font-semibold">
         {label}
       </label>
 
@@ -1482,7 +1402,7 @@ function SocialInput({
           name={name}
           value={value}
           onChange={onChange}
-          className="h-10 w-full rounded-md border border-[#dfe3e8] px-3 pr-10 text-[12px] outline-none focus:border-[#4385ee]"
+          className="h-[38px] w-full rounded-[3px] border border-[#dfe3e8] px-3 pr-9 text-[12px] outline-none transition focus:border-[#4385ee]"
         />
 
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
@@ -1533,7 +1453,7 @@ function SocialButton({
   return (
     <button
       type="button"
-      className="flex h-9 w-9 items-center justify-center rounded-md bg-gray-100 transition hover:bg-gray-200"
+      className="flex h-[44px] w-[44px] items-center justify-center rounded-[6px] bg-[#f1f2f4] transition hover:bg-gray-200"
     >
       {icon}
     </button>
@@ -1558,8 +1478,6 @@ function MentorCourses({
   return (
     <div>
 
-      {/* BACK */}
-
       <button
         onClick={onBack}
         className="mb-4 flex items-center gap-2 text-[12px] text-gray-600 hover:text-black"
@@ -1567,8 +1485,6 @@ function MentorCourses({
         <ArrowLeft size={15} />
         Orqaga
       </button>
-
-      {/* MENTOR */}
 
       <div className="mb-4 rounded-md bg-white p-3 shadow-sm">
 
@@ -1607,20 +1523,11 @@ function MentorCourses({
 
       </div>
 
-      {/* BREADCRUMB */}
-
       <div className="mb-4 flex items-center gap-2 text-[12px] text-gray-500">
 
-        <span>
-          Foydalanuvchilar
-        </span>
-
+        <span>Foydalanuvchilar</span>
         <span>•</span>
-
-        <span>
-          Mentorlar
-        </span>
-
+        <span>Mentorlar</span>
         <span>•</span>
 
         <span className="text-gray-800">
@@ -1628,8 +1535,6 @@ function MentorCourses({
         </span>
 
       </div>
-
-      {/* COURSES */}
 
       {mentor.courses.length === 0 ? (
 
@@ -1648,8 +1553,6 @@ function MentorCourses({
                 key={course.id}
                 className="overflow-hidden rounded-md bg-white shadow-sm"
               >
-
-                {/* IMAGE */}
 
                 <div className="relative h-[150px] overflow-hidden">
 
@@ -1671,8 +1574,6 @@ function MentorCourses({
                   </button>
 
                 </div>
-
-                {/* CONTENT */}
 
                 <div className="p-3">
 
@@ -1697,8 +1598,6 @@ function MentorCourses({
                   <p className="mt-1 h-[32px] overflow-hidden text-[9px] leading-4 text-gray-500">
                     {course.description}
                   </p>
-
-                  {/* RATING */}
 
                   <div className="mt-2 flex items-center gap-1">
 
@@ -1728,8 +1627,6 @@ function MentorCourses({
                     </span>
 
                   </div>
-
-                  {/* PRICE */}
 
                   <div className="mt-3 border-t pt-3">
 
