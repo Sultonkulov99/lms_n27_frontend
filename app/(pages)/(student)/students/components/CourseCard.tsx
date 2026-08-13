@@ -89,7 +89,7 @@ export default function CourseCard({
             </svg>
           </button>
         </div>
-
+  
         {/* Course title */}
         <Link href={`/students/${id}`}>
           <h3 className="text-base font-bold text-[#1a1a1a] mb-3 hover:text-[#4F7FFF] transition-colors line-clamp-2">
