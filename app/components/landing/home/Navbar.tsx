@@ -72,11 +72,12 @@ export default function Navbar() {
         <div className="flex items-center gap-10 xl:gap-14">
           <Link href="/" className="flex items-center">
             <Image
-              src="/images.png"
-              alt="IT Live Academy"
-              width={120}
-              height={40}
+              src="/Kebyu_logo_purple.png"
+              alt="Kebyu Logo"
+              width={140}
+              height={45}
               priority
+
               className="h-auto w-[120px] object-contain dark:brightness-0 dark:invert"
             />
           </Link>

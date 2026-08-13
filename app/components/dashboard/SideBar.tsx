@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ChevronDown,
   LayoutGrid,
@@ -9,20 +11,21 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
-  const [isUsersOpen, setIsUsersOpen] = useState(false);
-  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
+  const [isUsersOpen, setIsUsersOpen] = useState(pathname.includes('/dashboard/users'));
+  const [isCoursesOpen, setIsCoursesOpen] = useState(pathname.includes('/dashboard/courses'));
   const userSubLinks = ["administrators", "assistents", "mentors", "students"];
 
   return (
     <aside
       className={`${
         isOpen ? "w-70" : "w-20"
-      } bg-[#0F172A] text-white flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-20`}
+      } bg-blue-950 text-white flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-20`}
     >
       {/* Logo Area */}
       <div
@@ -31,11 +34,17 @@ export default function Sidebar() {
         }`}
       >
         <div
-          className={`text-2xl font-bold flex items-center tracking-tight whitespace-nowrap overflow-hidden transition-all duration-300 ${
+          className={`flex items-center overflow-hidden transition-all duration-300 ${
             isOpen ? "w-auto opacity-100" : "w-0 opacity-0"
           }`}
         >
-          <span className="text-blue-500">i</span>TLive
+          <Image 
+            src="/Kebyu_logo_purple.png" 
+            alt="Kebyu" 
+            width={160} 
+            height={48} 
+            className="h-10 w-auto object-contain brightness-0 invert" 
+          />
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
@@ -93,8 +102,12 @@ export default function Sidebar() {
                     setIsUsersOpen(!isUsersOpen);
                   }
                 }}
-                className={`w-full flex items-center justify-between py-2.5 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg group transition-all overflow-hidden ${
+                className={`w-full flex items-center justify-between py-2.5 rounded-lg group transition-all overflow-hidden ${
                   isOpen ? "px-3" : "justify-center px-0"
+                } ${
+                  pathname.includes('/dashboard/users') 
+                    ? "text-white" 
+                    : "text-gray-400 hover:bg-white/5 hover:text-white"
                 }`}
                 title="Foydalanuvchilar"
               >
@@ -127,15 +140,22 @@ export default function Sidebar() {
                 }`}
               >
                 <div className="pl-11 pr-3 py-1 space-y-1">
-                  {userSubLinks.map((link) => (
-                    <a
-                      key={link}
-                      href={`/dashboard/users/${link}`}
-                      className="block px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-white/5 rounded-lg capitalize transition-colors"
-                    >
-                      {link}
-                    </a>
-                  ))}
+                  {userSubLinks.map((link) => {
+                    const isActive = pathname.includes(`/dashboard/users/${link}`);
+                    return (
+                      <Link
+                        key={link}
+                        href={`/dashboard/users/${link}`}
+                        className={`block px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
+                          isActive
+                            ? "bg-white/10 text-white font-medium"
+                            : "text-gray-400 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        {link}
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -187,7 +207,7 @@ export default function Sidebar() {
                 <div className="pl-11 pr-3 py-1 space-y-1">
                   {[
                     { name: "Barcha kurslar", href: "/dashboard/courses/allCourses" },
-                    { name: "Kategoriyalar", href: "#" },
+                    { name: "Kategoriyalar", href: "/dashboard/courses/categories" },
                   ].map((link) => {
                     const isActive = pathname === link.href;
                     return (

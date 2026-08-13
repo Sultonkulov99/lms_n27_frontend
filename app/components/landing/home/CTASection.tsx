@@ -15,7 +15,7 @@ export default function CTASection() {
   return (
     <section
       id="cta-section"
-      className="relative overflow-hidden text-white bg-[#3B81F4] dark:bg-[#1E3A8A] py-[132px] transition-colors duration-200"
+      className="relative overflow-hidden text-white bg-blue-600 dark:bg-blue-900 py-[132px] transition-colors duration-200"
     >
       <div className="container relative">
 

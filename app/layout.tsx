@@ -11,11 +11,11 @@ interface RootLayoutProps {
 }
 
 export const metadata: Metadata = {
-  title: "IT Live Academy — Zamonaviy IT Kasblar Maktabi",
+  title: "Kebyu LMS — Zamonaviy IT Kasblar Maktabi",
   description:
     "Dasturlash, UI/UX Dizayn, Kiberxavfsizlik va Data Science bo'yicha amaliy IT kurslar va karyera markazi.",
   keywords: [
-    "IT Live Academy",
+    "Kebyu LMS",
     "Dasturlash kursi",
     "Frontend",
     "Backend",

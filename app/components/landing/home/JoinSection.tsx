@@ -16,7 +16,6 @@ const btnStyle: React.CSSProperties = {
   paddingLeft: "24px",
   paddingRight: "24px",
   gap: "10px",
-  backgroundColor: "#3B81F4",
   color: "#FFFFFF",
   fontFamily: "Inter, sans-serif",
   fontWeight: 500,
@@ -59,7 +58,7 @@ export default function JoinSection() {
               {t("join.studentDesc")}
             </p>
 
-            <a href="#courses" style={btnStyle}>
+            <a href="#courses" style={btnStyle} className="bg-blue-600 hover:bg-blue-700 transition-colors">
               {t("join.studentBtn")}
             </a>
           </div>
@@ -74,7 +73,7 @@ export default function JoinSection() {
               {t("join.mentorDesc")}
             </p>
 
-            <a href="#mentor-apply" style={btnStyle}>
+            <a href="#mentor-apply" style={btnStyle} className="bg-blue-600 hover:bg-blue-700 transition-colors">
               {t("join.mentorBtn")}
             </a>
           </div>

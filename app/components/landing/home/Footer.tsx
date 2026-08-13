@@ -15,7 +15,7 @@ export default function Footer() {
       {/* ── Footer Bottom Bar ────────────────────────────────────────────── */}
       <div className="border-t border-slate-100 dark:border-[#1E293B] py-6 text-slate-500 dark:text-slate-400 text-sm">
         <div className="container flex flex-col md:flex-row items-center justify-between gap-4">
-          
+
           {/* Left: Copyright */}
           <div className="font-medium text-[14px] text-[#636C79] dark:text-[#94A3B8]">
             {t("footer.copyright")}
