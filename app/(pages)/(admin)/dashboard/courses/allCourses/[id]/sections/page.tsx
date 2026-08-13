@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use, useEffect } from "react";
+import React, { useState, use } from "react";
 import { 
   Plus, 
   Filter,
@@ -27,25 +27,19 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
-  const [sections, setSections] = useState([
-    { id: 1, name: "Veb dasturlashga kirish" },
-    { id: 2, name: "CSS asoslari" }
-  ]);
-
-  // Set initial sections based on course type
-  useEffect(() => {
+  const [sections, setSections] = useState(() => {
     if (isBackend) {
-      setSections([
+      return [
         { id: 1, name: "Node JS" },
         { id: 2, name: "SQL asoslari" }
-      ]);
+      ];
     } else {
-      setSections([
+      return [
         { id: 1, name: "Veb dasturlashga kirish" },
         { id: 2, name: "CSS asoslari" }
-      ]);
+      ];
     }
-  }, [isBackend]);
+  });
 
   const [newSectionName, setNewSectionName] = useState("");
   const [editingSection, setEditingSection] = useState<{ id: number; name: string } | null>(null);
@@ -79,18 +73,18 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
         {/* Box Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-[22px] font-bold text-gray-900 mb-1.5">Bo'limlar</h1>
+            <h1 className="text-[22px] font-bold text-gray-900 mb-1.5">Bo&apos;limlar</h1>
             <div className="flex items-center text-[13px] font-medium gap-2">
               <Link href="/dashboard/courses/allCourses" className="text-gray-500 hover:text-gray-700 transition-colors">Kurslar</Link>
               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-              <span className="text-gray-500">{courseTitle}</span>
+              <Link href={`/dashboard/courses/allCourses/${courseId}/sections`} className="text-gray-500 hover:text-gray-700 transition-colors">{courseTitle}</Link>
               <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-              <span className="text-gray-900">Bo'limlar</span>
+              <Link href={`/dashboard/courses/allCourses/${courseId}/sections`} className="text-gray-900 hover:text-gray-700 transition-colors">Bo&apos;limlar</Link>
             </div>
           </div>
           <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm">
             <Plus size={18} />
-            Bo'lim qo'shish
+            Bo&apos;lim qo&apos;shish
           </button>
         </div>
 
@@ -102,7 +96,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
                 <tr className="text-[13px] text-gray-900 font-bold tracking-wide">
                   <th className="px-6 py-4 font-semibold whitespace-nowrap border border-gray-200">
                     <div className="flex items-center gap-2 cursor-pointer group">
-                      Bo'lim nomi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                      Bo&apos;lim nomi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
                     </div>
                   </th>
                   <th className="px-6 py-4 font-semibold whitespace-nowrap text-right w-32 border border-gray-200">
@@ -132,7 +126,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
                 )) : (
                   <tr>
                     <td colSpan={2} className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white">
-                      Bo'limlar mavjud emas
+                      Bo&apos;limlar mavjud emas
                     </td>
                   </tr>
                 )}
@@ -166,7 +160,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); setNewSectionName(""); setEditingSection(null); }}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[480px] flex flex-col animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Bo'lim {isEditModalOpen ? "tahrirlash" : "qo'shish"}</h2>
+              <h2 className="text-xl font-bold text-gray-900">Bo&apos;lim {isEditModalOpen ? "tahrirlash" : "qo&apos;shish"}</h2>
               <button onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); setNewSectionName(""); setEditingSection(null); }} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
@@ -177,7 +171,7 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
                 <input type="text" disabled value={courseTitle} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-[14px] cursor-not-allowed" />
               </div>
               <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Bo'lim nomi</label>
+                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Bo&apos;lim nomi</label>
                 <input 
                   type="text" 
                   placeholder="Kiriting" 
@@ -210,13 +204,13 @@ export default function CourseSectionsPage({ params }: { params: Promise<{ id: s
             <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5">
               <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center text-3xl font-bold">?</div>
             </div>
-            <h2 className="text-[22px] font-bold text-gray-900 mb-8">Rostdan ham o'chirmoqchimisiz?</h2>
+            <h2 className="text-[22px] font-bold text-gray-900 mb-8">Rostdan ham o&apos;chirmoqchimisiz?</h2>
             <div className="flex items-center justify-center gap-4 w-full">
               <button onClick={() => { setIsDeleteModalOpen(false); setDeletingSectionId(null); }} className="px-6 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors flex-1">
                 Bekor qilish
               </button>
               <button onClick={handleDeleteSection} className="px-8 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-colors flex-1">
-                O'chirish
+                O&apos;chirish
               </button>
             </div>
           </div>
