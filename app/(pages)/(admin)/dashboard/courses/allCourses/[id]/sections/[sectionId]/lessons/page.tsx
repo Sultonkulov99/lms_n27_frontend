@@ -340,10 +340,14 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
                 {lessons.length > 0 ? lessons.map((lesson) => (
                   <tr key={lesson.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
-                      {courseTitle}
+                      <Link href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lesson.id}/materials`} className="hover:text-blue-600 transition-colors cursor-pointer block w-full">
+                        {courseTitle}
+                      </Link>
                     </td>
                     <td className="px-6 py-4 border border-gray-200">
-                      {lesson.title}
+                      <Link href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lesson.id}/materials`} className="hover:text-blue-600 transition-colors cursor-pointer block w-full">
+                        {lesson.title}
+                      </Link>
                     </td>
                     <td className="px-6 py-4 border border-gray-200 text-gray-600 text-[13px]">
                       {lesson.description}
@@ -359,9 +363,9 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
                       )}
                     </td>
                     <td className="px-6 py-4 border border-gray-200">
-                      <button className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-[13px] font-medium transition-colors">
+                      <Link href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lesson.id}/materials`} className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-full text-[13px] font-medium transition-colors inline-block text-center">
                         Biriktirish
-                      </button>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 text-center border border-gray-200">
                       <div className="flex items-center justify-center gap-3 text-gray-400">
