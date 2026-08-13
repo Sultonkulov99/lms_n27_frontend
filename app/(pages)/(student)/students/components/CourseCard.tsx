@@ -1,7 +1,9 @@
-"use client";
-
-import Image, { StaticImageData } from "next/image";
+import Image from "next/image";
 import Link from "next/link";
+
+interface CourseCardProps {
+  id: string;
+}
 import { useState } from "react";
 
 type CourseCardProps = {
@@ -10,79 +12,111 @@ type CourseCardProps = {
   instructor: string;
   instructorAvatar: StaticImageData;
   title: string;
+  instructor: string;
+  instructorAvatar: string;
+  thumbnail: string;
   progress: number;
-  href: string; // Dars sahifasiga o'tish uchun manzil
-};
+  category?: string;
+  isLiked?: boolean;
+  onLike?: () => void;
+}
 
 export default function CourseCard({
-  image,
+  id,
+  title,
   instructor,
   instructorAvatar,
-  title,
+  thumbnail,
   progress,
-  href,
+  category = "UI/UX Dizayn",
+  isLiked = false,
+  onLike,
 }: CourseCardProps) {
-  const [isLiked, setIsLiked] = useState(false);
-
   return (
+    <div className="bg-white rounded-xl overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow">
+      {/* Course thumbnail */}
+      <Link href={`/students/${id}`} className="block relative aspect-video overflow-hidden">
+        <Image
+          src={thumbnail}
+          alt={title}
+          fill
+          className="object-cover hover:scale-105 transition-transform duration-300"
+          style={{ objectPosition: 'center 20%' }}
+        />
+        {/* Category badge */}
+        <div className="absolute top-3 left-3">
+          <span className="px-3 py-1.5 bg-[#10B981] text-white text-xs font-semibold rounded-full shadow-lg">
+            {category}
+          </span>
+        </div>
+      </Link>
     <div className="w-[300px] bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm font-sans">
       {/* Asosiy rasm qismi (Teg rasmning o’zida bo’lgani uchun ortiqcha span olib tashlandi) */}
       <div className="relative w-full h-[160px] overflow-hidden">
         <Image src={image} alt={title} fill className="object-cover" />
       </div>
 
-      {/* Kontent qismi */}
+      {/* Course info */}
       <div className="p-4">
-        <div className="flex items-center justify-between mb-2">
+        {/* Instructor */}
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Image
               src={instructorAvatar}
               alt={instructor}
-              width={22}
-              height={22}
+              width={28}
+              height={28}
               className="rounded-full object-cover"
             />
-            <span className="text-xs font-medium text-[#1a1a1a]">
-              {instructor}
-            </span>
+            <span className="text-xs font-medium text-[#64748B]">{instructor}</span>
           </div>
           <button
-            onClick={() => setIsLiked(!isLiked)}
-            aria-label="Sevimlilarga qo’shish"
+            onClick={onLike}
+            className="p-1.5 hover:bg-gray-50 rounded-full transition-colors"
+            aria-label="Like"
           >
             <svg
               width="18"
               height="18"
               viewBox="0 0 24 24"
-              fill={isLiked ? "#ef4444" : "none"}
-              stroke={isLiked ? "#ef4444" : "currentColor"}
-              strokeWidth="1.8"
+              fill={isLiked ? "#EF4444" : "none"}
+              stroke={isLiked ? "#EF4444" : "#94A3B8"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <path d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z" />
+              <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
             </svg>
           </button>
         </div>
+  
+        {/* Course title */}
+        <Link href={`/students/${id}`}>
+          <h3 className="text-base font-bold text-[#1a1a1a] mb-3 hover:text-[#4F7FFF] transition-colors line-clamp-2">
+            {title}
+          </h3>
+        </Link>
 
-        {/* Kurs nomi */}
-        <h3 className="text-base font-bold text-black mb-3">{title}</h3>
-
-        {/* Progress bar */}
-        <div className="flex items-center justify-between text-xs text-gray-400 mb-1.5">
-          <span>Ko&apos;rildi:</span>
-          <span>{progress}%</span>
+        {/* Progress */}
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[#94A3B8]">Ko&apos;rildi:</span>
+            <span className="text-[#1a1a1a] font-semibold">{progress}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#4F7FFF] rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
         </div>
-        <div className="h-1.5 w-full bg-gray-100 rounded-full mb-4 overflow-hidden">
-          <div
-            className="h-full bg-[#3b82f6] rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
 
-        {/* Tugma */}
-        <Link href={href} className="block">
-          <button className="w-full bg-[#3b82f6] hover:bg-[#2563eb] transition-colors text-white text-xs font-semibold py-2.5 rounded-xl">
-            Ko&apos;rishni boshlash
-          </button>
+        {/* Continue button */}
+        <Link
+          href={`/students/${id}`}
+          className="w-full block text-center bg-[#4F7FFF] hover:bg-[#3D6EEE] text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+        >
+          Ko&apos;rishni boshlash
         </Link>
       </div>
     </div>

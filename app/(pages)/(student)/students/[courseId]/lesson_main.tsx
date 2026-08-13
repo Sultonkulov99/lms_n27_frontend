@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Topbar from "../components/Topbar";
+import Sidebar from "../components/Sidebar";
 import CourseSidebar from "../components/CourseSidebar";
 import LessonPlayer, { Question, Material, Task, Exam } from "../components/LessonPlayer";
 import ismatxurshidov from "../../../../assets/ismatxurshidov.png";
@@ -99,27 +100,31 @@ export default function LessonMain() {
 
   return (
     <div className="flex h-screen bg-[#F8FAFC]">
+      <Sidebar />
+      
       <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar />
 
-        <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-6">
-          <div className="flex gap-5 items-start max-w-[1600px] mx-auto">
+        <main className="flex-1 overflow-hidden bg-[#F8FAFC] p-6">
+          <div className="flex gap-5 items-start h-full max-w-[1600px] mx-auto">
             <CourseSidebar 
               courseTitle="Frontend dasturlash" 
               activeLessonId={activeLessonId}
               onLessonChange={setActiveLessonId}
             />
-            <LessonPlayer
-              title={currentLesson?.title || "Nimadan boshlash kerak?"}
-              totalQuestions={questions.length}
-              totalAnswers={12}
-              questions={questions}
-              materials={materials}
-              tasks={tasks}
-              exams={exams}
-              onNextLesson={handleNextLesson}
-              videoUrl="/video_2026-08-10_11-15-10.mp4"
-            />
+            <div className="flex-1 overflow-y-auto h-full">
+              <LessonPlayer
+                title={currentLesson?.title || "Nimadan boshlash kerak?"}
+                totalQuestions={questions.length}
+                totalAnswers={12}
+                questions={questions}
+                materials={materials}
+                tasks={tasks}
+                exams={exams}
+                onNextLesson={handleNextLesson}
+                videoUrl="/video_2026-08-10_11-15-10.mp4"
+              />
+            </div>
           </div>
         </main>
       </div>

@@ -157,7 +157,7 @@ export default function CourseSidebar({
                             key={lesson.id}
                             aria-current={isActive ? "true" : undefined}
                             onClick={() => handleLessonClick(lesson.id)}
-                            className={`w-full flex items-center justify-between gap-2 px-4 py-3 text-left transition-all border-b border-gray-100 last:border-b-0 ${
+                            className={`w-full flex items-center gap-2 px-4 py-3 text-left transition-all border-b border-gray-100 last:border-b-0 ${
                               isActive 
                                 ? "bg-blue-50" 
                                 : "hover:bg-gray-50"
@@ -192,17 +192,6 @@ export default function CourseSidebar({
                                 <p className="text-xs text-[#94A3B8]">{lesson.duration}</p>
                               </div>
                             </div>
-                            <svg
-                              width="18"
-                              height="18"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#D1D5DB"
-                              strokeWidth="2"
-                              className="shrink-0"
-                            >
-                              <path d="M9 18l6-6-6-6" />
-                            </svg>
                           </button>
                         );
                       })}
