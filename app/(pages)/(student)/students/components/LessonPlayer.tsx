@@ -92,6 +92,7 @@ export default function LessonPlayer({
   const [isMuted, setIsMuted] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [likedQuestions, setLikedQuestions] = useState<Set<string>>(new Set<string>());
+  const [dislikedQuestions, setDislikedQuestions] = useState<Set<string>>(new Set<string>());
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExamResult, setShowExamResult] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -218,6 +219,30 @@ export default function LessonPlayer({
         newSet.delete(questionId);
       } else {
         newSet.add(questionId);
+        // Agar dislike bosilgan bo'lsa, uni olib tashlaymiz
+        setDislikedQuestions((prevDisliked) => {
+          const newDisliked = new Set(prevDisliked);
+          newDisliked.delete(questionId);
+          return newDisliked;
+        });
+      }
+      return newSet;
+    });
+  };
+
+  const handleDislikeQuestion = (questionId: string) => {
+    setDislikedQuestions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId);
+      } else {
+        newSet.add(questionId);
+        // Agar like bosilgan bo'lsa, uni olib tashlaymiz
+        setLikedQuestions((prevLiked) => {
+          const newLiked = new Set(prevLiked);
+          newLiked.delete(questionId);
+          return newLiked;
+        });
       }
       return newSet;
     });
@@ -243,7 +268,8 @@ export default function LessonPlayer({
         ref={videoContainerRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isPlaying && setShowControls(false)}
-        className="relative w-full aspect-video rounded-xl overflow-hidden bg-[#000] mb-6 group"
+        className="relative w-full rounded-xl overflow-hidden bg-[#000] mb-6 group"
+        style={{ aspectRatio: '16/9', maxHeight: '500px' }}
       >
         {videoUrl ? (
           <video
@@ -501,22 +527,25 @@ export default function LessonPlayer({
 
           <h4 className="text-sm font-semibold text-[#1a1a1a] mb-4">Barcha savollar</h4>
 
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-6">
             {questions.map((q) => {
               const isLiked = likedQuestions.has(q.id);
+              const isDisliked = dislikedQuestions.has(q.id);
               const displayLikes = isLiked ? q.likes + 1 : q.likes;
               
               return (
-                <div key={q.id} className="flex gap-3">
-                  <Image
-                    src={q.avatar}
-                    alt={q.name}
-                    width={40}
-                    height={40}
-                    className="rounded-full object-cover shrink-0"
-                  />
+                <div key={q.id} className="flex gap-3.5">
+                  <div className="shrink-0">
+                    <Image
+                      src={q.avatar}
+                      alt={q.name}
+                      width={48}
+                      height={48}
+                      className="rounded-xl object-cover"
+                    />
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-[#4F7FFF] mb-1">{q.name}</p>
+                    <p className="text-sm font-semibold text-[#4F7FFF] mb-1.5">{q.name}</p>
                     <p className="text-sm text-[#1a1a1a] leading-relaxed mb-3">{q.text}</p>
                     <div className="flex items-center gap-4 text-sm">
                       {/* Like */}
@@ -528,8 +557,8 @@ export default function LessonPlayer({
                         aria-label="Like"
                       >
                         <svg 
-                          width="16" 
-                          height="16" 
+                          width="18" 
+                          height="18" 
                           viewBox="0 0 24 24" 
                           fill={isLiked ? "currentColor" : "none"}
                           stroke="currentColor" 
@@ -537,28 +566,30 @@ export default function LessonPlayer({
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <path d="M7 22V11M2 13v6c0 1.1.9 2 2 2h1M16.5 3c-.9 0-1.6.4-2.1 1L7 11h8l1.4 8.1c.1.5.3.9.7 1.2.4.3.8.4 1.3.4 1.4 0 2.6-1.2 2.6-2.6V8c0-1.4-1.2-2.6-2.6-2.6h-2z" />
+                          <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3" />
                         </svg>
                         <span className="font-medium">{displayLikes}</span>
                       </button>
                       
                       {/* Dislike */}
                       <button 
-                        className="flex items-center gap-1.5 text-[#64748B] hover:text-[#1a1a1a] transition-colors"
+                        onClick={() => handleDislikeQuestion(q.id)}
+                        className={`flex items-center gap-1.5 transition-colors ${
+                          isDisliked ? "text-[#EF4444]" : "text-[#64748B] hover:text-[#1a1a1a]"
+                        }`}
                         aria-label="Dislike"
                       >
                         <svg 
-                          width="16" 
-                          height="16" 
+                          width="18" 
+                          height="18" 
                           viewBox="0 0 24 24" 
-                          fill="none"
+                          fill={isDisliked ? "currentColor" : "none"}
                           stroke="currentColor" 
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="rotate-180"
                         >
-                          <path d="M7 22V11M2 13v6c0 1.1.9 2 2 2h1M16.5 3c-.9 0-1.6.4-2.1 1L7 11h8l1.4 8.1c.1.5.3.9.7 1.2.4.3.8.4 1.3.4 1.4 0 2.6-1.2 2.6-2.6V8c0-1.4-1.2-2.6-2.6-2.6h-2z" />
+                          <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17" />
                         </svg>
                       </button>
                       
