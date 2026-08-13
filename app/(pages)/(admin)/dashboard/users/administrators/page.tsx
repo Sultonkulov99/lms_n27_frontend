@@ -244,7 +244,7 @@ export default function AdministratorsPage() {
               className="mt-4 sm:mt-0 flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
             >
               <PlusCircle size={18} strokeWidth={2} />
-              Qo'shish
+              Qo’shish
             </button>
           </div>
 
