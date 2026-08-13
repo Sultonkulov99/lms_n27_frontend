@@ -12,7 +12,8 @@ import {
   UploadCloud,
   Check,
   EyeOff,
-  Link as LinkIcon
+  Link as LinkIcon,
+  ChevronDown
 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/app/components/dashboard/Header";
@@ -204,27 +205,24 @@ export default function AllCoursesPage() {
                 <div className="flex items-center text-[13px] font-medium gap-2">
                   <span className="text-gray-500">Kurslar</span>
                   <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                  <span className="text-blue-500">Barcha kurslar</span>
                 </div>
               </div>
               <div className="flex items-center gap-6">
-                {selectedRows.length > 0 && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-[13px] font-medium text-gray-700">
-                      {selectedAreActive ? "Faol qilingan" : "Nofaol qilingan"}
-                    </span>
-                    <button 
-                      onClick={handleBulkToggle}
-                      className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${
-                        selectedAreActive ? "bg-blue-600" : "bg-gray-300"
-                      }`}
-                    >
-                      <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
-                        selectedAreActive ? "translate-x-4" : "translate-x-0"
-                      }`}></div>
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  <span className="text-[13px] font-medium text-gray-700">
+                    Faollashtirilgan
+                  </span>
+                  <button 
+                    onClick={handleBulkToggle}
+                    className={`w-9 h-5 rounded-full flex items-center px-0.5 transition-colors ${
+                      selectedAreActive && selectedRows.length > 0 ? "bg-blue-600" : "bg-gray-300"
+                    }`}
+                  >
+                    <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${
+                      selectedAreActive && selectedRows.length > 0 ? "translate-x-4" : "translate-x-0"
+                    }`}></div>
+                  </button>
+                </div>
                 <button 
                   onClick={openAddModal}
                   className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm"
@@ -238,7 +236,7 @@ export default function AllCoursesPage() {
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-6">
               {/* Search */}
-              <div className="relative w-85">
+              <div className="relative w-[340px]">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <Search size={16} className="text-gray-400" />
                 </div>
@@ -254,125 +252,170 @@ export default function AllCoursesPage() {
                 </div>
               </div>
 
-              {/* Just spacing, pagination is moved to bottom now */}
-              <div></div>
+              {/* Top Pagination Controls */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 text-[13px] text-gray-700 font-medium relative group">
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="appearance-none bg-transparent outline-none cursor-pointer pr-5"
+                  >
+                    <option value={10}>Bir sahifada 10</option>
+                    <option value={20}>Bir sahifada 20</option>
+                    <option value={50}>Bir sahifada 50</option>
+                  </select>
+                  <ChevronDown size={14} className="text-gray-500 absolute right-0 pointer-events-none" />
+                </div>
+
+                <div className="flex items-center gap-1 ml-4">
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const page = idx + 1;
+                    if (page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)) {
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          className={`w-7 h-7 flex items-center justify-center rounded text-[13px] font-medium transition-colors ${currentPage === page ? "bg-white border border-gray-200 shadow-sm text-gray-900" : "text-gray-600 hover:bg-gray-50"}`}
+                        >
+                          {page}
+                        </button>
+                      );
+                    } else if (page === currentPage - 2 || page === currentPage + 2) {
+                      return <span key={page} className="text-gray-400 px-1 font-medium text-xs">...</span>;
+                    }
+                    return null;
+                  })}
+                  <button
+                    onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="px-2.5 h-7 flex items-center justify-center rounded bg-white border border-gray-200 shadow-sm text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition-colors ml-1 disabled:opacity-50"
+                  >
+                    Keyingi
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* Table */}
-            <div className="border border-gray-100 rounded-xl overflow-x-auto mb-6 flex-1">
-              <table className="w-full text-left border-collapse min-w-[800px]">
-                <thead>
-                  <tr className="bg-gray-50/50 text-[13px] text-gray-500 border-b border-gray-100">
-                    <th className="p-4 w-12 text-center">
-                      <input 
-                        type="checkbox" 
-                        onChange={handleSelectAll}
-                        checked={isAllSelected}
-                        className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
-                      />
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Banner <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      Kurs nomi
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Darajasi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Narxi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 cursor-pointer group">
-                        Kategoriya <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap">
-                      <div className="flex items-center gap-2 justify-center cursor-pointer group">
-                        Holati <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
-                      </div>
-                    </th>
-                    <th className="p-4 font-medium whitespace-nowrap text-center">
-                      Amallar
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y divide-gray-50">
-                  {currentCourses.length > 0 ? (
-                    currentCourses.map((course) => (
-                      <tr key={course.id} className={`${selectedRows.includes(course.id) ? "bg-blue-50/50 hover:bg-blue-50/70" : "hover:bg-gray-50/50"} transition-colors group`}>
-                        <td className="p-4 text-center">
-                          <input 
-                            type="checkbox" 
-                            checked={selectedRows.includes(course.id)}
-                            onChange={() => handleSelectRow(course.id)}
-                            className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
-                          />
-                        </td>
-                        <td className="p-4">
-                          <div className={`w-15 h-9 rounded-lg ${course.cover || 'bg-gray-200'} shadow-sm`}></div>
-                        </td>
-                        <td className="p-4 font-medium text-gray-900">
-                          <Link href={`/dashboard/courses/allCourses/${course.id}`} className="hover:text-blue-600 hover:underline transition-colors">
-                            {course.title}
-                          </Link>
-                        </td>
-                        <td className="p-4 text-gray-600 font-medium capitalize">{course.level}</td>
-                        <td className="p-4 text-gray-900 font-medium">{(course.price).toLocaleString()}</td>
-                        <td className="p-4 text-gray-600">{getCategoryName(course.categoryId)}</td>
-                        <td className="p-4 text-center">
-                          {course.status === 'active' ? (
-                            <span className="text-green-600 font-medium text-[13px]">Faol</span>
-                          ) : (
-                            <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center justify-center gap-3 text-gray-400">
-                            <button 
-                              onClick={() => {
-                                setCurrentCourse(course);
-                                setIsViewModalOpen(true);
-                              }}
-                              className="hover:text-blue-600 transition-colors"
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button 
-                              onClick={() => openEditModal(course)}
-                              className="hover:text-blue-600 transition-colors"
-                            >
-                              <Pen size={16} />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setCurrentCourse(course);
-                                setIsDeleteModalOpen(true);
-                              }}
-                              className="hover:text-red-500 transition-colors"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden flex-1 mb-6 border border-gray-100">
+              <div className="overflow-x-auto h-full">
+                <table className="w-full text-left border-collapse min-w-[1000px]">
+                  <thead>
+                    <tr className="bg-white text-[13px] text-gray-900 font-bold tracking-wide border-b border-gray-100">
+                      <th className="px-5 py-4 w-12 text-center">
+                        <input 
+                          type="checkbox" 
+                          onChange={handleSelectAll}
+                          checked={isAllSelected}
+                          className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
+                        />
+                      </th>
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Banner <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                        Kurs nomi
+                      </th>
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Darajasi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Narxi <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2 cursor-pointer group">
+                          Kategoriya <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap">
+                        <div className="flex items-center gap-2 justify-center cursor-pointer group">
+                          Holati <Filter size={14} className="text-gray-400 group-hover:text-gray-600" />
+                        </div>
+                      </th>
+                      <th className="px-5 py-4 font-semibold whitespace-nowrap text-center">
+                        Amallar
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[14px] text-gray-800 divide-y divide-gray-100">
+                    {currentCourses.length > 0 ? (
+                      currentCourses.map((course) => (
+                        <tr key={course.id} className={`${selectedRows.includes(course.id) ? "bg-blue-50/50 hover:bg-blue-50/70" : "bg-white hover:bg-gray-50"} transition-colors group`}>
+                          <td className="px-5 py-4 text-center">
+                            <input 
+                              type="checkbox" 
+                              checked={selectedRows.includes(course.id)}
+                              onChange={() => handleSelectRow(course.id)}
+                              className="rounded border-gray-300 w-4 h-4 accent-blue-600 cursor-pointer" 
+                            />
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className={`w-[52px] h-[32px] mx-auto rounded ${course.cover || 'bg-gray-200'} shadow-sm`}></div>
+                          </td>
+                          <td className="px-5 py-4 font-medium text-gray-900">
+                            <Link href={`/dashboard/courses/allCourses/${course.id}/sections`} className="hover:text-blue-600 hover:underline transition-colors">
+                              {course.title}
+                            </Link>
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 font-medium capitalize text-center">{course.level}</td>
+                          <td className="px-5 py-4 text-gray-900 font-medium text-center">{(course.price).toLocaleString()}</td>
+                          <td className="px-5 py-4 text-gray-600 text-center">{getCategoryName(course.categoryId)}</td>
+                          <td className="px-5 py-4 text-center">
+                            {course.status === 'active' ? (
+                              <span className="text-green-600 font-medium text-[13px]">Faol</span>
+                            ) : (
+                              <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center justify-center gap-3 text-gray-400">
+                              <button 
+                                onClick={() => {
+                                  setCurrentCourse(course);
+                                  setIsViewModalOpen(true);
+                                }}
+                                className="hover:text-blue-600 transition-colors"
+                              >
+                                <Eye size={16} />
+                              </button>
+                              <button 
+                                onClick={() => openEditModal(course)}
+                                className="hover:text-blue-600 transition-colors"
+                              >
+                                <Pen size={16} />
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  setCurrentCourse(course);
+                                  setIsDeleteModalOpen(true);
+                                }}
+                                className="hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="p-8 text-center text-gray-500">
+                          Ma'lumot topilmadi
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-gray-500">
-                        Ma'lumot topilmadi
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* Footer Pagination */}
