@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-
+ 
+import avatar from "@/app/assets/bekzodsafarov.jpg"
 interface CourseCardProps {
   id: string;
   title: string;
