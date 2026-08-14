@@ -137,6 +137,20 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
     setIsDeleteModalOpen(false);
   };
 
+  const handleDownloadXLS = () => {
+    const headers = ["ID", "Biriktirilgan kurs", "Dars mavzusi", "Dars haqida"];
+    const rows = lessons.map(l => [l.id, courseTitle, l.title, l.description].join(","));
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "darslar.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -440,7 +454,7 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
                 setItemsPerPage(limit);
                 setCurrentPage(1);
               }}
-              onDownloadXLS={() => {}}
+              onDownloadXLS={handleDownloadXLS}
             />
           </div>
         </div>

@@ -190,7 +190,17 @@ export default function AllCoursesPage() {
   };
   
   const downloadXLS = () => {
-    console.log("Downloading courses...");
+    const headers = ["ID", "Kurs nomi", "Darajasi", "Narxi", "Kategoriya", "Holati"];
+    const rows = courses.map(c => [c.id, c.title, c.level, c.price, getCategoryName(c.categoryId), c.status].join(","));
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "kurslar.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
