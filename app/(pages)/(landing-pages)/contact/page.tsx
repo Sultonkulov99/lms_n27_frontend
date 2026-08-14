@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Phone, Mail, MapPin, ChevronDown, CheckCircle2, Loader2 } from "lucide-react";
-import { useLanguage } from "@/app/components/landing/context/LanguageContext";
+import { useLanguage } from "@/app/context/LanguageContext";
 
 interface FormData {
   fullName: string;

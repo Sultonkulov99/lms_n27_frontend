@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useLanguage, type Language } from "@/app/context/LanguageContext";
+import { baseAPI } from "@/app/lib/utils";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -21,16 +22,20 @@ export default function Navbar() {
 
   const isDark = mounted && resolvedTheme === "dark";
 
+  const [dbCategories, setDbCategories] = useState<{ id: number; name: string }[]>([]);
+
   useEffect(() => {
     setMounted(true);
+    const fetchCategories = async () => {
+      try {
+        const res = await baseAPI.get("categories");
+        setDbCategories(res.data?.data || []);
+      } catch (e) {
+        console.error("Failed to fetch categories:", e);
+      }
+    };
+    fetchCategories();
   }, []);
-
-  const courseCategories = [
-    { title: "UI/UX Dizayn", href: "/courses/ui-ux" },
-    { title: "Frontend", href: "/courses/frontend" },
-    { title: "Backend", href: "/courses/backend" },
-    { title: "Python", href: "/courses/python" },
-  ];
 
   const languages: Language[] = ["O’z", "Рус", "Eng"];
 
@@ -115,13 +120,13 @@ export default function Navbar() {
               {coursesDropdownOpen && (
                 <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 z-50 animate-fadeIn">
                   <div className="w-[135px] bg-white dark:bg-[#151C28] rounded-[10px] shadow-lg border border-slate-100 dark:border-[#1E293B] p-3 flex flex-col gap-[6px]">
-                    {courseCategories.map((item) => (
+                    {dbCategories.map((item) => (
                       <Link
-                        key={item.title}
-                        href={item.href}
-                        className="text-[15px] font-medium text-[#2F3641] dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors leading-none py-1"
+                        key={item.id}
+                        href={`/courses?category=${item.id}`}
+                        className="text-[15px] font-medium text-[#2F3641] dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors leading-none py-1 block"
                       >
-                        {item.title}
+                        {item.name}
                       </Link>
                     ))}
                   </div>
@@ -253,14 +258,14 @@ export default function Navbar() {
               {t("Navbar.courses")}
             </Link>
             <div className="pl-4 space-y-2 border-l-2 border-slate-100 dark:border-[#1E293B]">
-              {courseCategories.map((c) => (
+              {dbCategories.map((c) => (
                 <Link
-                  key={c.title}
-                  href={c.href}
+                  key={c.id}
+                  href={`/courses?category=${c.id}`}
                   onClick={() => setMobileMenuOpen(false)}
                   className="block text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400"
                 >
-                  {c.title}
+                  {c.name}
                 </Link>
               ))}
             </div>
