@@ -3,56 +3,62 @@
 import { useState, useRef, useEffect } from "react";
 import { Heart, Play, Pause, X } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { PrecisionStars } from "@/app/components/course-details/precision-stars";
-import { coursesData } from "@/app/data/courses";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { baseAPI } from "@/app/lib/utils";
 
-export interface Course {
+interface Category {
   id: number;
-  tag: string;
-  tagColor: string;
-  cover?: string;
-  coverImg?: string;
-  title: string;
-  desc: string;
-  rating: number;
+  name: string;
+}
+
+export interface CourseAPI {
+  id: number;
+  banner: string;
+  introVideo: string;
+  name: string;
+  description: string;
+  level: string;
   price: string;
-  duration?: string;
-  studentsCount?: number;
-  level?: string;
+  categoryId: number;
+  categories: Category;
 }
 
 interface CourseCardProps {
-  course: Course;
+  course: CourseAPI;
   priceLabel: string;
 }
 
 function CourseCard({ course, priceLabel }: CourseCardProps) {
   const [liked, setLiked] = useState(false);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://63.180.181.4:8080";
+
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="block bg-white dark:bg-[#151C28] rounded-2xl border border-gray-100 dark:border-[#1E293B] overflow-hidden shadow-sm hover:shadow-md dark:hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-all hover:-translate-y-1 cursor-pointer"
+      className="bg-white dark:bg-[#151C28] rounded-2xl border border-gray-100 dark:border-[#1E293B] overflow-hidden shadow-sm hover:shadow-md dark:hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-all hover:-translate-y-1 cursor-pointer h-full flex flex-col"
     >
-      <div className={`relative h-40 ${course.cover || ""}`}>
-        {course.coverImg && (
+      <div className={`relative h-56 w-full shrink-0 bg-gradient-to-br from-indigo-600 to-violet-700`}>
+        {course.banner && (
           <img
-            src={course.coverImg}
-            alt={course.title}
+            src={`${API_URL}${course.banner?.startsWith('/') ? '' : '/'}${course.banner}`}
+            alt={course.name}
             className="w-full h-full object-cover"
           />
         )}
         <span
-          className={`absolute top-3 left-3 ${course.tagColor} text-white text-xs font-medium px-3 py-1 rounded-full`}
+          className={`absolute top-3 left-3 bg-blue-600 text-white text-xs font-medium px-3 py-1 rounded-full`}
         >
-          {course.tag}
+          {course.categories?.name || course.level}
         </span>
       </div>
 
-      <div className="p-4">
-        <div className="flex items-center justify-between mb-3">
+      <div className="p-5 flex flex-col flex-1 gap-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-gray-900 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
+            <div className="w-7 h-7 rounded-full bg-gray-900 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">
               O
             </div>
             <span className="text-sm text-gray-700 dark:text-slate-300">Oybek Safarov</span>
@@ -73,45 +79,69 @@ function CourseCard({ course, priceLabel }: CourseCardProps) {
           </button>
         </div>
 
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{course.title}</h3>
-        <p className="text-xs text-gray-400 dark:text-[#94A3B8] leading-relaxed mb-3">
-          {course.desc}
-        </p>
+        <div className="flex flex-col gap-3">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-1 line-clamp-1">{course.name}</h3>
+          <p className="text-xs text-gray-400 dark:text-[#94A3B8] leading-relaxed line-clamp-2">
+            {course.description}
+          </p>
 
-        <PrecisionStars rating={course.rating} stars={5} courseId={course.id} />
+          <PrecisionStars rating={5.0} stars={5} courseId={course.id.toString()} />
+        </div>
 
-        <div className="border-t border-gray-100 dark:border-[#1E293B] mt-3 pt-3">
-          <p className="text-xs text-gray-400 dark:text-[#94A3B8] mb-0.5">{priceLabel}</p>
-          <p className="text-sm font-bold text-gray-900 dark:text-white">{course.price} UZS</p>
+        <div className="mt-auto pt-2">
+          <p className="text-[11px] text-gray-400 dark:text-[#94A3B8] mb-0.5">{priceLabel}</p>
+          <p className="text-sm font-bold text-gray-900 dark:text-white">
+            {new Intl.NumberFormat("ru-RU").format(Number(course.price) || 0)} UZS
+          </p>
         </div>
       </div>
     </Link>
   );
 }
 
-export default function KurslarPage() {
+function CoursesContent() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams.get("category");
 
-  const filters = [
-    { key: "all", label: t("coursesPage.filters.all") },
-    { key: "design", label: t("coursesPage.filters.design") },
-    { key: "frontend", label: t("coursesPage.filters.frontend") },
-    { key: "backend", label: t("coursesPage.filters.backend") },
-    { key: "mobile", label: t("coursesPage.filters.mobile") },
-    { key: "fullstack", label: t("coursesPage.filters.fullstack") },
-    { key: "ai", label: t("coursesPage.filters.ai") },
-    { key: "other", label: t("coursesPage.filters.other") },
-  ];
-
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [activeFilter, setActiveFilter] = useState<number | "all">(
+    categoryParam ? parseInt(categoryParam, 10) : "all"
+  );
   const [showModal, setShowModal] = useState(false);
+  const [courses, setCourses] = useState<CourseAPI[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredCourses = coursesData.filter((course) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "design") {
-      return course.tag.toLowerCase().includes("dizayn");
+  useEffect(() => {
+    if (categoryParam) {
+      setActiveFilter(parseInt(categoryParam, 10));
+    } else {
+      setActiveFilter("all");
     }
-    return course.tag.toLowerCase() === activeFilter.toLowerCase();
+  }, [categoryParam]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [coursesRes, categoriesRes] = await Promise.all([
+          baseAPI.get("courses"),
+          baseAPI.get("categories")
+        ]);
+        
+        setCourses(coursesRes.data || []);
+        setCategories(categoriesRes.data?.data || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredCourses = courses.filter((course) => {
+    if (activeFilter === "all") return true;
+    return course.categoryId === activeFilter;
   });
 
   return (
@@ -135,23 +165,37 @@ export default function KurslarPage() {
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
-        {filters.map((filter) => (
+        <button
+          onClick={() => setActiveFilter("all")}
+          className={`px-4 py-2 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+            activeFilter === "all"
+              ? "bg-gray-900 dark:bg-blue-600 text-white shadow-sm"
+              : "bg-gray-100 dark:bg-[#151C28] text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-[#1E293B] border border-transparent dark:border-[#1E293B]"
+          }`}
+        >
+          {t("coursesPage.filters.all")}
+        </button>
+        {categories.map((filter) => (
           <button
-            key={filter.key}
-            onClick={() => setActiveFilter(filter.key)}
+            key={filter.id}
+            onClick={() => setActiveFilter(filter.id)}
             className={`px-4 py-2 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-              activeFilter === filter.key
+              activeFilter === filter.id
                 ? "bg-gray-900 dark:bg-blue-600 text-white shadow-sm"
                 : "bg-gray-100 dark:bg-[#151C28] text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-[#1E293B] border border-transparent dark:border-[#1E293B]"
             }`}
           >
-            {filter.label}
+            {filter.name}
           </button>
         ))}
       </div>
 
       <div className="min-h-112.5 flex items-center justify-center w-full">
-        {filteredCourses.length > 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20 w-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : filteredCourses.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2 w-full self-start">
             {filteredCourses.map((course) => (
               <CourseCard
@@ -170,5 +214,13 @@ export default function KurslarPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function KurslarPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>}>
+      <CoursesContent />
+    </Suspense>
   );
 }

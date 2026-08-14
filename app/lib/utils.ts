@@ -1,8 +1,7 @@
 import axios from "axios";
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const baseAPI = axios.create({
-  baseURL: `${API_URL}/api/v1`,
+  baseURL: `/api/v1`,
   // headers: {
   //   Authorization: `Bearer ${ getToken()}`,
   // },

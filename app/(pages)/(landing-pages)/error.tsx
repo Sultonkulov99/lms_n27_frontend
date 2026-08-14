@@ -2,8 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
-import Navbar from "@/app/components/landing/home/Navbar";
-import Footer from "@/app/components/landing/home/Footer";
+
 import { LanguageProvider, useLanguage } from "@/app/context/LanguageContext";
 import { RefreshCcw, Home } from "lucide-react";
 
@@ -21,7 +20,6 @@ function ErrorContent({ error, reset }: ErrorProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <Navbar />
       <main className="flex flex-1 flex-col items-center justify-center text-center px-4 py-20">
         <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-red-50 text-red-500 shadow-sm">
           <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,7 +47,6 @@ function ErrorContent({ error, reset }: ErrorProps) {
           </Link>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
