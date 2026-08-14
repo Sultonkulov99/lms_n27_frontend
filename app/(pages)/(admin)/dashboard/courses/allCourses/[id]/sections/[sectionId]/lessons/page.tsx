@@ -70,7 +70,7 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
     
     return [
       { 
-        id: parseInt(sectionId) * 10 + 1, 
+        id: parseInt(sectionId) * 1, 
         title: initialTitle, 
         description: initialDesc,
         video: { name: "video_2026-08-10_11-15-10.mp4", size: "15.4 MB" }
