@@ -1,10 +1,6 @@
-import Navbar from "@/app/components/landing/home/Navbar";
-import Footer from "@/app/components/landing/home/Footer";
-
 export default function Loading() {
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <Navbar />
+    <div className="flex h-[70vh] flex-col bg-white">
       <main className="flex flex-1 flex-col items-center justify-center">
         <div className="relative flex items-center justify-center">
           {/* Outer ping animation */}
@@ -22,7 +18,6 @@ export default function Loading() {
         </div>
         <h3 className="mt-8 text-lg font-medium text-slate-600 animate-pulse">Yuklanmoqda...</h3>
       </main>
-      <Footer />
     </div>
   );
 }

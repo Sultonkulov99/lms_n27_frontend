@@ -1,10 +1,26 @@
+"use client";
+
+import { useState } from "react";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 import CourseCard from "./components/CourseCard";
-import banner from "../../../assets/banner.png";
 import oybeksafarov from "../../../assets/oybeksafarov.png";
 
 export default function StudentMain() {
+  const [likedCourses, setLikedCourses] = useState<Set<string>>(new Set());
+
+  const handleLike = (courseId: string) => {
+    setLikedCourses((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(courseId)) {
+        newSet.delete(courseId);
+      } else {
+        newSet.add(courseId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="flex h-screen bg-[#0b0f19]">
       <Sidebar />
@@ -19,12 +35,15 @@ export default function StudentMain() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <CourseCard
-              image={banner}
-              tag="UI/UX Dizayn"
-              instructor="Oybek Safarov"
-              instructorAvatar={oybeksafarov}
+              id="ui-ux-dizayn"
               title="UI/UX Dizayn"
+              instructor="Oybek Safarov"
+              instructorAvatar={oybeksafarov.src}
+              thumbnail="/bolakay.png"
               progress={40}
+              category="UI/UX Dizayn"
+              isLiked={likedCourses.has("ui-ux-dizayn")}
+              onLike={() => handleLike("ui-ux-dizayn")}
             />
           </div>
         </main>

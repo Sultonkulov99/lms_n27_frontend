@@ -1,49 +1,50 @@
 "use client";
 
+import { useLanguage } from "../../../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
+
 interface Testimonial {
   id: string;
   name: string;
-  role: string;
-  comment: string;
+  roleKey: string;
+  commentKey: string;
 }
 
 export default function Testimonials() {
+  const { t } = useLanguage();
+
   const reviews: Testimonial[] = [
     {
       id: "1",
       name: "Xurshid Istamov",
-      role: "Frontend kursi o'quvchisi",
-      comment:
-        "Lorem ipsum dolor sit amet consectetur. Sit in eget posuere facilisis elementum. Est semper aenean erat est etiam sit. Auctor risus semper ultrices eleifend vel at. Pharetra turpis fames cursus sit in faucibus.",
+      roleKey: "testimonials.items.1.role",
+      commentKey: "testimonials.items.1.comment",
     },
     {
       id: "2",
       name: "Xurshid Istamov",
-      role: "Frontend kursi o'quvchisi",
-      comment:
-        "Lorem ipsum dolor sit amet consectetur. In mattis ullamcorper faucibus amet libero. Et varius lorem magna non ultricies dictum duis. Quis imperdiet parturient leo orci libero gravida. Tortor malesuada quam.",
+      roleKey: "testimonials.items.2.role",
+      commentKey: "testimonials.items.2.comment",
     },
     {
       id: "3",
       name: "Xurshid Istamov",
-      role: "Frontend kursi o'quvchisi",
-      comment:
-        "Lorem ipsum dolor sit amet consectetur. Lectus placerat convallis vel mauris. Donec nunc tincidunt mattis enim rhoncus viverra libero enim nulla. Faucibus eleifend commodo sollicitudin eu turpis risus vitae.",
+      roleKey: "testimonials.items.3.role",
+      commentKey: "testimonials.items.3.comment",
     },
   ];
 
   return (
-    <section id="testimonials" className="py-20 bg-white">
+    <section id="testimonials" className="py-20 bg-white dark:bg-[#0A0E17] transition-colors duration-200">
       <div className="container">
-        
-        {/* Title — 48px, 700, 60px line-height */}
-        <h2 className="text-center font-bold text-[48px] leading-[60px] tracking-normal text-[#0F172A] mb-3">
-          Izohlar
+
+        {/* Title */}
+        <h2 className="text-center font-bold text-[48px] leading-[60px] tracking-normal text-[#0F172A] dark:text-white mb-3">
+          {t("testimonials.title")}
         </h2>
 
-        {/* Subtitle — 20px, 500, 30px line-height */}
-        <p className="text-center font-medium text-[20px] leading-[30px] tracking-normal text-[#636C79] mb-[48px]">
-          O&#39;quvchilarimiz tomonidan qoldirilgan izohlar
+        {/* Subtitle */}
+        <p className="text-center font-medium text-[20px] leading-[30px] tracking-normal text-[#636C79] dark:text-[#94A3B8] mb-[48px]">
+          {t("testimonials.subtitle")}
         </p>
 
         {/* 3 Testimonial Cards Grid */}
@@ -51,7 +52,7 @@ export default function Testimonials() {
           {reviews.map((rev) => (
             <div
               key={rev.id}
-              className="bg-white border border-slate-200 p-8 rounded-[16px] flex flex-col justify-between min-h-[320px]"
+              className="bg-white dark:bg-[#151C28] border border-slate-200 dark:border-[#1E293B] p-8 rounded-[16px] flex flex-col justify-between min-h-[320px] transition-colors duration-200"
             >
               <div>
                 {/* Orange Double Quote SVG Icon */}
@@ -71,24 +72,23 @@ export default function Testimonials() {
                 </div>
 
                 {/* Comment Text */}
-                <p className="font-medium text-[15px] leading-6 text-[#1E293B] m-0">
-                  {rev.comment}
+                <p className="font-medium text-[15px] leading-6 text-[#1E293B] dark:text-slate-200 m-0">
+                  {t(rev.commentKey)}
                 </p>
               </div>
 
               {/* Author Info */}
               <div className="mt-8">
-                <div className="font-bold text-[16px] leading-snug text-[#0F172A]">
+                <div className="font-bold text-[16px] leading-snug text-[#0F172A] dark:text-white">
                   {rev.name}
                 </div>
                 <div className="font-medium text-[13px] leading-snug text-[#94A3B8] mt-1">
-                  {rev.role}
+                  {t(rev.roleKey)}
                 </div>
               </div>
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );
