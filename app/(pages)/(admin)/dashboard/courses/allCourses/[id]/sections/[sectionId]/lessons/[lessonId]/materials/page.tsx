@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, use, useRef } from "react";
-import { 
-  PlusCircle, 
+import {
+  PlusCircle,
   Filter,
   Pen,
   Trash2,
@@ -15,15 +15,17 @@ import {
   File as FileIcon,
   type LucideIcon
 } from "lucide-react";
-import Link from "next/link";
 import Pagination from "@/app/components/dashboard/Pagination";
-import { useCourseStore } from "@/app/store/useCourseStore";
+import { useLessonMeta } from "@/app/components/lesson/useLessonMeta";
+import LessonHeader from "@/app/components/lesson/LessonHeader";
+import LessonTabs from "@/app/components/lesson/LessonTabs";
 
 interface AttachedFile {
   id: string;
   name: string;
   size: string;
-  url?: string;
+  url: string;
+  uploading?: boolean;
 }
 
 interface Material {
@@ -46,43 +48,38 @@ const getFileMeta = (name: string): { Icon: LucideIcon; color: string; label: st
 
 const UPLOAD_ACCEPT = ".pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx,.svg,.png,.jpg,.jpeg,.gif";
 
-const filesFromFileList = (fileList: FileList): AttachedFile[] =>
-  Array.from(fileList).map((file) => ({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: file.name,
-    size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
-    url: URL.createObjectURL(file)
-  }));
+// Uploads a single file to the server (saved under public/upload/materials) and returns its public URL.
+async function uploadFileToServer(file: File): Promise<{ url: string; name: string; size: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/materials/upload", { method: "POST", body: formData });
+  if (!res.ok) throw new Error("Upload failed");
+  return res.json();
+}
 
-export default function MaterialsPage({ params }: { params: Promise<{ id: string; sectionId: string; lessonId: string }> }) {
+export default function LessonMaterialsPage({
+  params,
+}: {
+  params: Promise<{ id: string; sectionId: string; lessonId: string }>;
+}) {
   const { id: courseId, sectionId, lessonId } = use(params);
-  const { courses } = useCourseStore();
-  const currentCourse = courses.find((c) => c.id.toString() === courseId);
-  const courseTitle = currentCourse?.title || "Frontend dasturlash";
-  
-  // Mock section name
-  const isBackend = courseTitle.toLowerCase().includes("backend");
-  let sectionName = "CSS asoslari";
-  if (sectionId === "1") {
-    sectionName = isBackend ? "Node JS" : "Veb dasturlashga kirish";
-  } else if (sectionId === "2") {
-    sectionName = isBackend ? "SQL asoslari" : "CSS asoslari";
-  }
+  const { courseTitle, lessonName } = useLessonMeta(courseId, sectionId);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  
+
   const [materials, setMaterials] = useState<Material[]>([
-    { 
-      id: 1, 
-      title: "Veb dasturlashga kirish", 
+    {
+      id: 1,
+      title: "Veb dasturlashga kirish",
       description: "Frontend dasturlash veb dasturlashning bir qismi hisoblanadi",
       files: [
-        { id: "seed-1", name: "Kirish.xlsx", size: "1.1 MB" },
-        { id: "seed-2", name: "Kirish.pdf", size: "2.4 MB" }
+        { id: "seed-1", name: "Kirish.xlsx", size: "1.1 MB", url: "/upload/materials/seed-Kirish.xlsx" },
+        { id: "seed-2", name: "Kirish.pdf", size: "2.4 MB", url: "/upload/materials/seed-Kirish.pdf" }
       ]
     }
   ]);
@@ -95,7 +92,7 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
 
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [deletingMaterialId, setDeletingMaterialId] = useState<number | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
@@ -106,10 +103,10 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
   const handleAddMaterial = () => {
     if (!newMaterial.title.trim()) return;
     setMaterials([
-      ...materials, 
-      { 
-        id: Date.now(), 
-        title: newMaterial.title.trim(), 
+      ...materials,
+      {
+        id: Date.now(),
+        title: newMaterial.title.trim(),
         description: newMaterial.description.trim(),
         files: newMaterial.files
       }
@@ -120,9 +117,9 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
 
   const handleEditMaterial = () => {
     if (!editingMaterial || !editingMaterial.title.trim()) return;
-    setMaterials(materials.map(l => l.id === editingMaterial.id ? { 
-      ...l, 
-      title: editingMaterial.title.trim(), 
+    setMaterials(materials.map(l => l.id === editingMaterial.id ? {
+      ...l,
+      title: editingMaterial.title.trim(),
       description: editingMaterial.description.trim(),
       files: editingMaterial.files
     } : l));
@@ -137,14 +134,49 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
     setIsDeleteModalOpen(false);
   };
 
-  const addFiles = (fileList: FileList | null) => {
+  const addFiles = async (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
-    const picked = filesFromFileList(fileList);
-    if (isEditModalOpen && editingMaterial) {
-      setEditingMaterial({ ...editingMaterial, files: [...editingMaterial.files, ...picked] });
+    const pickedFiles = Array.from(fileList);
+    const targetIsEdit = isEditModalOpen;
+
+    // Show an "uploading" placeholder immediately, then patch in the real url once saved.
+    const placeholders: AttachedFile[] = pickedFiles.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
+      url: "",
+      uploading: true
+    }));
+
+    if (targetIsEdit) {
+      setEditingMaterial((prev) => (prev ? { ...prev, files: [...prev.files, ...placeholders] } : prev));
     } else {
-      setNewMaterial(prev => ({ ...prev, files: [...prev.files, ...picked] }));
+      setNewMaterial((prev) => ({ ...prev, files: [...prev.files, ...placeholders] }));
     }
+
+    await Promise.all(
+      pickedFiles.map(async (file, index) => {
+        const placeholder = placeholders[index];
+        try {
+          const uploaded = await uploadFileToServer(file);
+          const patch = (files: AttachedFile[]) =>
+            files.map((f) => (f.id === placeholder.id ? { ...f, url: uploaded.url, uploading: false } : f));
+          if (targetIsEdit) {
+            setEditingMaterial((prev) => (prev ? { ...prev, files: patch(prev.files) } : prev));
+          } else {
+            setNewMaterial((prev) => ({ ...prev, files: patch(prev.files) }));
+          }
+        } catch (err) {
+          console.error("Faylni yuklashda xatolik:", err);
+          const drop = (files: AttachedFile[]) => files.filter((f) => f.id !== placeholder.id);
+          if (targetIsEdit) {
+            setEditingMaterial((prev) => (prev ? { ...prev, files: drop(prev.files) } : prev));
+          } else {
+            setNewMaterial((prev) => ({ ...prev, files: drop(prev.files) }));
+          }
+        }
+      })
+    );
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,18 +205,13 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
   const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
 
   const handleDownloadXLS = () => {
-    const headers = [
-      "ID",
-      "Dars",
-      "Material uchun izoh",
-      "Biriktirilgan fayllar",
-    ];
+    const headers = ["ID", "Dars", "Material uchun izoh", "Biriktirilgan fayllar"];
     const rows = materials.map((m) =>
       [
         m.id,
         csvEscape(m.title),
         csvEscape(m.description),
-        csvEscape(m.files.map((f) => f.name).join("; ")),
+        csvEscape(m.files.map((f) => f.url).join("; ")),
       ].join(","),
     );
     const csvContent =
@@ -206,13 +233,13 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
       <div className="p-6 space-y-6">
         <div>
           <label className="block text-[14px] font-bold text-gray-900 mb-2">Bo&apos;lim nomi</label>
-          <input type="text" disabled value={sectionName} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[14px] cursor-not-allowed" />
+          <input type="text" disabled value={lessonName} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[14px] cursor-not-allowed" />
         </div>
         <div>
           <label className="block text-[14px] font-bold text-gray-900 mb-2">Dars nomi</label>
-          <input 
-            type="text" 
-            placeholder="Kiriting" 
+          <input
+            type="text"
+            placeholder="Kiriting"
             value={isEdit ? (editingMaterial?.title || "") : newMaterial.title}
             onChange={(e) => {
               if (isEdit && editingMaterial) {
@@ -221,14 +248,14 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
                 setNewMaterial({ ...newMaterial, title: e.target.value });
               }
             }}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]" 
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]"
           />
         </div>
         <div>
           <label className="block text-[14px] font-bold text-gray-900 mb-2">Dars haqida</label>
-          <input 
-            type="text" 
-            placeholder="Kiriting" 
+          <input
+            type="text"
+            placeholder="Kiriting"
             value={isEdit ? (editingMaterial?.description || "") : newMaterial.description}
             onChange={(e) => {
               if (isEdit && editingMaterial) {
@@ -237,13 +264,13 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
                 setNewMaterial({ ...newMaterial, description: e.target.value });
               }
             }}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]" 
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]"
           />
         </div>
         <div>
           <label className="block text-[14px] font-bold text-gray-900 mb-2">Fayllar</label>
 
-          <div 
+          <div
             className="border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50/50 cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() => fileInputRef.current?.click()}
             onDragOver={(e) => e.preventDefault()}
@@ -256,9 +283,9 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
               <span className="text-blue-600 font-medium">Bu yerga bosing</span> yoki faylni suring
             </p>
             <p className="text-[12px] text-gray-400 mt-1">PDF, Excel, Word, rasm va h.k.</p>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
+            <input
+              type="file"
+              ref={fileInputRef}
               onChange={handleFileUpload}
               accept={UPLOAD_ACCEPT}
               multiple
@@ -277,9 +304,11 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-medium text-gray-900 truncate pr-4">{file.name}</p>
-                      <p className="text-[12px] text-gray-500">{file.size}</p>
+                      <p className="text-[12px] text-gray-500">
+                        {file.uploading ? "Yuklanmoqda..." : file.size}
+                      </p>
                     </div>
-                    <button 
+                    <button
                       onClick={() => removeFile(file.id, isEdit)}
                       className="p-1.5 text-gray-400 hover:text-red-500 transition-colors shrink-0"
                     >
@@ -291,9 +320,9 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
             </div>
           )}
         </div>
-        <button 
+        <button
           onClick={isEdit ? handleEditMaterial : handleAddMaterial}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-2" 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-2"
         >
           <Check size={18} /> Saqlash
         </button>
@@ -304,52 +333,16 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
   return (
     <>
       <div className="flex-1 overflow-y-auto p-6 flex flex-col h-full bg-transparent">
-        
-        {/* Box Header */}
-        <div className="mb-6">
-          <h1 className="text-[22px] font-bold text-gray-900 mb-1.5">Darslar</h1>
-          <div className="flex items-center text-[13px] font-medium gap-2">
-            <Link href="/dashboard/courses/allCourses" className="text-gray-500 hover:text-gray-700 transition-colors">Kurslar</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <Link href={`/dashboard/courses/allCourses/${courseId}`} className="text-gray-500 hover:text-gray-700 transition-colors">{courseTitle}</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <Link href={`/dashboard/courses/allCourses/${courseId}/sections`} className="text-gray-500 hover:text-gray-700 transition-colors">Bo&apos;limlar</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <Link href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}`} className="text-gray-500 hover:text-gray-700 transition-colors">Darslar</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <span className="text-gray-900">{sectionName}</span>
-          </div>
-        </div>
+        <LessonHeader courseId={courseId} sectionId={sectionId} courseTitle={courseTitle} />
 
-        {/* Tabs + Add button */}
         <div className="flex items-center justify-between mb-6">
-          <div className="inline-flex items-center bg-white border border-gray-200 rounded-xl p-1 gap-1">
-            <Link
-              href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lessonId}/materials`}
-              className={`px-5 py-2 rounded-lg text-[14px] font-medium transition-colors bg-blue-600 text-white`}
-            >
-              Materiallar
-            </Link>
-            <Link
-              href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lessonId}/tasks`}
-              className={`px-5 py-2 rounded-lg text-[14px] font-medium transition-colors text-gray-600 hover:bg-gray-50`}
-            >
-              Vazifalar
-            </Link>
-            <Link
-              href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lessonId}/exams`}
-              className={`px-5 py-2 rounded-lg text-[14px] font-medium transition-colors text-gray-600 hover:bg-gray-50`}
-            >
-              Imtihonlar
-            </Link>
-          </div>
+          <LessonTabs courseId={courseId} sectionId={sectionId} lessonId={lessonId} active="materials" />
           <button onClick={() => { resetForm(); setIsAddModalOpen(true); }} className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm">
             <PlusCircle size={18} />
             Qo&apos;shish
           </button>
         </div>
 
-        {/* Table Container */}
         <div className="flex-1 flex flex-col">
           <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
             <table className="w-full text-left border-collapse min-w-[1000px] bg-white">
@@ -388,37 +381,20 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
                       {material.files.length > 0 ? (
                         <div className="flex flex-wrap items-center gap-2">
                           {material.files.map((file) => {
-                            const { Icon, color } = getFileMeta(file.name);
+                            const { Icon, color, label } = getFileMeta(file.name);
                             return (
-                              <a 
-                                key={file.id} 
-                                href={file.url || "#"} 
-                                target="_blank" 
+                              <a
+                                key={file.id}
+                                href={file.url}
+                                target="_blank"
                                 rel="noopener noreferrer"
-                                download={file.name}
-                                onClick={(e) => {
-                                  if (!file.url) {
-                                    e.preventDefault();
-                                    
-                                    // Fallback for mock file
-                                    const blob = new Blob(["Bu mock fayl mazmuni"], { type: "text/plain" });
-                                    const url = URL.createObjectURL(blob);
-                                    const link = document.createElement("a");
-                                    link.href = url;
-                                    link.download = file.name;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    URL.revokeObjectURL(url);
-                                  }
-                                }}
                                 title={file.name}
-                                className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-800 hover:bg-gray-50 transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-800 hover:border-blue-300 hover:text-blue-600 transition-colors"
                               >
                                 <span className={`w-6 h-6 rounded-md text-white flex items-center justify-center shrink-0 ${color}`}>
                                   <Icon size={13} />
                                 </span>
-                                {file.name.length > 15 ? file.name.slice(0, 15) + '...' : file.name}
+                                {label}
                               </a>
                             );
                           })}
@@ -448,8 +424,7 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
               </tbody>
             </table>
           </div>
-          
-          {/* Pagination */}
+
           <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl px-2 py-1 shadow-sm">
             <Pagination
               currentPage={currentPage}
@@ -467,10 +442,8 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
             />
           </div>
         </div>
-
       </div>
 
-      {/* Add/Edit Modal */}
       {(isAddModalOpen || isEditModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); resetForm(); }}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-[480px] flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
@@ -485,7 +458,6 @@ export default function MaterialsPage({ params }: { params: Promise<{ id: string
         </div>
       )}
 
-      {/* Delete Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}>
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-[400px] flex flex-col items-center text-center p-8 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
