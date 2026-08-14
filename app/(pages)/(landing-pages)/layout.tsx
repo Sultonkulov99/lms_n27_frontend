@@ -1,4 +1,4 @@
-import { LanguageProvider } from "@/app/components/landing/context/LanguageContext";
+import { LanguageProvider } from "@/app/context/LanguageContext";
 import Footer from "@/app/components/landing/home/Footer";
 import Navbar from "@/app/components/landing/home/Navbar";
 
@@ -11,7 +11,7 @@ export default function LandingLayout({
     <LanguageProvider>
       <Navbar />
       <main>{children}</main>
-      <Footer/>
+      <Footer />
     </LanguageProvider>
   );
 }

@@ -42,7 +42,7 @@ export default async function CoursePage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0E17] pb-12 transition-colors duration-200">
       <CourseHero
         title={course.title}
         description={course.description}
@@ -53,11 +53,11 @@ export default async function CoursePage({ params }: PageProps) {
 
       <div className="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:col-span-1">
         <div className="lg:col-span-2 space-y-8">
-          <section className="bg-white p-6 rounded-2xl">
+          <section className="bg-white dark:bg-[#151C28] p-6 rounded-2xl border border-transparent dark:border-[#1E293B] transition-colors duration-200">
             <AccordionList courseId={courseId} />
           </section>
 
-          <section className="bg-white p-6 rounded-2xl">
+          <section className="bg-white dark:bg-[#151C28] p-6 rounded-2xl border border-transparent dark:border-[#1E293B] transition-colors duration-200">
             <CommentsSection courseId={courseId} />
           </section>
         </div>

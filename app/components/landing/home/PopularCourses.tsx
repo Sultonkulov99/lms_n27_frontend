@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useLanguage } from "../context/LanguageContext"; // To’g’ri path ko’rsatilganiga ishonch hosil qiling
+import { useLanguage } from "../../../context/LanguageContext";
 
 interface Course {
   id: string;
@@ -17,7 +17,7 @@ interface Course {
   rating: number;
   ratingCount: string;
   price: string;
-  descriptionKey: string; // Static matn o’rniga tarjima kalitidan foydalanamiz
+  descriptionKey: string;
   category: string;
 }
 
@@ -102,7 +102,7 @@ export default function PopularCourses() {
       : courses.filter((c) => c.category === activeCategory);
 
   return (
-    <section id="courses" className="pt-8 pb-16 bg-[#F8FAFC]">
+    <section id="courses" className="pt-8 pb-16 bg-[#F8FAFC] dark:bg-[#0B0F19] transition-colors duration-200">
       <div className="container">
         {/* Heading */}
         <h2
@@ -113,30 +113,31 @@ export default function PopularCourses() {
             fontSize: "48px",
             lineHeight: "60px",
             letterSpacing: 0,
-            color: "#0F172A",
             marginBottom: "32px",
           }}
+          // Color handled via Tailwind below
         >
-          {t("courses.title")}
+          <span className="text-[#0F172A] dark:text-white">
+            {t("courses.title")}
+          </span>
         </h2>
 
         {/* Subtitle */}
         <p
-          className="text-center"
+          className="text-center text-[#636C79] dark:text-[#94A3B8]"
           style={{
             fontFamily: "Inter, sans-serif",
             fontWeight: 500,
             fontSize: "20px",
             lineHeight: "30px",
             letterSpacing: 0,
-            color: "#636C79",
             marginBottom: "32px",
           }}
         >
           {t("courses.subtitle")}
         </p>
 
-        {/* Kategoriya filtrlari */}
+        {/* Category filters */}
         <div className="flex flex-wrap items-center justify-center gap-2.5 mb-8">
           {categories.map((cat) => (
             <button
@@ -145,7 +146,7 @@ export default function PopularCourses() {
               className={`px-4 py-2 rounded-[10px] text-sm font-medium transition-all duration-200 border cursor-pointer ${
                 activeCategory === cat.id
                   ? "bg-blue-600 text-white border-blue-600 shadow-xs"
-                  : "bg-white text-slate-600 border-blue-100 hover:border-blue-300 hover:text-blue-600"
+                  : "bg-white dark:bg-[#151C28] text-slate-600 dark:text-slate-300 border-blue-100 dark:border-[#1E293B] hover:border-blue-300 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
               }`}
             >
               {cat.label}
@@ -153,7 +154,7 @@ export default function PopularCourses() {
           ))}
         </div>
 
-        {/* Grid Card-lar */}
+        {/* Course Cards Grid */}
         <div
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-8"
           style={{ gap: "32px" }}
@@ -161,20 +162,19 @@ export default function PopularCourses() {
           {filteredCourses.map((course) => (
             <div
               key={course.id}
-              className="bg-white overflow-hidden flex flex-col hover:shadow-md transition-shadow duration-200 mx-auto"
+              className="bg-white dark:bg-[#151C28] overflow-hidden flex flex-col hover:shadow-md dark:hover:shadow-[0_4px_20px_rgba(0,0,0,0.4)] transition-shadow duration-200 mx-auto border border-[#E2E8F0] dark:border-[#1E293B]"
               style={{
                 width: "405px",
                 minWidth: "401px",
                 maxWidth: "405px",
                 height: "515px",
                 borderRadius: "4px",
-                border: "1px solid #E2E8F0",
                 opacity: 1,
               }}
             >
-              {/* Kurs rasmi */}
+              {/* Course image */}
               <div
-                className="relative w-full overflow-hidden flex-shrink-0"
+                className="relative w-full overflow-hidden flex-shrink-0 border-b border-[#E2E8F0] dark:border-[#1E293B]"
                 style={{ width: "405px", height: "262px" }}
               >
                 <img
@@ -182,18 +182,14 @@ export default function PopularCourses() {
                   alt={course.title}
                   className="w-full h-full object-cover"
                 />
-
-                {/* Badge */}
                 <div className="absolute top-3 left-3 z-10">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${course.badgeColor}`}
-                  >
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${course.badgeColor}`}>
                     {course.badge}
                   </span>
                 </div>
               </div>
 
-              {/* Karta tarkibi */}
+              {/* Card content */}
               <div
                 className="flex flex-col justify-between flex-shrink-0"
                 style={{
@@ -204,28 +200,19 @@ export default function PopularCourses() {
                   boxSizing: "border-box",
                 }}
               >
-                {/* Top block */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "16px",
-                  }}
-                >
-                  {/* Mentor va Like */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* Mentor + Like */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+                      <div className="w-7 h-7 rounded-full bg-slate-200 dark:bg-[#1E293B] overflow-hidden flex-shrink-0">
                         <img
                           src={course.mentor.avatar}
                           alt={course.mentor.name}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = "none";
-                          }}
+                          onError={(e) => { (e.target as HTMLElement).style.display = "none"; }}
                         />
                       </div>
-                      <span className="text-xs font-semibold text-slate-800">
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                         {course.mentor.name}
                       </span>
                     </div>
@@ -233,14 +220,10 @@ export default function PopularCourses() {
                     <button
                       onClick={() => toggleLike(course.id)}
                       className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
-                      aria-label="Sevimlilarga qo’shish"
+                      aria-label="Sevimlilarga qo'shish"
                     >
                       <svg
-                        className={`w-5 h-5 ${
-                          likedCourses[course.id]
-                            ? "fill-red-500 text-red-500"
-                            : "fill-none"
-                        }`}
+                        className={`w-5 h-5 ${likedCourses[course.id] ? "fill-red-500 text-red-500" : "fill-none"}`}
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={1.8}
@@ -254,39 +237,35 @@ export default function PopularCourses() {
                     </button>
                   </div>
 
-                  {/* Kurs nomi */}
-                  <h3 className="text-base font-bold text-slate-900 leading-snug">
+                  {/* Course title */}
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
                     {course.title}
                   </h3>
 
-                  {/* Tavsif */}
-                  <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                  {/* Description */}
+                  <p className="text-xs text-slate-500 dark:text-[#94A3B8] leading-relaxed line-clamp-2">
                     {t(course.descriptionKey)}
                   </p>
 
-                  {/* Reyting yulduzlari */}
+                  {/* Stars */}
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
-                      <svg
-                        key={star}
-                        className="w-4 h-4 text-amber-400 fill-amber-400"
-                        viewBox="0 0 20 20"
-                      >
+                      <svg key={star} className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                       </svg>
                     ))}
-                    <span className="text-xs font-medium text-slate-400 ml-1">
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500 ml-1">
                       {course.ratingCount}
                     </span>
                   </div>
                 </div>
 
-                {/* Narxi */}
+                {/* Price */}
                 <div>
-                  <div className="text-[11px] text-slate-400 mb-0.5">
+                  <div className="text-[11px] text-slate-400 dark:text-slate-500 mb-0.5">
                     {t("courses.price_label")}
                   </div>
-                  <div className="text-base font-bold text-slate-900">
+                  <div className="text-base font-bold text-slate-900 dark:text-white">
                     {course.price}
                   </div>
                 </div>
@@ -295,7 +274,7 @@ export default function PopularCourses() {
           ))}
         </div>
 
-        {/* "Barcha kurslarni ko’rish" */}
+        {/* View all button */}
         <div className="text-center mt-8">
           <Link
             href="/courses"
