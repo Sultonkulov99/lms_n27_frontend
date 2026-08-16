@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   ShieldCheck,
   Bell,
@@ -25,6 +25,13 @@ import {
   Code,
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
+import {
+  getAdmins,
+  createAdmin,
+  updateAdmin,
+  deleteAdmin,
+  Admin,
+} from "@/app/lib/api/users";
 
 export default function AdministratorsPage() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -56,24 +63,34 @@ export default function AdministratorsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  const [admins, setAdmins] = useState([
-    { id: 2458, image: "https://i.pravatar.cc/150?u=2458", name: "Istamov Xurshid Hazratqul o'g'li", phone: "+998999999999", date: "2023-04-09 14:21:44", role: "Administrator", status: "Faol" },
-    { id: 3652, image: "https://i.pravatar.cc/150?u=3652", name: "Istamov Xurshid Hazratqul o'g'li", phone: "+998999999999", date: "2023-04-09 14:21:44", role: "Administrator", status: "Faol" },
-    { id: 4123, image: "https://i.pravatar.cc/150?u=4123", name: "Alimov Jasur", phone: "+998901234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4124, image: "https://i.pravatar.cc/150?u=4124", name: "Sotvoldiyev Bobur", phone: "+998911234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4125, image: "https://i.pravatar.cc/150?u=4125", name: "Qodirova Zebo", phone: "+998931234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4126, image: "https://i.pravatar.cc/150?u=4126", name: "Yusupov Doniyor", phone: "+998941234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4127, image: "https://i.pravatar.cc/150?u=4127", name: "Rustamova Kamola", phone: "+998951234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4128, image: "https://i.pravatar.cc/150?u=4128", name: "Rahmonov Sardor", phone: "+998971234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4129, image: "https://i.pravatar.cc/150?u=4129", name: "Karimov Sherzod", phone: "+998991234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4130, image: "https://i.pravatar.cc/150?u=4130", name: "Toxirov Murod", phone: "+998881234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-    { id: 4131, image: "https://i.pravatar.cc/150?u=4131", name: "Nazarova Madina (Page 2)", phone: "+998331234567", date: "2023-05-12 10:15:00", role: "Administrator", status: "Faol" },
-  ]);
+  const [admins, setAdmins] = useState<Admin[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+  loadAdmins();
+}, []);
+
+const loadAdmins = async () => {
+  try {
+    setLoading(true);
+    setError("");
+
+    const data = await getAdmins();
+
+    setAdmins(data);
+  } catch (error: any) {
+    console.error(error);
+    setError(error.message || "Ошибка загрузки");
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Derived state
   const filteredAdmins = useMemo(() => {
     return admins.filter(admin => 
-      admin.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      admin.fullName.toLowerCase().includes(searchQuery.toLowerCase()) || 
       admin.phone.includes(searchQuery)
     );
   }, [admins, searchQuery]);
@@ -85,7 +102,7 @@ export default function AdministratorsPage() {
 
   const handleDownloadXLS = () => {
     const headers = ["ID", "F.I.Sh", "Telefon raqam", "Yaratilgan vaqt", "Rol", "Holati"];
-    const rows = admins.map(a => [a.id, a.name, a.phone, a.date, a.role, a.status].join(","));
+    const rows = admins.map(a => [a.id, a.fullName, a.phone, a.created_at, a.role, a.status].join(","));
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
     
     const encodedUri = encodeURI(csvContent);
@@ -96,6 +113,34 @@ export default function AdministratorsPage() {
     link.click();
     document.body.removeChild(link);
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+
+    return date
+      .toLocaleString("sv-SE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+    })
+    .replace(",", "");
+  };
+
+  const getAvatarUrl = (file?: string) => {
+  if (!file) {
+    return "/default-avatar.png";
+  }
+
+  if (file.startsWith("http")) {
+    return file;
+  }
+
+  return `${process.env.NEXT_PUBLIC_API_URL}/uploads/avatars/${file}`;
+};
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow digits and plus
@@ -129,7 +174,7 @@ export default function AdministratorsPage() {
 
   const openEditModal = (admin: any) => {
     setEditingId(admin.id);
-    setName(admin.name);
+    setName(admin.fullName);
     setPhone(admin.phone);
     setPassword("");
     setImageFile(null);
@@ -146,14 +191,35 @@ export default function AdministratorsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteAdmin = () => {
-    if (deletingId) {
-      setAdmins(admins.filter(a => a.id !== deletingId));
-      if (currentAdmins.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
+  const handleDeleteAdmin = async () => {
+    if (!deletingId) return;
+
+    try {
+      await deleteAdmin(deletingId);
+
+      setAdmins((prev) =>
+        prev.filter(
+          (admin) => admin.id !== deletingId,
+        ),
+      );
+
+      if (
+        currentAdmins.length === 1 &&
+        currentPage > 1
+      ) {
+        setCurrentPage((prev) => prev - 1);
       }
+
       setIsDeleteModalOpen(false);
       setDeletingId(null);
+
+    } catch (error: any) {
+      console.error(error);
+
+      alert(
+        error.message ||
+        "Не удалось удалить администратора",
+      );
     }
   };
 
@@ -166,65 +232,91 @@ export default function AdministratorsPage() {
     }
   };
 
-  const handleSaveAdmin = () => {
-    let hasError = false;
+  const handleSaveAdmin = async () => {
+  let hasError = false;
 
-    if (!name.trim()) {
-      setNameError(true);
-      hasError = true;
-    } else {
-      setNameError(false);
+  if (!name.trim()) {
+    setNameError(true);
+    hasError = true;
+  } else {
+    setNameError(false);
+  }
+
+  if (phone.length < 13) {
+    setPhoneError(true);
+    hasError = true;
+  } else {
+    setPhoneError(false);
+  }
+
+  if (
+    (!editingId && password.length < 8) ||
+    (editingId && password && password.length < 8)
+  ) {
+    setPasswordError(true);
+    hasError = true;
+  } else {
+    setPasswordError(false);
+  }
+
+  if (hasError) return;
+
+  try {
+    const formData = new FormData();
+
+    formData.append("name", name);
+    formData.append("phone", phone);
+
+    if (password) {
+      formData.append("password", password);
     }
-    
-    if (phone.length < 13) {
-      setPhoneError(true);
-      hasError = true;
-    } else {
-      setPhoneError(false);
+
+    if (imageFile) {
+      formData.append("file", imageFile);
     }
-    
-    if (!editingId && password.length < 8) {
-      setPasswordError(true);
-      hasError = true;
-    } else if (editingId && password && password.length < 8) {
-      setPasswordError(true);
-      hasError = true;
-    } else {
-      setPasswordError(false);
-    }
-    
-    if (hasError) return;
-    
+
     if (editingId) {
-      setAdmins(admins.map(admin => {
-        if (admin.id === editingId) {
-          return {
-            ...admin,
-            name,
-            phone,
-            image: imagePreview || admin.image
-          };
-        }
-        return admin;
-      }));
+      const updatedAdmin = await updateAdmin(
+        editingId,
+        formData,
+      );
+
+      setAdmins((prev) =>
+        prev.map((admin) =>
+          admin.id === editingId
+            ? updatedAdmin
+            : admin,
+        ),
+      );
     } else {
-      const newAdmin = {
-        id: Math.floor(1000 + Math.random() * 9000),
-        image: imagePreview || `https://i.pravatar.cc/150?u=${Date.now()}`,
-        name: name,
-        phone: phone,
-        date: new Date().toISOString().replace('T', ' ').slice(0, 19),
-        role: "Administrator",
-        status: "Faol"
-      };
-      setAdmins([newAdmin, ...admins]);
-    }
-    
-    setIsModalOpen(false);
-    if (!editingId) {
+      const newAdmin = await createAdmin(formData);
+
+      setAdmins((prev) => [
+        newAdmin,
+        ...prev,
+      ]);
+
       setIsSuccessModalOpen(true);
     }
-  };
+
+    setIsModalOpen(false);
+
+    setEditingId(null);
+    setName("");
+    setPhone("+998");
+    setPassword("");
+    setImageFile(null);
+    setImagePreview(null);
+
+  } catch (error: any) {
+    console.error(error);
+
+    alert(
+      error.message ||
+      "Произошла ошибка",
+    );
+  }
+};
 
   return (
     <>
@@ -297,14 +389,14 @@ export default function AdministratorsPage() {
                       <td className="px-5 py-4 border border-gray-200">
                         <div 
                           className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
-                          onClick={() => { setViewingAdmin(admin); setIsViewModalOpen(true); }}
+                          onClick={() => { setViewingAdmin(admin); setIsViewModalOpen(true);}}
                         >
-                          <img src={admin.image} alt={admin.name} className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200" />
-                          <span className="font-semibold text-[13px]">{admin.name}</span>
+                          <img src={getAvatarUrl(admin.file)} alt={admin.fullName} className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200" />
+                          <span className="font-semibold text-[13px]">{admin.fullName}</span>
                         </div>
                       </td>
                       <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">{admin.phone}</td>
-                      <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">{admin.date}</td>
+                      <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">{formatDate(admin.created_at)}</td>
                       <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">{admin.role}</td>
                       <td className="px-5 py-4 border border-gray-200">
                         <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
@@ -586,9 +678,9 @@ export default function AdministratorsPage() {
             <div className="p-6">
               {/* Profile Header */}
               <div className="flex items-center gap-4 mb-8">
-                <img src={viewingAdmin.image} alt={viewingAdmin.name} className="w-[80px] h-[80px] rounded-full object-cover border border-gray-200" />
+                <img src={viewingAdmin.image} alt={viewingAdmin.fullName} className="w-[80px] h-[80px] rounded-full object-cover border border-gray-200" />
                 <div>
-                  <h3 className="text-[20px] font-bold text-gray-900 mb-1">{viewingAdmin.name}</h3>
+                  <h3 className="text-[20px] font-bold text-gray-900 mb-1">{viewingAdmin.fullName}</h3>
                   <p className="text-gray-500 text-[14px]">Administrator</p>
                 </div>
               </div>
