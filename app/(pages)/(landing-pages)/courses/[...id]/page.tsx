@@ -3,28 +3,33 @@ import { CourseHero } from "@/app/components/course-details/course-hero";
 import { CourseSidebar } from "@/app/components/course-details/course-sidebar";
 import { AccordionList } from "@/app/components/course-details/accordion-list";
 import { CommentsSection } from "@/app/components/course-details/comments-section";
-import { coursesData } from "@/app/data/courses";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://63.180.181.4:8080";
 
 interface PageProps {
   params: Promise<{ id?: string[] }>;
 }
 
 async function getCourseData(id: string) {
-  const numericId = parseInt(id, 10);
-  const foundCourse = coursesData.find((c) => c.id === numericId);
-
-  if (!foundCourse) return null;
-
-  return {
-    title: foundCourse.title,
-    description: foundCourse.desc,
-    price: parseInt(foundCourse.price.replace(/\s/g, ""), 10),
-    duration: foundCourse.duration || "10 soat",
-    studentsCount: foundCourse.studentsCount || 0,
-    level: foundCourse.level || "Beginner",
-    cover: foundCourse.cover,
-    coverImg: foundCourse.coverImg,
-  };
+  try {
+    const res = await fetch(`${API_URL}/api/v1/courses/${id}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    
+    return {
+      title: data.name,
+      description: data.description,
+      price: parseInt(data.price.toString().replace(/\s/g, ""), 10) || parseInt(data.price, 10) || 0,
+      duration: "10 soat",
+      studentsCount: 0,
+      level: data.level || "Beginner",
+      cover: "bg-gradient-to-br from-indigo-600 to-violet-700",
+      coverImg: data.banner ? `${API_URL}${data.banner.startsWith('/') ? '' : '/'}${data.banner}` : undefined,
+      introVideo: data.introVideo ? `${API_URL}${data.introVideo.startsWith('/') ? '' : '/'}${data.introVideo}` : undefined,
+    };
+  } catch (error) {
+    console.error("Failed to fetch course details:", error);
+    return null;
+  }
 }
 
 export default async function CoursePage({ params }: PageProps) {
@@ -63,11 +68,12 @@ export default async function CoursePage({ params }: PageProps) {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="top-6 -mt-71.75 relative z-10">
+          <div className="-mt-64 relative z-10">
             <CourseSidebar
               price={course.price}
               cover={course.cover}
               coverImg={course.coverImg}
+              introVideo={course.introVideo}
               title={course.title}
             />
           </div>

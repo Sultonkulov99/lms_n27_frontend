@@ -1,13 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Topbar from "./components/Topbar";
 import Sidebar from "./components/Sidebar";
 import CourseCard from "./components/CourseCard";
-import oybeksafarov from "../../../assets/oybeksafarov.png";
+import { studentService, type MyCourse } from "@/app/services/student.service";
 
 export default function StudentMain() {
+  const [courses, setCourses] = useState<MyCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [likedCourses, setLikedCourses] = useState<Set<string>>(new Set());
+
+  // Fetch courses from backend
+  useEffect(() => {
+    async function fetchCourses() {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await studentService.getMyCourses();
+        setCourses(data);
+      } catch (err: any) {
+        console.error("Error fetching courses:", err);
+        setError(err.response?.data?.message || "Kurslarni yuklashda xatolik yuz berdi");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCourses();
+  }, []);
 
   const handleLike = (courseId: string) => {
     setLikedCourses((prev) => {
@@ -33,19 +55,47 @@ export default function StudentMain() {
             Mening kurslarim
           </h1>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <CourseCard
-              id="ui-ux-dizayn"
-              title="UI/UX Dizayn"
-              instructor="Oybek Safarov"
-              instructorAvatar={oybeksafarov.src}
-              thumbnail="/bolakay.png"
-              progress={40}
-              category="UI/UX Dizayn"
-              isLiked={likedCourses.has("ui-ux-dizayn")}
-              onLike={() => handleLike("ui-ux-dizayn")}
-            />
-          </div>
+          {/* Loading state */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4F7FFF]"></div>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+              <p className="font-medium">Xatolik:</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!loading && !error && courses.length === 0 && (
+            <div className="bg-white rounded-lg p-8 text-center">
+              <p className="text-gray-500">Sizda hali kurslar mavjud emas</p>
+            </div>
+          )}
+
+          {/* Courses grid */}
+          {!loading && !error && courses.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {courses.map((item) => (
+                <CourseCard
+                  key={item.course.id}
+                  id={item.course.id}
+                  title={item.course.title}
+                  instructor={item.course.category?.name || "Mentor"}
+                  instructorAvatar="/oybeksafarov.png"
+                  thumbnail={item.course.thumbnail || "/bolakay.png"}
+                  progress={item.progress || 0}
+                  category={item.course.category?.name || "Kurs"}
+                  isLiked={likedCourses.has(item.course.id)}
+                  onLike={() => handleLike(item.course.id)}
+                />
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </div>

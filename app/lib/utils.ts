@@ -1,41 +1,52 @@
 import axios from "axios";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const baseAPI = axios.create({
-  baseURL: `${API_URL}/api/v1`,
-  // headers: {
-  //   Authorization: `Bearer ${ getToken()}`,
-  // },
+  baseURL: API_URL, // Already includes /api/v1 in .env.local
 });
 
-async function getToken() {
-  const token = await cookieStore.get("accessToken");
-
-  return token?.value;
+function getTokenFromCookies(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  const cookies = document.cookie.split(';');
+  const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
+  
+  if (tokenCookie) {
+    return tokenCookie.split('=')[1];
+  }
+  
+  return null;
 }
 
-// // Add a request interceptor
-// axios.interceptors.request.use(
-//   function (config) {
-//     // Do something before request is sent
-//     return config;
-//   },
-//   function (error) {
-//     // Do something with request error
-//     return Promise.reject(error);
-//   }
-// );
+baseAPI.interceptors.request.use(
+  function (config) {
+    const token = getTokenFromCookies();
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  function (error) {
+    return Promise.reject(error);
+  }
+);
 
-// // Add a response interceptor
-// axios.interceptors.response.use(
-//   function (response) {
-//     // Any status code that lie within the range of 2xx cause this function to trigger
-//     // Do something with response data
-//     return response;
-//   },
-//   function (error) {
-//     // Any status codes that falls outside the range of 2xx cause this function to trigger
-//     // Do something with response error
-//     return Promise.reject(error);
-//   }
-// );
+baseAPI.interceptors.response.use(
+  function (response) {
+    return response;
+  },
+  function (error) {
+    // Handle 401 unauthorized errors
+    if (error.response?.status === 401) {
+      // Redirect to login if needed
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
