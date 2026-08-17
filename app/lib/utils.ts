@@ -6,22 +6,16 @@ export const baseAPI = axios.create({
   baseURL: API_URL + '/api/v1', // Already includes /api/v1 in .env.local
 });
 
-function getTokenFromCookies(): string | null {
+// Helper function to get token from localStorage (client-side only)
+function getTokenFromStorage(): string | null {
   if (typeof window === 'undefined') return null;
   
-  const cookies = document.cookie.split(';');
-  const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('accessToken='));
-  
-  if (tokenCookie) {
-    return tokenCookie.split('=')[1];
-  }
-  
-  return null;
+  return localStorage.getItem('accessToken');
 }
 
 baseAPI.interceptors.request.use(
   function (config) {
-    const token = getTokenFromCookies();
+    const token = getTokenFromStorage();
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -41,8 +35,9 @@ baseAPI.interceptors.response.use(
   function (error) {
     // Handle 401 unauthorized errors
     if (error.response?.status === 401) {
-      // Redirect to login if needed
+      // Clear invalid token and redirect to login
       if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
         window.location.href = '/login';
       }
     }
