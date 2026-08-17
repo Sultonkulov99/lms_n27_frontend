@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
+import { useLanguage } from "../../../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface Mentor {
   id: string;
@@ -67,37 +67,15 @@ export default function Mentors() {
   ];
 
   return (
-    <section id="mentors" className="py-16 lg:py-20 bg-white overflow-hidden">
+    <section id="mentors" className="py-16 lg:py-20 bg-white dark:bg-[#0A0E17] overflow-hidden transition-colors duration-200">
       <div className="container mb-12">
         {/* Title */}
-        <h2
-          style={{
-            fontFamily: "Inter, sans-serif",
-            fontWeight: 700,
-            fontSize: "48px",
-            lineHeight: "60px",
-            letterSpacing: "0%",
-            textAlign: "center",
-            color: "#1C232C",
-            marginBottom: "16px",
-          }}
-        >
+        <h2 className="text-center text-[#1C232C] dark:text-white font-bold text-[48px] leading-[60px] mb-4 transition-colors duration-200">
           {t("mentors.title")}
         </h2>
 
         {/* Subtitle */}
-        <p
-          style={{
-            fontFamily: "Inter, sans-serif",
-            fontWeight: 500,
-            fontSize: "20px",
-            lineHeight: "30px",
-            letterSpacing: "0%",
-            textAlign: "center",
-            color: "#636C79",
-            margin: 0,
-          }}
-        >
+        <p className="text-center text-[#636C79] dark:text-[#94A3B8] font-medium text-[20px] leading-[30px] m-0 transition-colors duration-200">
           {t("mentors.subtitle")}
         </p>
       </div>

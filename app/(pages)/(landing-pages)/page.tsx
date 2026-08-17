@@ -7,7 +7,7 @@ import Testimonials from "../../components/landing/home/Testimonials";
 
 export default function Home() {
   return (
-    <main className="bg-white text-slate-900 selection:bg-blue-600 selection:text-white relative">
+    <main className="bg-white dark:bg-[#0A0E17] text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white relative transition-colors duration-200">
       <Hero />
       <PopularCourses />
       <JoinSection />

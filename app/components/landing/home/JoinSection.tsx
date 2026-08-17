@@ -1,6 +1,6 @@
 "use client";
 
-import { useLanguage } from "../context/LanguageContext";
+import { useLanguage } from "../../../context/LanguageContext";
 
 const btnStyle: React.CSSProperties = {
   display: "inline-flex",
@@ -32,16 +32,16 @@ export default function JoinSection() {
   const { t } = useLanguage();
 
   return (
-    <section id="join-us" className="bg-[#FAFAFA] py-[60px]">
+    <section id="join-us" className="bg-[#FAFAFA] dark:bg-[#0B0F19] py-[60px] transition-colors duration-200">
       <div className="container">
 
         {/* Section Header */}
-        <h2 className="font-bold text-[32px] leading-none tracking-normal text-[#0F172A] mb-[23px]">
+        <h2 className="font-bold text-[32px] leading-none tracking-normal text-[#0F172A] dark:text-white mb-[23px]">
           {t("join.title")}
         </h2>
 
         {/* Subtitle */}
-        <p className="font-medium text-[15px] leading-none tracking-normal text-[#636C79] mb-[23px]">
+        <p className="font-medium text-[15px] leading-none tracking-normal text-[#636C79] dark:text-[#94A3B8] mb-[23px]">
           {t("join.subtitle")}
         </p>
 
@@ -49,12 +49,12 @@ export default function JoinSection() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[23px]">
 
           {/* Card 1: Student */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col gap-4">
-            <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] m-0">
+          <div className="bg-white dark:bg-[#151C28] p-5 rounded-lg border border-slate-200 dark:border-[#1E293B] flex flex-col gap-4 transition-colors duration-200">
+            <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] dark:text-white m-0">
               {t("join.studentTitle")}
             </h3>
 
-            <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] m-0">
+            <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] dark:text-[#94A3B8] m-0">
               {t("join.studentDesc")}
             </p>
 
@@ -64,12 +64,12 @@ export default function JoinSection() {
           </div>
 
           {/* Card 2: Mentor */}
-          <div className="bg-white p-5 rounded-lg border border-slate-200 flex flex-col gap-4">
-            <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] m-0">
+          <div className="bg-white dark:bg-[#151C28] p-5 rounded-lg border border-slate-200 dark:border-[#1E293B] flex flex-col gap-4 transition-colors duration-200">
+            <h3 className="font-bold text-[24px] leading-none tracking-normal text-[#0F172A] dark:text-white m-0">
               {t("join.mentorTitle")}
             </h3>
 
-            <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] m-0">
+            <p className="font-medium text-[15px] leading-6 tracking-normal text-[#636C79] dark:text-[#94A3B8] m-0">
               {t("join.mentorDesc")}
             </p>
 

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Play, Pause, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useLanguage } from "../context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
+import { useLanguage } from "@/app/context/LanguageContext"; // Path to’g’riligiga ishonch hosil qiling
 
 interface VideoModalProps {
   onClose: () => void;
@@ -111,7 +111,7 @@ export default function FinalCTA() {
   const [showVideo, setShowVideo] = useState(false);
 
   return (
-    <div className="bg-white py-16 text-center border-t border-slate-100">
+    <div className="bg-white dark:bg-[#0A0E17] py-16 text-center border-t border-slate-100 dark:border-[#1E293B] transition-colors duration-200">
       <div className="container max-w-4xl mx-auto flex flex-col items-center gap-6">
         {/* ── Brand Logo ────────────────────────────────────────────── */}
         <div className="flex items-center justify-center mb-2">
@@ -125,12 +125,12 @@ export default function FinalCTA() {
         </div>
 
         {/* ── Heading ────────────────────────────────────────────────────── */}
-        <h2 className="font-bold text-[32px] leading-[120%] text-[#0F172A] m-0">
+        <h2 className="font-bold text-[32px] leading-[120%] text-[#0F172A] dark:text-white m-0">
           {t("finalCta.title")}
         </h2>
 
         {/* ── Subtitle ───────────────────────────────────────────────────── */}
-        <p className="font-medium text-[16px] leading-[140%] text-[#636C79] m-0">
+        <p className="font-medium text-[16px] leading-[140%] text-[#636C79] dark:text-[#94A3B8] m-0">
           {t("finalCta.subtitle")}
         </p>
 
@@ -140,7 +140,7 @@ export default function FinalCTA() {
           <button
             onClick={() => setShowVideo(true)}
             type="button"
-            className="inline-flex items-center justify-center gap-2 w-[214px] h-[48px] rounded-[8px] border border-slate-200 bg-white text-[#1C232C] hover:bg-slate-50 font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
+            className="inline-flex items-center justify-center gap-2 w-[214px] h-[48px] rounded-[8px] border border-slate-200 dark:border-[#1E293B] bg-white dark:bg-[#151C28] text-[#1C232C] dark:text-white hover:bg-slate-50 dark:hover:bg-[#1E293B] font-medium text-[15px] leading-none no-underline cursor-pointer transition-colors box-border"
           >
             <svg
               width="18"
