@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-
+ 
+import avatar from "@/app/assets/bekzodsafarov.jpg"
 interface CourseCardProps {
   id: string;
   title: string;
@@ -49,11 +50,9 @@ export default function CourseCard({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Image
-              src={instructorAvatar}
+              src={avatar}
               alt={instructor}
-              width={28}
-              height={28}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover h-[25px] w-[25px]"
             />
             <span className="text-xs font-medium text-[#64748B]">{instructor}</span>
           </div>

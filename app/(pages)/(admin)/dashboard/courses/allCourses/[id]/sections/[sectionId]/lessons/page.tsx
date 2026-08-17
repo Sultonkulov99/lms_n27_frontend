@@ -70,7 +70,7 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
     
     return [
       { 
-        id: parseInt(sectionId) * 10 + 1, 
+        id: parseInt(sectionId) * 1, 
         title: initialTitle, 
         description: initialDesc,
         video: { name: "video_2026-08-10_11-15-10.mp4", size: "15.4 MB" }
@@ -135,6 +135,20 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
     setLessons(lessons.filter(l => l.id !== deletingLessonId));
     setDeletingLessonId(null);
     setIsDeleteModalOpen(false);
+  };
+
+  const handleDownloadXLS = () => {
+    const headers = ["ID", "Biriktirilgan kurs", "Dars mavzusi", "Dars haqida"];
+    const rows = lessons.map(l => [l.id, courseTitle, l.title, l.description].join(","));
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "darslar.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -440,7 +454,7 @@ export default function LessonsPage({ params }: { params: Promise<{ id: string; 
                 setItemsPerPage(limit);
                 setCurrentPage(1);
               }}
-              onDownloadXLS={() => {}}
+              onDownloadXLS={handleDownloadXLS}
             />
           </div>
         </div>
