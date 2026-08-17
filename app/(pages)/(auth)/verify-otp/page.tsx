@@ -132,8 +132,12 @@ export default function VerificationPage() {
               <span>
                 Tasdiqlash kodi kiritilgan telefon raqamining telegram akkaunti
                 orqali telegram bot:{" "}
-                <a href="https://t.me/lms_n27_bot" className="text-blue-600">
-                  @lms_n27_bot
+                <a
+                  href="https://t.me/Lms_n27_otpbot"
+                  target="_blank"
+                  className="text-gray-600"
+                >
+                  @Lms_n27_otpbot
                 </a>{" "}
                 dan tasdiqlash kodini oling!
               </span>
