@@ -1,14 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
-  ShieldCheck,
-  Bell,
-  Settings,
   ChevronDown,
-  ChevronRight,
-  LogOut,
-  User,
   PlusCircle,
   X,
   Eye,
@@ -25,10 +19,15 @@ import {
   Code,
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
+import {
+  Assistent,
+  createAssistent,
+  deleteAssistent,
+  getAssistents,
+  updateAssistent,
+} from "@/app/lib/api/assistents";
 
 export default function AssistentsPage() {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -46,8 +45,8 @@ export default function AssistentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Form states
-  const [name, setName] = useState("");
-  const [nameError, setNameError] = useState(false);
+  const [fullName, setName] = useState("");
+  const [fullNameError, setNameError] = useState(false);
   const [phone, setPhone] = useState("+998");
   const [phoneError, setPhoneError] = useState(false);
   const [course, setCourse] = useState("");
@@ -58,131 +57,50 @@ export default function AssistentsPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  const [assistents, setAssistents] = useState([
-    {
-      id: 2458,
-      image: "https://i.pravatar.cc/150?u=2458",
-      name: "Istamov Xurshid Hazratqul o’g’li",
-      course: "UI/UX Dizayn",
-      phone: "+998999999999",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 3652,
-      image: "https://i.pravatar.cc/150?u=3652",
-      name: "Istamov Xurshid Hazratqul o’g’li",
-      course: "Frontend",
-      phone: "+998999999999",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4123,
-      image: "https://i.pravatar.cc/150?u=4123",
-      name: "Alimov Jasur",
-      course: "Backend",
-      phone: "+998901234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4124,
-      image: "https://i.pravatar.cc/150?u=4124",
-      name: "Sotvoldiyev Bobur",
-      course: "Mobil",
-      phone: "+998911234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4125,
-      image: "https://i.pravatar.cc/150?u=4125",
-      name: "Qodirova Zebo",
-      course: "SMM",
-      phone: "+998931234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4126,
-      image: "https://i.pravatar.cc/150?u=4126",
-      name: "Yusupov Doniyor",
-      course: "Grafik dizayn",
-      phone: "+998941234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4127,
-      image: "https://i.pravatar.cc/150?u=4127",
-      name: "Rustamova Kamola",
-      course: "Grafik dizayn",
-      phone: "+998951234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4128,
-      image: "https://i.pravatar.cc/150?u=4128",
-      name: "Rahmonov Sardor",
-      course: "SMM",
-      phone: "+998971234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4129,
-      image: "https://i.pravatar.cc/150?u=4129",
-      name: "Karimov Sherzod",
-      course: "Backend",
-      phone: "+998991234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4130,
-      image: "https://i.pravatar.cc/150?u=4130",
-      name: "Toxirov Murod",
-      course: "Frontend",
-      phone: "+998881234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-    {
-      id: 4131,
-      image: "https://i.pravatar.cc/150?u=4131",
-      name: "Nazarova Madina (Page 2)",
-      course: "Frontend",
-      phone: "+998331234567",
-      role: "Assistentlar",
-      date: "2023-04-09 14:21:44",
-      status: "Faol",
-    },
-  ]);
+  const [assistents, setAssistents] = useState<Assistent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    loadAssistents();
+  }, []);
+
+  const loadAssistents = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const data = await getAssistents();
+
+      setAssistents(data);
+    } catch (error: any) {
+      console.error(error);
+      setError(error.message || "Yuklanmadi");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Derived state
   const filteredAssistents = useMemo(() => {
     return assistents.filter(
       (assistent) =>
-        assistent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        assistent.phone.includes(searchQuery),
+        (assistent.fullName || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        assistent.phone.includes(searchQuery) ||
+        (assistent.course || "")
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
     );
   }, [assistents, searchQuery]);
 
   const totalPages = Math.ceil(filteredAssistents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, filteredAssistents.length);
+  const endIndex = Math.min(
+    startIndex + itemsPerPage,
+    filteredAssistents.length,
+  );
   const currentAssistents = filteredAssistents.slice(startIndex, endIndex);
 
   const handleDownloadXLS = () => {
@@ -195,7 +113,7 @@ export default function AssistentsPage() {
       "Holati",
     ];
     const rows = assistents.map((a) =>
-      [a.id, a.name, a.phone, a.role, a.status].join(","),
+      [a.id, a.fullName, a.phone, a.created_at, a.status].join(","),
     );
     const csvContent =
       "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
@@ -207,6 +125,34 @@ export default function AssistentsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+
+    return date
+      .toLocaleString("sv-SE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+      .replace(",", "");
+  };
+
+  const getAvatarUrl = (file?: string) => {
+    if (!file) {
+      return "/default-avatar.png";
+    }
+
+    if (file.startsWith("http")) {
+      return file;
+    }
+
+    return `${"http://63.180.181.4:8080"}/uploads/${file}`;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -243,12 +189,12 @@ export default function AssistentsPage() {
 
   const openEditModal = (assistent: any) => {
     setEditingId(assistent.id);
-    setName(assistent.name);
+    setName(assistent.fullName);
     setPhone(assistent.phone);
     setCourse(assistent.course || "");
     setPassword("");
     setImageFile(null);
-    setImagePreview(assistent.image); // Show current image in edit mode
+    setImagePreview(getAvatarUrl(assistent.file)); // Show current image in edit mode
     setNameError(false);
     setPhoneError(false);
     setCourseError(false);
@@ -262,14 +208,26 @@ export default function AssistentsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteAssistent = () => {
-    if (deletingId) {
-      setAssistents(assistents.filter((a) => a.id !== deletingId));
+  const handleDeleteAssistent = async () => {
+    if (!deletingId) return;
+
+    try {
+      await deleteAssistent(deletingId);
+
+      setAssistents((prev) =>
+        prev.filter((assistent) => assistent.id !== deletingId),
+      );
+
       if (currentAssistents.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
+        setCurrentPage((prev) => prev - 1);
       }
+
       setIsDeleteModalOpen(false);
       setDeletingId(null);
+    } catch (error: any) {
+      console.error(error);
+
+      alert(error.message || "Assistent o‘chirilmadi");
     }
   };
 
@@ -282,17 +240,10 @@ export default function AssistentsPage() {
     }
   };
 
-  const handleSaveAssistent = () => {
+  const handleSaveAssistent = async () => {
     let hasError = false;
 
-    if (!imagePreview) {
-      setImageError(true);
-      hasError = true;
-    } else {
-      setImageError(false);
-    }
-
-    if (!name.trim()) {
+    if (!fullName.trim()) {
       setNameError(true);
       hasError = true;
     } else {
@@ -306,17 +257,10 @@ export default function AssistentsPage() {
       setPhoneError(false);
     }
 
-    if (!course) {
-      setCourseError(true);
-      hasError = true;
-    } else {
-      setCourseError(false);
-    }
-
-    if (!editingId && password.length < 8) {
-      setPasswordError(true);
-      hasError = true;
-    } else if (editingId && password && password.length < 8) {
+    if (
+      (!editingId && password.length < 8) ||
+      (editingId && password && password.length < 8)
+    ) {
       setPasswordError(true);
       hasError = true;
     } else {
@@ -325,38 +269,40 @@ export default function AssistentsPage() {
 
     if (hasError) return;
 
-    if (editingId) {
-      setAssistents(
-        assistents.map((assistent) => {
-          if (assistent.id === editingId) {
-            return {
-              ...assistent,
-              name,
-              phone,
-              course,
-              image: imagePreview || assistent.image,
-            };
-          }
-          return assistent;
-        }),
-      );
-    } else {
-      const newAssistent = {
-        id: Math.floor(1000 + Math.random() * 9000),
-        image: imagePreview || `https://i.pravatar.cc/150?u=${Date.now()}`,
-        name: name,
-        course: course,
-        phone: phone,
-        role: "Assistentlar",
-        date: new Date().toISOString().replace("T", " ").substring(0, 19),
-        status: "Faol",
-      };
-      setAssistents([newAssistent, ...assistents]);
-    }
+    try {
+      const formData = new FormData();
 
-    setIsModalOpen(false);
-    if (!editingId) {
+      formData.append("fullName", fullName);
+      formData.append("phone", phone);
+
+      if (password) {
+        formData.append("password", password);
+      }
+
+      if (imageFile) {
+        formData.append("file", imageFile);
+      }
+
+      if (editingId) {
+        await updateAssistent(editingId, formData);
+      } else {
+        await createAssistent(formData);
+      }
+
+      await loadAssistents();
+
+      setIsModalOpen(false);
       setIsSuccessModalOpen(true);
+
+      setEditingId(null);
+      setName("");
+      setPhone("+998");
+      setPassword("");
+      setImageFile(null);
+      setImagePreview(null);
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "Xatolik yuz berdi");
     }
   };
 
@@ -387,7 +333,7 @@ export default function AssistentsPage() {
 
         {/* Search Bar */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="relative flex-1 max-w-[400px]">
+          <div className="relative flex-1 max-w-100">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               size={18}
@@ -418,7 +364,7 @@ export default function AssistentsPage() {
         {/* Table (Excel Style Borders) */}
         <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-gray-200 min-w-[1000px]">
+            <table className="w-full text-left border-collapse border border-gray-200 min-w-250">
               <thead>
                 <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
                   <th className="px-5 py-4 w-16 border border-gray-200">ID</th>
@@ -480,12 +426,12 @@ export default function AssistentsPage() {
                         }}
                       >
                         <img
-                          src={assistent.image}
-                          alt={assistent.name}
+                          src={getAvatarUrl(assistent.file)}
+                          alt={assistent.fullName}
                           className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
                         />
                         <span className="font-semibold text-[13px]">
-                          {assistent.name}
+                          {assistent.fullName}
                         </span>
                       </div>
                     </td>
@@ -496,7 +442,7 @@ export default function AssistentsPage() {
                       {assistent.phone}
                     </td>
                     <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                      {assistent.date}
+                      {formatDate(assistent.created_at)}
                     </td>
                     <td className="px-5 py-4 border border-gray-200">
                       <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
@@ -555,7 +501,7 @@ export default function AssistentsPage() {
       {/* Add/Edit Modal Overlay */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[10px] p-4">
-          <div className="bg-white relative flex flex-col w-full max-w-[673px] max-h-[95vh] rounded-[10px] p-[16px_24px] overflow-hidden">
+          <div className="bg-white relative flex flex-col w-full max-w-168.25 max-h-[95vh] rounded-[10px] p-[16px_24px] overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between mb-4 shrink-0">
               <h2 className="text-[20px] font-bold text-gray-900">
@@ -629,15 +575,15 @@ export default function AssistentsPage() {
                 </label>
                 <input
                   type="text"
-                  value={name}
+                  value={fullName}
                   onChange={(e) => {
                     setName(e.target.value);
-                    if (nameError) setNameError(false);
+                    if (fullNameError) setNameError(false);
                   }}
                   placeholder="Kiriting"
-                  className={`w-full px-4 h-[48px] rounded-lg border text-[14px] outline-none transition-colors ${nameError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f] placeholder:text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
+                  className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors ${fullNameError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f] placeholder:text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
                 />
-                {nameError && (
+                {fullNameError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
                     To’liq kiritilmadi
                   </p>
@@ -653,7 +599,7 @@ export default function AssistentsPage() {
                   type="text"
                   value={phone}
                   onChange={handlePhoneChange}
-                  className={`w-full px-4 h-[48px] rounded-lg border text-[14px] outline-none transition-colors tracking-wide ${phoneError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
+                  className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors tracking-wide ${phoneError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
                 />
                 {phoneError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
@@ -674,7 +620,7 @@ export default function AssistentsPage() {
                       setCourse(e.target.value);
                       if (courseError) setCourseError(false);
                     }}
-                    className={`w-full px-4 h-[48px] rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer ${
+                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer ${
                       course ? "text-gray-900" : "text-gray-400"
                     } ${
                       courseError
@@ -714,7 +660,7 @@ export default function AssistentsPage() {
                     </span>
                   )}
                 </label>
-                <div className="relative w-full h-[48px]">
+                <div className="relative w-full h-12">
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
@@ -765,8 +711,8 @@ export default function AssistentsPage() {
 
       {/* Custom Delete Confirmation Modal */}
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]">
-          <div className="bg-white rounded-xl shadow-xl p-6 w-[400px] animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
               O’chirishni tasdiqlash
             </h3>
@@ -794,19 +740,19 @@ export default function AssistentsPage() {
           </div>
         </div>
       )}
-    
-    {/* Success Modal */}
+
+      {/* Success Modal */}
       {isSuccessModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs"
           onClick={() => setIsSuccessModalOpen(false)}
         >
           <div
-            className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center animate-in fade-in zoom-in duration-200"
+            className="bg-white rounded-[20px] shadow-xl p-8 w-100 flex flex-col items-center animate-in fade-in zoom-in duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-[84px] h-[84px] rounded-full bg-[#E6F4EA] flex items-center justify-center mb-6">
-              <div className="w-[60px] h-[60px] rounded-full bg-[#137333] flex items-center justify-center text-white">
+            <div className="w-21 h-21 rounded-full bg-[#E6F4EA] flex items-center justify-center mb-6">
+              <div className="w-15 h-15 rounded-full bg-[#137333] flex items-center justify-center text-white">
                 <Check size={32} strokeWidth={3} />
               </div>
             </div>
@@ -826,11 +772,11 @@ export default function AssistentsPage() {
       {/* View Assistent Modal */}
       {isViewModalOpen && viewingAssistent && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px] p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs p-4"
           onClick={() => setIsViewModalOpen(false)}
         >
           <div
-            className="bg-white rounded-[16px] shadow-xl w-full max-w-[600px] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200 relative"
+            className="bg-white rounded-2xl shadow-xl w-full max-w-150 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200 relative"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
@@ -849,13 +795,13 @@ export default function AssistentsPage() {
               {/* Profile Header */}
               <div className="flex items-center gap-4 mb-8">
                 <img
-                  src={viewingAssistent.image}
-                  alt={viewingAssistent.name}
-                  className="w-[80px] h-[80px] rounded-full object-cover border border-gray-200"
+                  src={getAvatarUrl(viewingAssistent.file)}
+                  alt={viewingAssistent.fullName}
+                  className="w-20 h-20 rounded-full object-cover border border-gray-200"
                 />
                 <div>
                   <h3 className="text-[20px] font-bold text-gray-900 mb-1">
-                    {viewingAssistent.name}
+                    {viewingAssistent.fullName}
                   </h3>
                   <p className="text-gray-500 text-[14px]">Assistent</p>
                 </div>
@@ -895,22 +841,22 @@ export default function AssistentsPage() {
               </h4>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
+                  <div className="w-10.5 h-10.5 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
                     <Globe size={20} />
                   </div>
-                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
+                  <div className="w-10.5 h-10.5 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
                     <Send size={20} />
                   </div>
-                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
+                  <div className="w-10.5 h-10.5 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
                     <Camera size={20} />
                   </div>
-                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
+                  <div className="w-10.5 h-10.5 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
                     <Briefcase size={20} />
                   </div>
-                  <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
+                  <div className="w-10.5 h-10.5 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors">
                     <Code size={20} />
                   </div>
-                  <div className="h-[42px] px-4 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[14px] hover:bg-gray-200 cursor-pointer transition-colors">
+                  <div className="h-10.5 px-4 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[14px] hover:bg-gray-200 cursor-pointer transition-colors">
                     Portfolio
                   </div>
                 </div>

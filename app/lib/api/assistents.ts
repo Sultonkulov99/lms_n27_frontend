@@ -1,13 +1,13 @@
 import axios from "axios";
 import { api } from "../api";
 
-export interface Admin {
+export interface Assistent {
   id: number;
   file?: string;
   fullName: string;
   phone: string;
   created_at: string;
-  role: string;
+  course: string
   status: "Faol" | "Nofaol";
 }
 
@@ -21,19 +21,19 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function getAdmins(): Promise<Admin[]> {
-  const { data } = await api.get("/user/admin");
-  return unwrapList<Admin>(data);
+export async function getAssistents(): Promise<Assistent[]> {
+  const { data } = await api.get("/course-assistant");
+  return unwrapList<Assistent>(data);
 }
 
-export async function createAdmin(formData: FormData) {
-  console.log("createAdmin FormData:");
+export async function createAssistent(formData: FormData) {
+  console.log("createAssistent FormData:");
   for (const [key, value] of formData.entries()) {
     console.log(" ", key, "=", value);
   }
 
   try {
-    const { data } = await api.post("/user/admin", formData);
+    const { data } = await api.post("/course-assistant", formData);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -43,14 +43,14 @@ export async function createAdmin(formData: FormData) {
   }
 }
 
-export async function updateAdmin(id: number, formData: FormData) {
-  console.log("updateAdmin FormData:");
+export async function updateAssistent(id: number, formData: FormData) {
+  console.log("updateAssistent FormData:");
   for (const [key, value] of formData.entries()) {
     console.log(" ", key, "=", value);
   }
 
   try {
-    const { data } = await api.patch(`/user/admin/${id}`, formData);
+    const { data } = await api.patch(`/course-assistant/${id}`, formData);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -60,7 +60,7 @@ export async function updateAdmin(id: number, formData: FormData) {
   }
 }
 
-export async function deleteAdmin(id: number) {
-  const { data } = await api.delete(`/user/admin/${id}`);
+export async function deleteAssistent(id: number) {
+  const { data } = await api.delete(`/course-assistant/${id}`);
   return data;
 }
