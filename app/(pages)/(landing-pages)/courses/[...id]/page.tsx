@@ -74,7 +74,7 @@ export default async function CoursePage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0A0E17] pb-12 transition-colors duration-200">
+    <div className="min-h-screen bg-gray-100 dark:bg-[#0A0E17] pb-12 transition-colors duration-200">
       <CourseHero
         title={course.title}
         description={course.description}
@@ -83,28 +83,16 @@ export default async function CoursePage({ params }: PageProps) {
         level={course.level}
         category={course.category}
         updatedAt={course.updatedAt}
+        introVideo={course.introVideo}
       />
 
       <div className="max-w-7xl mx-auto px-4 mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:col-span-1">
-        <div className="lg:col-span-2 space-y-8">
-          {course.introVideo && (
-            <section className="bg-white dark:bg-[#151C28] p-6 rounded-2xl border border-transparent dark:border-[#1E293B] transition-colors duration-200">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Kirish</h2>
-              <div className="aspect-video rounded-xl overflow-hidden relative bg-black">
-                <video
-                  src={course.introVideo}
-                  controls
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            </section>
-          )}
-
-          <section className="bg-white dark:bg-[#151C28] p-6 rounded-2xl border border-transparent dark:border-[#1E293B] transition-colors duration-200">
-            <AccordionList courseId={courseId} sections={course.sections} />
+        <div className="lg:col-span-2 space-y-6">
+          <section className="bg-white dark:bg-[#151C28] p-6 rounded-2xl shadow-sm border border-transparent dark:border-[#1E293B] transition-colors duration-200">
+            <AccordionList sections={course.sections} />
           </section>
 
-          <section className="bg-white dark:bg-[#151C28] p-6 rounded-2xl border border-transparent dark:border-[#1E293B] transition-colors duration-200">
+          <section className="bg-white dark:bg-[#151C28] p-6 rounded-2xl shadow-sm border border-transparent dark:border-[#1E293B] transition-colors duration-200">
             <CommentsSection courseId={courseId} />
           </section>
         </div>
