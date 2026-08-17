@@ -11,7 +11,7 @@ interface PageProps {
 
 async function getCourseData(id: string) {
   try {
-    const res = await fetch(`${API_URL}/api/v1/courses/${id}`, { cache: "no-store" });
+    const res = await fetch(`${API_URL}/courses/${id}`, { cache: "no-store" });
     if (!res.ok) return null;
     const data = await res.json();
     
@@ -70,6 +70,7 @@ export default async function CoursePage({ params }: PageProps) {
         <div className="lg:col-span-1">
           <div className="-mt-64 relative z-10">
             <CourseSidebar
+              id={Number(courseId)}
               price={course.price}
               cover={course.cover}
               coverImg={course.coverImg}

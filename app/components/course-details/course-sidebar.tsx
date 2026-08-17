@@ -4,8 +4,11 @@ import Image from "next/image";
 import { useState } from "react";
 import { PrecisionStars } from "./precision-stars";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { register } from "module";
+import Link from "next/link";
 
 interface CourseSidebarProps {
+  id: number;
   price: number;
   title: string;
   cover?: string;
@@ -14,6 +17,7 @@ interface CourseSidebarProps {
 }
 
 export function CourseSidebar({
+  id,
   price,
   title,
   cover,
@@ -78,9 +82,11 @@ export function CourseSidebar({
           <PrecisionStars rating={4.5} stars={5} />
         </div>
 
-        <button className="w-full bg-[#1C232C] dark:bg-blue-600 hover:bg-[#0f172a] dark:hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors text-sm">
-          {t("courseDetail.buyButton")}
-        </button>
+        <Link href={`/register?courseId=${id}`}>
+          <button className="w-full bg-[#1C232C] dark:bg-blue-600 hover:bg-[#0f172a] dark:hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors text-sm">
+            {t("courseDetail.buyButton")}
+          </button>
+        </Link>
       </div>
 
       <div className="bg-white dark:bg-[#151C28] p-4 rounded-2xl flex flex-col gap-4 border border-transparent dark:border-[#1E293B] transition-colors duration-200">
