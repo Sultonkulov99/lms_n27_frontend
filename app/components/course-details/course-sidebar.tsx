@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { PrecisionStars } from "./precision-stars";
 import { useLanguage } from "@/app/context/LanguageContext";
 
@@ -9,6 +10,7 @@ interface CourseSidebarProps {
   title: string;
   cover?: string;
   coverImg?: string;
+  introVideo?: string;
 }
 
 export function CourseSidebar({
@@ -16,8 +18,10 @@ export function CourseSidebar({
   title,
   cover,
   coverImg,
+  introVideo,
 }: CourseSidebarProps) {
   const { t } = useLanguage();
+  const [isPlaying, setIsPlaying] = useState(false);
   const formattedPrice = new Intl.NumberFormat("ru-RU").format(price);
 
   return (
@@ -26,18 +30,39 @@ export function CourseSidebar({
         <div
           className={`aspect-video rounded-xl relative overflow-hidden flex items-center justify-center ${cover || "bg-gray-100 dark:bg-[#0F172A]"}`}
         >
-          {coverImg ? (
-            <Image
-              src={coverImg}
-              alt={title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 350px"
-              priority
+          {isPlaying && introVideo ? (
+            <video
+              src={introVideo}
+              controls
+              autoPlay
+              className="w-full h-full object-cover z-20"
             />
-          ) : !cover ? (
-            <span className="text-xs text-gray-400 dark:text-gray-500">{t("courseDetail.noImage")}</span>
-          ) : null}
+          ) : (
+            <>
+              {coverImg ? (
+                <Image
+                  src={coverImg}
+                  alt={title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 350px"
+                  priority
+                />
+              ) : !cover ? (
+                <span className="text-xs text-gray-400 dark:text-gray-500">{t("courseDetail.noImage")}</span>
+              ) : null}
+              {introVideo && (
+                <button
+                  onClick={() => setIsPlaying(true)}
+                  className="absolute inset-0 m-auto w-12 h-12 bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/50 transition-colors z-10 cursor-pointer"
+                >
+                  <svg className="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </button>
+              )}
+            </>
+          )}
         </div>
 
         <div className="space-y-1">

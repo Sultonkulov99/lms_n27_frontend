@@ -26,18 +26,22 @@ export function CourseHero({
         <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
         <p className="text-lg opacity-90 max-w-3xl">{description}</p>
 
-        <div className="flex flex-wrap gap-6 pt-4 text-sm opacity-80">
+        <div className="flex flex-wrap gap-6 pt-2 text-sm opacity-90">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4" />
             <span>{duration}</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4" />
-            <span>{studentsCount} {t("courseDetail.viewsLabel")}</span>
+            <span>
+              {studentsCount} {t("courseDetail.viewsLabel")}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <BarChart className="w-4 h-4" />
-            <span>{t("courseDetail.levelLabel")} {level}</span>
+            <span>
+              {t("courseDetail.levelLabel")} {level}
+            </span>
           </div>
         </div>
       </div>
