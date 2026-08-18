@@ -1,40 +1,47 @@
 import axios from "axios";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export const baseAPI = axios.create({
-  baseURL: `/api/v1`,
-  // headers: {
-  //   Authorization: `Bearer ${ getToken()}`,
-  // },
+  baseURL: API_URL + '/api/v1', // Already includes /api/v1 in .env.local
 });
 
-async function getToken() {
-  const token = await cookieStore.get("accessToken");
-
-  return token?.value;
+// Helper function to get token from localStorage (client-side only)
+function getTokenFromStorage(): string | null {
+  if (typeof window === 'undefined') return null;
+  
+  return localStorage.getItem('accessToken');
 }
 
-// // Add a request interceptor
-// axios.interceptors.request.use(
-//   function (config) {
-//     // Do something before request is sent
-//     return config;
-//   },
-//   function (error) {
-//     // Do something with request error
-//     return Promise.reject(error);
-//   }
-// );
+baseAPI.interceptors.request.use(
+  function (config) {
+    const token = getTokenFromStorage();
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  function (error) {
+    return Promise.reject(error);
+  }
+);
 
-// // Add a response interceptor
-// axios.interceptors.response.use(
-//   function (response) {
-//     // Any status code that lie within the range of 2xx cause this function to trigger
-//     // Do something with response data
-//     return response;
-//   },
-//   function (error) {
-//     // Any status codes that falls outside the range of 2xx cause this function to trigger
-//     // Do something with response error
-//     return Promise.reject(error);
-//   }
-// );
+baseAPI.interceptors.response.use(
+  function (response) {
+    return response;
+  },
+  function (error) {
+    // Handle 401 unauthorized errors
+    if (error.response?.status === 401) {
+      // Clear invalid token and redirect to login
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('accessToken');
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);

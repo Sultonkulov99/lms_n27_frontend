@@ -20,12 +20,20 @@ import {
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 import {
-  Assistent,
-  createAssistent,
-  deleteAssistent,
-  getAssistents,
-  updateAssistent,
-} from "@/app/lib/api/assistents";
+  Assistant,
+  getAssistants,
+  createAssistant,
+  updateAssistant,
+  deleteAssistant,
+} from "@/app/lib/api/assistants";
+import {
+  CourseAssistantLink,
+  getCourseAssistants,
+  createCourseAssistant,
+  updateCourseAssistant,
+  deleteCourseAssistant,
+} from "@/app/lib/api/course-assistant";
+import { Course, getCourses } from "@/app/lib/api/courses";
 
 export default function AssistentsPage() {
   // Modals
@@ -33,10 +41,15 @@ export default function AssistentsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [viewingAssistent, setViewingAssistent] = useState<any>(null);
+  const [viewingAssistent, setViewingAssistent] = useState<Assistant | null>(
+    null,
+  );
 
   const [showPassword, setShowPassword] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingLink, setEditingLink] = useState<CourseAssistantLink | null>(
+    null,
+  );
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Pagination & Search
@@ -49,30 +62,38 @@ export default function AssistentsPage() {
   const [fullNameError, setNameError] = useState(false);
   const [phone, setPhone] = useState("+998");
   const [phoneError, setPhoneError] = useState(false);
+  // course хранит courseId строкой (значение <select>) — "" значит "без курса"
   const [course, setCourse] = useState("");
-  const [courseError, setCourseError] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  const [assistents, setAssistents] = useState<Assistent[]>([]);
+  const [assistents, setAssistents] = useState<Assistant[]>([]);
+  const [courseLinks, setCourseLinks] = useState<CourseAssistantLink[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    loadAssistents();
+    loadAll();
   }, []);
 
-  const loadAssistents = async () => {
+  const loadAll = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const data = await getAssistents();
+      const [assistantsData, linksData, coursesData] = await Promise.all([
+        getAssistants(),
+        getCourseAssistants(),
+        getCourses(),
+      ]);
 
-      setAssistents(data);
+      setAssistents(assistantsData);
+      setCourseLinks(linksData);
+      setCourses(coursesData);
     } catch (error: any) {
       console.error(error);
       setError(error.message || "Yuklanmadi");
@@ -81,19 +102,48 @@ export default function AssistentsPage() {
     }
   };
 
+  // Курс (если есть) для конкретного ассистента — из /course-assistant, т.к. там связка userId -> courseId
+  const linkForUser = (userId: number) =>
+    courseLinks.find((l) => l.userId === userId) || null;
+
+  const courseNameById = (id: number) =>
+    courses.find((c) => c.id === id)?.name || "—";
+
+  const getAvatarUrl = (file?: string | null) => {
+    if (!file) return "/default-avatar.png";
+    if (file.startsWith("http")) return file;
+    return `http://63.180.181.4:8080/uploads/${file}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date
+      .toLocaleString("sv-SE", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+      .replace(",", "");
+  };
+
   // Derived state
   const filteredAssistents = useMemo(() => {
-    return assistents.filter(
-      (assistent) =>
+    return assistents.filter((assistent) => {
+      const link = linkForUser(assistent.id);
+      const courseName = link ? courseNameById(link.courseId) : "";
+      return (
         (assistent.fullName || "")
           .toLowerCase()
           .includes(searchQuery.toLowerCase()) ||
         assistent.phone.includes(searchQuery) ||
-        (assistent.course || "")
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase())
-    );
-  }, [assistents, searchQuery]);
+        courseName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
+  }, [assistents, courseLinks, courses, searchQuery]);
 
   const totalPages = Math.ceil(filteredAssistents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -109,12 +159,13 @@ export default function AssistentsPage() {
       "F.I.Sh",
       "Biriktirilgan kurs",
       "Telefon raqam",
-      "Rol",
-      "Holati",
+      "Yaratilgan vaqt",
     ];
-    const rows = assistents.map((a) =>
-      [a.id, a.fullName, a.phone, a.created_at, a.status].join(","),
-    );
+    const rows = assistents.map((a) => {
+      const link = linkForUser(a.id);
+      const courseName = link ? courseNameById(link.courseId) : "";
+      return [a.id, a.fullName, courseName, a.phone, a.created_at].join(",");
+    });
     const csvContent =
       "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
 
@@ -127,44 +178,11 @@ export default function AssistentsPage() {
     document.body.removeChild(link);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-
-    return date
-      .toLocaleString("sv-SE", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-      })
-      .replace(",", "");
-  };
-
-  const getAvatarUrl = (file?: string) => {
-    if (!file) {
-      return "/default-avatar.png";
-    }
-
-    if (file.startsWith("http")) {
-      return file;
-    }
-
-    return `${"http://63.180.181.4:8080"}/uploads/${file}`;
-  };
-
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow digits and plus
     let val = e.target.value.replace(/[^0-9+]/g, "");
-
-    // Prevent deletion of +998 prefix
     if (!val.startsWith("+998")) {
       val = "+998" + val.replace(/\+998/g, "").trim();
     }
-
-    // Ensure format "+998XXXXXXXXX" by length limit (13 chars)
     if (val.length <= 13) {
       setPhone(val);
       if (phoneError) setPhoneError(false);
@@ -173,6 +191,7 @@ export default function AssistentsPage() {
 
   const openAddModal = () => {
     setEditingId(null);
+    setEditingLink(null);
     setName("");
     setPhone("+998");
     setCourse("");
@@ -180,24 +199,24 @@ export default function AssistentsPage() {
     setImageFile(null);
     setImagePreview(null);
     setNameError(false);
-    setCourseError(false);
     setPasswordError(false);
     setPhoneError(false);
     setImageError(false);
     setIsModalOpen(true);
   };
 
-  const openEditModal = (assistent: any) => {
+  const openEditModal = (assistent: Assistant) => {
+    const link = linkForUser(assistent.id);
     setEditingId(assistent.id);
+    setEditingLink(link);
     setName(assistent.fullName);
     setPhone(assistent.phone);
-    setCourse(assistent.course || "");
+    setCourse(link ? String(link.courseId) : "");
     setPassword("");
     setImageFile(null);
-    setImagePreview(getAvatarUrl(assistent.file)); // Show current image in edit mode
+    setImagePreview(getAvatarUrl(assistent.file));
     setNameError(false);
     setPhoneError(false);
-    setCourseError(false);
     setPasswordError(false);
     setImageError(false);
     setIsModalOpen(true);
@@ -208,15 +227,18 @@ export default function AssistentsPage() {
     setIsDeleteModalOpen(true);
   };
 
+  // Удаляет ассистента полностью: сначала связку с курсом (если есть), потом самого пользователя
   const handleDeleteAssistent = async () => {
     if (!deletingId) return;
 
     try {
-      await deleteAssistent(deletingId);
+      const link = linkForUser(deletingId);
+      if (link) {
+        await deleteCourseAssistant(link.id);
+      }
+      await deleteAssistant(deletingId);
 
-      setAssistents((prev) =>
-        prev.filter((assistent) => assistent.id !== deletingId),
-      );
+      await loadAll();
 
       if (currentAssistents.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
@@ -226,8 +248,7 @@ export default function AssistentsPage() {
       setDeletingId(null);
     } catch (error: any) {
       console.error(error);
-
-      alert(error.message || "Assistent o‘chirilmadi");
+      alert(error.message || "Assistent o'chirilmadi");
     }
   };
 
@@ -267,36 +288,48 @@ export default function AssistentsPage() {
       setPasswordError(false);
     }
 
+    // Курс НЕ обязателен — специально не валидируется
     if (hasError) return;
 
     try {
       const formData = new FormData();
-
       formData.append("fullName", fullName);
       formData.append("phone", phone);
+      if (password) formData.append("password", password);
+      if (imageFile) formData.append("file", imageFile);
 
-      if (password) {
-        formData.append("password", password);
-      }
-
-      if (imageFile) {
-        formData.append("file", imageFile);
-      }
+      let userId: number;
 
       if (editingId) {
-        await updateAssistent(editingId, formData);
+        await updateAssistant(editingId, formData);
+        userId = editingId;
       } else {
-        await createAssistent(formData);
+        const created = await createAssistant(formData);
+        userId = created.data.id;
       }
 
-      await loadAssistents();
+      // Курс объединяем только если реально выбран
+      if (course) {
+        const courseId = Number(course);
+        if (editingLink) {
+          if (editingLink.courseId !== courseId) {
+            await updateCourseAssistant(editingLink.id, { courseId });
+          }
+        } else {
+          await createCourseAssistant(courseId, userId);
+        }
+      }
+
+      await loadAll();
 
       setIsModalOpen(false);
       setIsSuccessModalOpen(true);
 
       setEditingId(null);
+      setEditingLink(null);
       setName("");
       setPhone("+998");
+      setCourse("");
       setPassword("");
       setImageFile(null);
       setImagePreview(null);
@@ -327,7 +360,7 @@ export default function AssistentsPage() {
             className="mt-4 sm:mt-0 flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
           >
             <PlusCircle size={18} strokeWidth={2} />
-            Qo’shish
+            Qo'shish
           </button>
         </div>
 
@@ -361,151 +394,162 @@ export default function AssistentsPage() {
           </button>
         </div>
 
-        {/* Table (Excel Style Borders) */}
-        <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-gray-200 min-w-250">
-              <thead>
-                <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
-                  <th className="px-5 py-4 w-16 border border-gray-200">ID</th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    F.I.Sh{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Biriktirilgan kurs{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Telefon raqam{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Yaratilgan vaqt{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Holati{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 text-center border border-gray-200">
-                    Amallar
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-[14px] text-gray-800">
-                {currentAssistents.map((assistent) => (
-                  <tr
-                    key={assistent.id}
-                    className="hover:bg-gray-50 transition-colors group"
-                  >
-                    <td className="px-5 py-4 font-medium border border-gray-200">
-                      {assistent.id}
-                    </td>
-                    <td className="px-5 py-4 border border-gray-200">
-                      <div
-                        className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
-                        onClick={() => {
-                          setViewingAssistent(assistent);
-                          setIsViewModalOpen(true);
-                        }}
-                      >
-                        <img
-                          src={getAvatarUrl(assistent.file)}
-                          alt={assistent.fullName}
-                          className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
-                        />
-                        <span className="font-semibold text-[13px]">
-                          {assistent.fullName}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                      {assistent.course}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                      {assistent.phone}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                      {formatDate(assistent.created_at)}
-                    </td>
-                    <td className="px-5 py-4 border border-gray-200">
-                      <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
-                        {assistent.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 border border-gray-200">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => openEditModal(assistent)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(assistent.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {currentAssistents.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-6 py-10 text-center text-gray-500 border border-gray-200"
-                    >
-                      Ma’lumot topilmadi
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        {loading && (
+          <div className="py-10 text-center text-gray-400 text-sm">
+            Yuklanmoqda...
           </div>
-        </div>
+        )}
+        {!loading && error && (
+          <div className="py-4 text-center text-red-500 text-sm">{error}</div>
+        )}
 
-        {/* Bottom Pagination Component */}
-        <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredAssistents.length}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={setItemsPerPage}
-            onDownloadXLS={handleDownloadXLS}
-          />
-        </div>
+        {!loading && !error && (
+          <>
+            {/* Table */}
+            <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse border border-gray-200 min-w-250">
+                  <thead>
+                    <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
+                      <th className="px-5 py-4 w-16 border border-gray-200">
+                        ID
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        F.I.Sh{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Biriktirilgan kurs{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Telefon raqam{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Yaratilgan vaqt{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 text-center border border-gray-200">
+                        Amallar
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[14px] text-gray-800">
+                    {currentAssistents.map((assistent) => {
+                      const link = linkForUser(assistent.id);
+                      return (
+                        <tr
+                          key={assistent.id}
+                          className="hover:bg-gray-50 transition-colors group"
+                        >
+                          <td className="px-5 py-4 font-medium border border-gray-200">
+                            {assistent.id}
+                          </td>
+                          <td className="px-5 py-4 border border-gray-200">
+                            <div
+                              className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
+                              onClick={() => {
+                                setViewingAssistent(assistent);
+                                setIsViewModalOpen(true);
+                              }}
+                            >
+                              <img
+                                src={getAvatarUrl(assistent.file)}
+                                alt={assistent.fullName}
+                                className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
+                              />
+                              <span className="font-semibold text-[13px]">
+                                {assistent.fullName}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                            {link ? (
+                              courseNameById(link.courseId)
+                            ) : (
+                              <span className="text-gray-400 italic">
+                                Biriktirilmagan
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                            {assistent.phone}
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                            {formatDate(assistent.created_at)}
+                          </td>
+                          <td className="px-5 py-4 border border-gray-200">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => openEditModal(assistent)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                              >
+                                <Pencil size={14} />
+                              </button>
+                              <button
+                                onClick={() => confirmDelete(assistent.id)}
+                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {currentAssistents.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={6}
+                          className="px-6 py-10 text-center text-gray-500 border border-gray-200"
+                        >
+                          Ma'lumot topilmadi
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredAssistents.length}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                onDownloadXLS={handleDownloadXLS}
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Add/Edit Modal Overlay */}
+      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[10px] p-4">
           <div className="bg-white relative flex flex-col w-full max-w-168.25 max-h-[95vh] rounded-[10px] p-[16px_24px] overflow-hidden">
-            {/* Header */}
             <div className="flex items-center justify-between mb-4 shrink-0">
               <h2 className="text-[20px] font-bold text-gray-900">
-                {editingId ? "Tahrirlash" : "Qo’shish"}
+                {editingId ? "Tahrirlash" : "Qo'shish"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -515,7 +559,6 @@ export default function AssistentsPage() {
               </button>
             </div>
 
-            {/* Form Fields - 1 Column Stack */}
             <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-2 pb-2">
               {/* Rasm */}
               <div className="flex flex-col items-center gap-1 w-full shrink-0">
@@ -549,11 +592,6 @@ export default function AssistentsPage() {
                       className="hidden"
                     />
                   </label>
-                  {imageError && (
-                    <p className="text-[#ff4d4f] text-[12px] -mt-1">
-                      Rasm yuklash majburiy
-                    </p>
-                  )}
                   {imagePreview && (
                     <label className="cursor-pointer text-blue-600 text-[13px] font-medium hover:underline text-center">
                       Qayta yuklash
@@ -585,7 +623,7 @@ export default function AssistentsPage() {
                 />
                 {fullNameError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    To’liq kiritilmadi
+                    To'liq kiritilmadi
                   </p>
                 )}
               </div>
@@ -603,51 +641,39 @@ export default function AssistentsPage() {
                 />
                 {phoneError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    Telefon raqam to’liq kiritilmadi
+                    Telefon raqam to'liq kiritilmadi
                   </p>
                 )}
               </div>
 
-              {/* Kurs biriktirish */}
+              {/* Kurs biriktirish — ixtiyoriy */}
               <div className="flex flex-col shrink-0">
                 <label className="block text-[13px] font-bold text-gray-900 mb-1.5">
-                  Kurs biriktirish
+                  Kurs biriktirish{" "}
+                  <span className="text-gray-400 font-normal ml-1">
+                    (ixtiyoriy)
+                  </span>
                 </label>
                 <div className="relative w-full">
                   <select
                     value={course}
-                    onChange={(e) => {
-                      setCourse(e.target.value);
-                      if (courseError) setCourseError(false);
-                    }}
-                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer ${
+                    onChange={(e) => setCourse(e.target.value)}
+                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer border-gray-200 focus:border-[#407BFF] ${
                       course ? "text-gray-900" : "text-gray-400"
-                    } ${
-                      courseError
-                        ? "border-[#ff4d4f] focus:border-[#ff4d4f]"
-                        : "border-gray-200 focus:border-[#407BFF]"
                     }`}
                   >
-                    <option value="" disabled hidden>
-                      Tanlang
-                    </option>
-                    <option value="Frontend">Frontend</option>
-                    <option value="Backend">Backend</option>
-                    <option value="UI/UX Dizayn">UI/UX Dizayn</option>
-                    <option value="Mobil">Mobil</option>
-                    <option value="SMM">SMM</option>
-                    <option value="Grafik dizayn">Grafik dizayn</option>
+                    <option value="">Kurssiz</option>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown
                     size={18}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                   />
                 </div>
-                {courseError && (
-                  <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    Kurs tanlanmadi
-                  </p>
-                )}
               </div>
 
               {/* Parol */}
@@ -656,7 +682,7 @@ export default function AssistentsPage() {
                   Parol{" "}
                   {editingId && (
                     <span className="text-gray-400 font-normal ml-1">
-                      (O’zgartirmaslik uchun bo’sh qoldiring)
+                      (O'zgartirmaslik uchun bo'sh qoldiring)
                     </span>
                   )}
                 </label>
@@ -688,7 +714,6 @@ export default function AssistentsPage() {
               </div>
             </div>
 
-            {/* Save Button */}
             <div className="mt-4 flex justify-start shrink-0">
               <button
                 onClick={handleSaveAssistent}
@@ -709,16 +734,16 @@ export default function AssistentsPage() {
         </div>
       )}
 
-      {/* Custom Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
           <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              O’chirishni tasdiqlash
+              O'chirishni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham o’chirmoqchimisiz? Bu amalni ortga qaytarib
-              bo’lmaydi.
+              Haqiqatan ham o'chirmoqchimisiz? Bu amalni ortga qaytarib
+              bo'lmaydi.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
@@ -734,7 +759,7 @@ export default function AssistentsPage() {
                 onClick={handleDeleteAssistent}
                 className="px-4 py-2 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
               >
-                O’chirish
+                O'chirish
               </button>
             </div>
           </div>
@@ -757,7 +782,7 @@ export default function AssistentsPage() {
               </div>
             </div>
             <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">
-              Muvaffaqiyatli qo'shildi
+              Muvaffaqiyatli saqlandi
             </h3>
             <button
               onClick={() => setIsSuccessModalOpen(false)}
@@ -792,7 +817,6 @@ export default function AssistentsPage() {
             </div>
 
             <div className="p-6">
-              {/* Profile Header */}
               <div className="flex items-center gap-4 mb-8">
                 <img
                   src={getAvatarUrl(viewingAssistent.file)}
@@ -821,6 +845,19 @@ export default function AssistentsPage() {
                   </p>
                 </div>
                 <div>
+                  <p className="text-[12px] text-gray-500 mb-1">
+                    Biriktirilgan kurs
+                  </p>
+                  <p className="text-[15px] font-bold text-gray-900">
+                    {(() => {
+                      const link = linkForUser(viewingAssistent.id);
+                      return link
+                        ? courseNameById(link.courseId)
+                        : "Biriktirilmagan";
+                    })()}
+                  </p>
+                </div>
+                <div>
                   <p className="text-[12px] text-gray-500 mb-1">Rol</p>
                   <p className="text-[15px] font-bold text-gray-900">
                     {viewingAssistent.role}
@@ -831,7 +868,7 @@ export default function AssistentsPage() {
                     Ro'yxatdan o'tgan vaqti
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAssistent.date}
+                    {formatDate(viewingAssistent.created_at)}
                   </p>
                 </div>
               </div>

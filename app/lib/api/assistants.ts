@@ -1,0 +1,56 @@
+import axios from "axios";
+import { api } from "../api";
+
+export interface Assistant {
+  id: number;
+  fullName: string;
+  phone: string;
+  file?: string | null;
+  role: string;
+  created_at: string;
+  updated_at: string;
+}
+
+function unwrapList<T>(payload: unknown): T[] {
+  if (Array.isArray(payload)) return payload;
+  if (payload && typeof payload === "object") {
+    const obj = payload as Record<string, unknown>;
+    if (Array.isArray(obj.data)) return obj.data as T[];
+    if (Array.isArray(obj.result)) return obj.result as T[];
+  }
+  return [];
+}
+
+export async function getAssistants(): Promise<Assistant[]> {
+  const { data } = await api.get("/user/assistant");
+  return unwrapList<Assistant>(data);
+}
+
+export async function createAssistant(formData: FormData) {
+  try {
+    const { data } = await api.post("/user/assistant", formData);
+    return data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      console.log("BACKEND ERROR:", err.response?.status, err.response?.data);
+    }
+    throw err;
+  }
+}
+
+export async function updateAssistant(id: number, formData: FormData) {
+  try {
+    const { data } = await api.patch(`/user/assistant/${id}`, formData);
+    return data;
+  } catch (err) {
+    if (axios.isAxiosError(err)) {
+      console.log("BACKEND ERROR:", err.response?.status, err.response?.data);
+    }
+    throw err;
+  }
+}
+
+export async function deleteAssistant(id: number) {
+  const { data } = await api.delete(`/user/assistant/${id}`);
+  return data;
+}
