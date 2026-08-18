@@ -6,42 +6,48 @@ export const baseAPI = axios.create({
   baseURL: API_URL + '/api/v1', // Already includes /api/v1 in .env.local
 });
 
-// Helper function to get token from localStorage (client-side only)
-function getTokenFromStorage(): string | null {
+export function getToken(name: string): string | null {
   if (typeof window === 'undefined') return null;
   
-  return localStorage.getItem('accessToken');
+  const token = localStorage.getItem(name)
+  
+  return token;
 }
 
-baseAPI.interceptors.request.use(
-  function (config) {
-    const token = getTokenFromStorage();
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    return config;
-  },
-  function (error) {
-    return Promise.reject(error);
-  }
-);
+export function setToken(name: string, key: string) {
+  if (typeof window === 'undefined') return null;
+  
+  localStorage.setItem(name, key);
+}
 
-baseAPI.interceptors.response.use(
-  function (response) {
-    return response;
-  },
-  function (error) {
-    // Handle 401 unauthorized errors
-    if (error.response?.status === 401) {
-      // Clear invalid token and redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('accessToken');
-        window.location.href = '/login';
-      }
-    }
+// baseAPI.interceptors.request.use(
+//   function (config) {
+//     const token = getToken("accessToken");
     
-    return Promise.reject(error);
-  }
-);
+//     if (token) {
+//       config.headers.Authorization = `Bearer ${token}`;
+//     }
+    
+//     return config;
+//   },
+//   function (error) {
+//     return Promise.reject(error);
+//   }
+// );
+
+// baseAPI.interceptors.response.use(
+//   // function (response) {
+//   //   return response;
+//   // },
+//   function (error: any) {
+//     // Handle 401 unauthorized errors
+//     if (error.response?.status === 401) {
+//       // Redirect to login if needed
+//       if (typeof window !== 'undefined') {
+//         window.location.href = '/login';
+//       }
+//     }
+    
+//     return Promise.reject(error);
+//   }
+// );
