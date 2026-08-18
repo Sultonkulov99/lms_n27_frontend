@@ -245,11 +245,13 @@ export default function Sidebar() {
               </span>
             </a>
 
-            <a
-              href="#"
-              className={`flex items-center py-2.5 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg transition-all overflow-hidden ${
-                isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"
-              }`}
+            <Link
+              href="/dashboard/comments"
+              className={`flex items-center py-2.5 rounded-lg transition-all overflow-hidden ${
+                pathname === "/dashboard/comments"
+                  ? "bg-white/10 text-white"
+                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+              } ${isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"}`}
               title="Izohlar"
             >
               <MessageSquare size={20} className="shrink-0" />
@@ -260,7 +262,7 @@ export default function Sidebar() {
               >
                 Izohlar
               </span>
-            </a>
+            </Link>
           </nav>
         </div>
       </div>
