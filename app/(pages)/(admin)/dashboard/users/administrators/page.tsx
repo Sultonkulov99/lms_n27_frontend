@@ -384,13 +384,13 @@ export default function AdministratorsPage() {
             <div className="flex flex-col gap-4 flex-1 overflow-y-auto pr-2 pb-2">
               {/* Rasm */}
               <div className="flex flex-col items-center gap-1 w-full shrink-0">
-                <label className="block text-[13px] font-bold text-gray-900 w-full text-left">Rasm</label>
+                <label className="block text-[13px] font-bold text-gray-900 w-full text-left">Rasm (Ixtiyoriy)</label>
                 <div className="flex flex-col items-center gap-2 w-full">
-                  <label className={`flex flex-col items-center justify-center w-[120px] h-[120px] rounded-full border-[1.5px] border-dashed cursor-pointer hover:bg-gray-50 transition-colors bg-white overflow-hidden relative ${imageError ? 'border-[#ff4d4f]' : 'border-gray-300'}`}>
+                  <label className={`flex flex-col items-center justify-center w-[120px] h-[120px] rounded-full border-[1.5px] border-dashed cursor-pointer hover:bg-gray-50 transition-colors bg-white overflow-hidden relative border-gray-300`}>
                     {imagePreview ? (
                       <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
-                      <div className={`flex flex-col items-center ${imageError ? 'text-[#ff4d4f]' : 'text-gray-400'}`}>
+                      <div className={`flex flex-col items-center text-gray-400`}>
                         <Upload size={32} />
                         <span className="text-[13px] mt-2 font-medium">Yuklash</span>
                       </div>
@@ -402,9 +402,6 @@ export default function AdministratorsPage() {
                       className="hidden" 
                     />
                   </label>
-                  {imageError && (
-                    <p className="text-[#ff4d4f] text-[12px] -mt-1">Rasm yuklash majburiy</p>
-                  )}
                   {imagePreview && (
                     <label className="cursor-pointer text-blue-600 text-[13px] font-medium hover:underline text-center">
                       Qayta yuklash
