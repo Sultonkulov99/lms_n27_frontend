@@ -1,34 +1,91 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Camera, Check } from "lucide-react";
+import { useProfileStore } from "@/store/useProfileStore";
+import { baseAPI } from "@/app/lib/utils";
+import { showToast } from "@/store/useToastStore";
+import Image from "next/image";
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("profile");
 
-  const [name, setName] = useState("Istamov Xurshid");
-  const [phone, setPhone] = useState("+998 91 791 11 22");
-  const [email, setEmail] = useState("example@gmail.com");
+  const { profile, fetchProfile, isLoading } = useProfileStore();
 
-  const [image, setImage] = useState(
-    "https://i.pravatar.cc/150?u=admin-profile"
-  );
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [image, setImage] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [notifications, setNotifications] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  useEffect(() => {
+    if (profile) {
+      setName(profile.fullName || "");
+      setPhone(profile.phone || "");
+      setEmail(profile.email || "");
+      if (profile.file) {
+        setImage(`${process.env.NEXT_PUBLIC_API_URL}${profile.file}`);
+      } else {
+        setImage("");
+      }
+    }
+  }, [profile]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-
     if (!file) return;
 
+    setImageFile(file);
     setImage(URL.createObjectURL(file));
   };
 
   const handleDeleteImage = () => {
-    setImage("https://i.pravatar.cc/150?u=admin-profile");
+    setImage("");
+    setImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
+
+  const handleSaveProfile = async () => {
+    try {
+      setIsUpdating(true);
+      const formData = new FormData();
+      if (name) formData.append("fullName", name);
+      if (phone) formData.append("phone", phone);
+      if (email) formData.append("email", email);
+      
+      if (imageFile) {
+        formData.append("avatar", imageFile);
+      }
+
+      const response = await baseAPI.patch("/profile", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      showToast(response.data.message || "Profil muvaffaqiyatli yangilandi", { type: "success" });
+      await fetchProfile(); // refresh store
+    } catch (error: unknown) {
+      const err = error as any;
+      showToast(err.response?.data?.message || "Xatolik yuz berdi", { type: "error" });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  if (isLoading && !profile) {
+    return <div className="p-8 text-center text-gray-500">Yuklanmoqda...</div>;
+  }
 
   return (
     <main className="min-h-full w-full bg-[#F3F4F6] px-[13px] py-[17px]">
@@ -112,11 +169,20 @@ export default function ProfilePage() {
 
               <div className="mb-[18px] flex items-center gap-[10px]">
                 <div className="relative h-[44px] w-[44px] shrink-0">
-                  <img
-                    src={image}
-                    alt="Profile"
-                    className="h-[44px] w-[44px] rounded-full object-cover"
-                  />
+                  {image ? (
+                    <Image
+                      src={image}
+                      alt="Profile"
+                      width={44}
+                      height={44}
+                      className="h-[44px] w-[44px] rounded-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-blue-100 text-[18px] font-bold text-blue-600">
+                      {name ? name.charAt(0).toUpperCase() : "A"}
+                    </div>
+                  )}
 
                   {/* CAMERA */}
 
@@ -128,6 +194,7 @@ export default function ProfilePage() {
                     />
 
                     <input
+                      ref={fileInputRef}
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
@@ -143,7 +210,7 @@ export default function ProfilePage() {
                   onClick={handleDeleteImage}
                   className="flex h-[24px] w-[64px] items-center justify-center rounded-full bg-[#F5F6F8] text-[11px] font-medium text-[#8A8F98]"
                 >
-                  O'chirish
+                  O&apos;chirish
                 </button>
               </div>
 
@@ -151,7 +218,7 @@ export default function ProfilePage() {
 
               <div className="mb-[9px]">
                 <label className="mb-[5px] block p-[4px] text-[13px] font-medium leading-none text-[#4B5563]">
-                  To'liq ism
+                  To&apos;liq ism
                 </label>
 
                 <input
@@ -196,13 +263,21 @@ export default function ProfilePage() {
 
               <button
                 type="button"
-                className="flex h-[43px] w-[120px] items-center justify-center gap-[5px] rounded-[5px] bg-[#407BFF] px-[12px] text-[12px] font-medium text-white transition hover:bg-[#306BEF]"
+                onClick={handleSaveProfile}
+                disabled={isUpdating}
+                className="flex h-[43px] w-[120px] items-center justify-center gap-[5px] rounded-[5px] bg-[#407BFF] px-[12px] text-[12px] font-medium text-white transition hover:bg-[#306BEF] disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <Check
-                  size={11}
-                  strokeWidth={2.5}
-                />
-                Saqlash
+                {isUpdating ? (
+                  "Saqlanmoqda..."
+                ) : (
+                  <>
+                    <Check
+                      size={11}
+                      strokeWidth={2.5}
+                    />
+                    Saqlash
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -260,7 +335,7 @@ export default function ProfilePage() {
                 type="button"
                 className="flex h-[43px] w-[160px] items-center justify-center rounded-[5px] bg-[#407BFF] px-[12px] text-[12px] font-medium text-white transition hover:bg-[#306BEF]"
               >
-                Parolni o'zgartirish
+                Parolni o&apos;zgartirish
               </button>
             </div>
           )}
