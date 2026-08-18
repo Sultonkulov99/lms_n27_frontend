@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { PrecisionStars } from "@/app/components/course-details/precision-stars";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { baseAPI } from "@/app/lib/utils";
+import { baseAPI, fetchCategoriesCached, fetchCoursesCached } from "@/app/lib/utils";
 
 interface Category {
   id: number;
@@ -124,8 +124,8 @@ function CoursesContent() {
     const fetchData = async () => {
       try {
         const [coursesRes, categoriesRes] = await Promise.all([
-          baseAPI.get("courses"),
-          baseAPI.get("categories")
+          fetchCoursesCached(),
+          fetchCategoriesCached()
         ]);
         
         setCourses(coursesRes.data || []);

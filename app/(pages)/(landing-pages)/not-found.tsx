@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Navbar from "@/app/components/landing/home/Navbar";
-import Footer from "@/app/components/landing/home/Footer";
 import { LanguageProvider, useLanguage } from "@/app/context/LanguageContext";
 import { Home } from "lucide-react";
 
@@ -10,8 +8,7 @@ function NotFoundContent() {
   const { t } = useLanguage();
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
-      <Navbar />
+    <div className="flex min-h-[70vh] flex-col bg-transparent">
       <main className="flex flex-1 flex-col items-center justify-center text-center px-4 py-20">
         <h2 className="mb-4 text-8xl font-extrabold text-[#0047FF]">404</h2>
         <h3 className="mb-4 text-3xl font-bold text-[#141518]">{t("notFound.title")}</h3>
@@ -26,7 +23,6 @@ function NotFoundContent() {
           <span>{t("notFound.backHome")}</span>
         </Link>
       </main>
-      <Footer />
     </div>
   );
 }
