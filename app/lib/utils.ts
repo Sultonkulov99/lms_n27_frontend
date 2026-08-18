@@ -20,6 +20,42 @@ export function setToken(name: string, key: string) {
   localStorage.setItem(name, key);
 }
 
+let categoriesCache: any = null;
+let categoriesPromise: Promise<any> | null = null;
+
+export const fetchCategoriesCached = async () => {
+  if (categoriesCache) return categoriesCache;
+  if (categoriesPromise) return categoriesPromise;
+  
+  categoriesPromise = baseAPI.get("categories").then(res => {
+    categoriesCache = res;
+    return res;
+  }).catch(err => {
+    categoriesPromise = null;
+    throw err;
+  });
+  
+  return categoriesPromise;
+};
+
+let coursesCache: any = null;
+let coursesPromise: Promise<any> | null = null;
+
+export const fetchCoursesCached = async () => {
+  if (coursesCache) return coursesCache;
+  if (coursesPromise) return coursesPromise;
+  
+  coursesPromise = baseAPI.get("courses").then(res => {
+    coursesCache = res;
+    return res;
+  }).catch(err => {
+    coursesPromise = null;
+    throw err;
+  });
+  
+  return coursesPromise;
+};
+
 // baseAPI.interceptors.request.use(
 //   function (config) {
 //     const token = getToken("accessToken");
