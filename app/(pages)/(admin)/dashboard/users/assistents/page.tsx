@@ -112,7 +112,7 @@ export default function AssistentsPage() {
   const getAvatarUrl = (file?: string | null) => {
     if (!file) return "/default-avatar.png";
     if (file.startsWith("http")) return file;
-    return `http://63.180.181.4:8080/uploads/${file}`;
+    return `${process.env.NEXT_PUBLIC_API_URL}/uploads/avatars/${file}`;
   };
 
   const formatDate = (dateString: string) => {

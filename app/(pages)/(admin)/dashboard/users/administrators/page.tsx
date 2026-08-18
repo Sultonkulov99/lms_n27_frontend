@@ -136,15 +136,9 @@ export default function AdministratorsPage() {
   };
 
   const getAvatarUrl = (file?: string) => {
-    if (!file) {
-      return "/default-avatar.png";
-    }
-
-    if (file.startsWith("http")) {
-      return file;
-    }
-
-    return `${"http://63.180.181.4:8080"}/uploads/${file}`;
+    if (!file) return "/default-avatar.png";
+    if (file.startsWith("http")) return file;
+    return `${process.env.NEXT_PUBLIC_API_URL}/uploads/avatars/${file}`;
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {

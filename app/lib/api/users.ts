@@ -64,3 +64,19 @@ export async function deleteAdmin(id: number) {
   const { data } = await api.delete(`/user/admin/${id}`);
   return data;
 }
+
+export interface DashboardStats {
+  dashboard: {
+    ADMIN: number;
+    MENTOR: number;
+    ASSISTANT: number;   
+    STUDENT: number;     
+    totalCourses: number;
+    [key: string]: number;
+  };
+}
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+  const { data } = await api.get("/user/dashboard");
+  return data;
+}
