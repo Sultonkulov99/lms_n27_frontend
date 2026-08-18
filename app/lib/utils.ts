@@ -18,6 +18,14 @@ export function setToken(name: string, key: string) {
   if (typeof window === 'undefined') return null;
   
   localStorage.setItem(name, key);
+  document.cookie = `${name}=${key}; path=/; max-age=31536000`;
+}
+
+export function removeToken(name: string) {
+  if (typeof window === 'undefined') return;
+  
+  localStorage.removeItem(name);
+  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 let categoriesCache: any = null;
