@@ -17,6 +17,7 @@ import { baseAPI } from "@/app/lib/utils";
 interface Category {
   id: number;
   name: string;
+  status?: string;
 }
 
 export default function CategoriesPage() {
@@ -45,6 +46,7 @@ export default function CategoriesPage() {
     useState<number | null>(null);
 
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryStatus, setNewCategoryStatus] = useState("ACTIVE");
 
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -94,6 +96,7 @@ export default function CategoriesPage() {
 
       const response = await baseAPI.post("/categories", {
         name: newCategoryName.trim(),
+        status: newCategoryStatus,
       });
 
       console.log(
@@ -112,6 +115,7 @@ export default function CategoriesPage() {
 
       setIsAddModalOpen(false);
       setNewCategoryName("");
+      setNewCategoryStatus("ACTIVE");
 
       setSuccessMessage("Muvaffaqiyatli qo'shildi");
       setIsSuccessModalOpen(true);
@@ -160,6 +164,7 @@ export default function CategoriesPage() {
         `/categories/${editingCategory.id}`,
         {
           name: editingCategory.name.trim(),
+          status: editingCategory.status || "ACTIVE",
         }
       );
 
@@ -187,8 +192,9 @@ export default function CategoriesPage() {
             category.id === editingCategory.id
               ? {
                   ...category,
-                  name: editingCategory.name.trim(),
-                }
+                name: editingCategory.name.trim(),
+                status: editingCategory.status || "ACTIVE",
+              }
               : category
           )
         );
@@ -391,6 +397,10 @@ const handleDeleteCategory = async () => {
                     Kategoriya nomi
                   </th>
 
+                  <th className="py-4 px-6 text-center">
+                    Holati
+                  </th>
+
                   <th className="py-4 px-6 w-32 text-center">
                     Amallar
                   </th>
@@ -422,6 +432,14 @@ const handleDeleteCategory = async () => {
 
                         <td className="py-4 px-6 font-semibold text-gray-800">
                           {category.name}
+                        </td>
+
+                        <td className="py-4 px-6 text-center">
+                          {category.status === 'ACTIVE' ? (
+                            <span className="text-green-600 font-medium text-[13px]">Faol</span>
+                          ) : (
+                            <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
+                          )}
                         </td>
 
                         <td className="py-4 px-6">
@@ -548,6 +566,20 @@ const handleDeleteCategory = async () => {
                 />
               </div>
 
+              <div className="mb-6">
+                <label className="block text-[13px] font-semibold text-gray-700 mb-2">
+                  Holati
+                </label>
+                <select
+                  value={newCategoryStatus}
+                  onChange={(e) => setNewCategoryStatus(e.target.value)}
+                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
+                >
+                  <option value="ACTIVE">Faol</option>
+                  <option value="INACTIVE">Nofaol</option>
+                </select>
+              </div>
+
               <button
                 onClick={handleAddCategory}
                 disabled={loading}
@@ -614,6 +646,25 @@ const handleDeleteCategory = async () => {
                     }
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
                   />
+                </div>
+
+                <div className="mb-6">
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">
+                    Holati
+                  </label>
+                  <select
+                    value={editingCategory.status || "ACTIVE"}
+                    onChange={(e) =>
+                      setEditingCategory({
+                        ...editingCategory,
+                        status: e.target.value,
+                      })
+                    }
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
+                  >
+                    <option value="ACTIVE">Faol</option>
+                    <option value="INACTIVE">Nofaol</option>
+                  </select>
                 </div>
 
                 <button

@@ -24,7 +24,15 @@ export default function LoginPage() {
                     type: "error",
                 });
             }
-            const res = await baseAPI.post('/auth/login', loginData);
+            
+            // Clean inputs to avoid 401 errors due to accidental spaces
+            const cleanPhone = loginData.phone.replace(/\s/g, '');
+            const cleanPassword = loginData.password.trim();
+            
+            const res = await baseAPI.post('/auth/login', { 
+                phone: cleanPhone, 
+                password: cleanPassword 
+            });
 
             setToken("accessToken", res.data?.tokens?.accessToken);
             setToken("refreshToken", res.data?.tokens?.refreshToken);
