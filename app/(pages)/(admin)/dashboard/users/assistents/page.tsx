@@ -128,6 +128,9 @@ export default function AssistentsPage() {
       .replace(",", "");
   };
 
+  const formatRole = (role: string) =>
+    role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+
   const filteredAssistents = useMemo(() => {
     return assistents.filter((assistent) => {
       const link = linkForUser(assistent.id);
@@ -314,7 +317,7 @@ export default function AssistentsPage() {
         }
       } else {
         if (editingId && editingLink) {
-          await deleteCourseAssistant(editingLink.id); 
+          await deleteCourseAssistant(editingLink.id);
         }
       }
 
@@ -870,7 +873,7 @@ export default function AssistentsPage() {
                 <div>
                   <p className="text-[12px] text-gray-500 mb-1">Rol</p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAssistent.role}
+                    {formatRole(viewingAssistent.role)}
                   </p>
                 </div>
                 <div>

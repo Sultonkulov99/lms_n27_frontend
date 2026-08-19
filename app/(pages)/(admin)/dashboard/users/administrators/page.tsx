@@ -134,6 +134,9 @@ export default function AdministratorsPage() {
       .replace(",", "");
   };
 
+  const formatRole = (role: string) =>
+    role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+
   const getAvatarUrl = (file?: string) => {
     if (!file) return "/default-avatar.png";
     if (file.startsWith("http")) return file;
@@ -431,7 +434,7 @@ export default function AdministratorsPage() {
                           {formatDate(admin.created_at)}
                         </td>
                         <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                          {admin.role}
+                          {formatRole(admin.role)}
                         </td>
                         <td className="px-5 py-4 border border-gray-200">
                           <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
@@ -785,7 +788,7 @@ export default function AdministratorsPage() {
                 <div>
                   <p className="text-[12px] text-gray-500 mb-1">Rol</p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAdmin.role}
+                    {formatRole(viewingAdmin.role)}
                   </p>
                 </div>
                 <div>
