@@ -526,7 +526,7 @@ export default function AssistentsPage() {
                     {currentAssistents.length === 0 && (
                       <tr>
                         <td
-                          colSpan={6}
+                          colSpan={8}
                           className="px-6 py-10 text-center text-gray-500 border border-gray-200"
                         >
                           Ma'lumot topilmadi

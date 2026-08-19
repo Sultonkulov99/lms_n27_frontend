@@ -30,7 +30,8 @@ export function CourseHero({
 
   return (
     <>
-      <div className="bg-[#1D4ED6] dark:bg-[#1E3A8A] text-white pt-16 pb-24 px-4 md:px-8 transition-colors duration-200">
+      {/* <div className="bg-[#1D4ED6] dark:bg-[#1E3A8A] text-white pt-16 pb-24 px-4 md:px-8 transition-colors duration-200"> */}
+      <div className="bg-blue-600 dark:bg-blue-700 text-white pt-16 pb-24 px-4 md:px-8 transition-colors duration-200">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 px-4">
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center gap-3 mb-2">

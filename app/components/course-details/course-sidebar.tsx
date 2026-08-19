@@ -59,7 +59,7 @@ export function CourseSidebar({
         </div>
 
         <Link href={`/register?courseId=${id}`}>
-          <button className="w-full bg-[#1C232C] dark:bg-blue-600 hover:bg-[#0f172a] dark:hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors text-sm">
+          <button className="w-full bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors text-sm">
             {t("courseDetail.buyButton")}
           </button>
         </Link>
