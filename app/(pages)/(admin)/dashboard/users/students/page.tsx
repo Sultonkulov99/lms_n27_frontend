@@ -492,6 +492,7 @@ export default function StudentsPage() {
             </div>
             <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">
               Siz rostdan ham o'chirmoqchimisiz?
+              
             </h3>
             <div className="flex items-center justify-center gap-4 w-full">
               <button
