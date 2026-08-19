@@ -1,99 +1,23 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Search, X, ChevronDown, Pencil, Trash2, Check } from "lucide-react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { Search, X, ChevronDown, Pencil, Trash2, Check, Loader2 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
+import { baseAPI } from "@/app/lib/utils";
+
 
 interface Comment {
-  id: number;
-  owner: string;
-  text: string;
-  replies: number;
-  date: string;
+  id: number | string;
+  fullName: string;
+  phone: string;
+  message: string;
+  replies?: number;
+  createdAt?: string;
 }
 
-const initialComments: Comment[] = [
-  {
-    id: 1,
-    owner: "Jasurbek_007",
-    text: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
-    replies: 3,
-    date: "01.01.2024",
-  },
-  {
-    id: 2,
-    owner: "Shamsiddin1998",
-    text: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
-    replies: 3,
-    date: "01.01.2024",
-  },
-  {
-    id: 3,
-    owner: "",
-    text: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
-    replies: 3,
-    date: "01.01.2024",
-  },
-  {
-    id: 4,
-    owner: "",
-    text: "SMM sohasini 0 dan o'rganing va faoliyatingizni eng yaxshi kompaniyada olib boring",
-    replies: 3,
-    date: "01.01.2024",
-  },
-  {
-    id: 5,
-    owner: "Alisher_99",
-    text: "Kurs juda foydali bo'ldi, rahmat!",
-    replies: 1,
-    date: "15.02.2024",
-  },
-  {
-    id: 6,
-    owner: "Malika_dev",
-    text: "Materiallar tushunarli va qiziqarli tarzda taqdim etilgan.",
-    replies: 2,
-    date: "20.03.2024",
-  },
-  {
-    id: 7,
-    owner: "Nodir_uz",
-    text: "Ushbu kurs menga katta yordam berdi.",
-    replies: 0,
-    date: "05.04.2024",
-  },
-  {
-    id: 8,
-    owner: "Zulfiya_2000",
-    text: "Murabbiy juda yaxshi tushuntirdi, tavsiya qilaman.",
-    replies: 4,
-    date: "10.05.2024",
-  },
-  {
-    id: 9,
-    owner: "Bekzod_IT",
-    text: "Har bir mavzu batafsil yoritilgan, juda zo'r.",
-    replies: 2,
-    date: "22.05.2024",
-  },
-  {
-    id: 10,
-    owner: "Sarvar_pro",
-    text: "Amaliy mashqlar juda foydali ekan.",
-    replies: 1,
-    date: "01.06.2024",
-  },
-  {
-    id: 11,
-    owner: "Dilnoza_99",
-    text: "Kursni tugatib, ish topdim. Katta rahmat!",
-    replies: 5,
-    date: "15.06.2024",
-  },
-];
-
 export default function CommentsPage() {
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -102,32 +26,61 @@ export default function CommentsPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingComment, setEditingComment] = useState<Comment | null>(null);
   const [editText, setEditText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Delete modal
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | string | null>(null);
 
+  // 1. Backend'dan izohlarni olish (GET)
+  const fetchComments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await baseAPI.get("/comments");
+      // Backend'dan kelayotgan data array yoki object { data: [] } ko'rinishida bo'lishi mumkin
+      const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      setComments(data);
+    } catch (error) {
+      console.error("Izohlarni yuklashda xatolik:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
+
+  // Qidiruv mantiqi
   const filteredComments = useMemo(() => {
     return comments.filter(
       (c) =>
-        c.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.owner.toLowerCase().includes(searchQuery.toLowerCase())
+        (c.message && c.message.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.fullName && c.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (c.phone && c.phone.includes(searchQuery))
     );
   }, [comments, searchQuery]);
 
-  const totalPages = Math.ceil(filteredComments.length / itemsPerPage);
+  // Pagination mantiqi
+  const totalPages = Math.ceil(filteredComments.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, filteredComments.length);
   const currentComments = filteredComments.slice(startIndex, endIndex);
 
+  // CSV yuklab olish
   const handleDownloadXLS = () => {
-    const headers = ["ID", "Izoh egasi", "Izoh", "Javoblar", "Sana"];
+    const headers = ["ID", "Izoh egasi", "Telefon raqami", "Izoh", "Sana"];
     const rows = comments.map((c) =>
-      [c.id, c.owner || "—", `"${c.text}"`, c.replies, c.date].join(",")
+      [
+        c.id,
+        `"${c.fullName || "—"}"`,
+        `"${c.phone || "—"}"`,
+        `"${c.message || "—"}"`,
+        c.createdAt ? new Date(c.createdAt).toLocaleDateString("uz-UZ") : "—",
+      ].join(",")
     );
     const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows].join("\n");
+      "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -137,36 +90,65 @@ export default function CommentsPage() {
     document.body.removeChild(link);
   };
 
+  // 2. Izohni tahrirlash (PATCH / PUT)
   const openEditModal = (comment: Comment) => {
     setEditingComment(comment);
-    setEditText(comment.text);
+    setEditText(comment.message);
     setIsEditModalOpen(true);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingComment || !editText.trim()) return;
-    setComments((prev) =>
-      prev.map((c) =>
-        c.id === editingComment.id ? { ...c, text: editText.trim() } : c
-      )
-    );
-    setIsEditModalOpen(false);
-    setEditingComment(null);
+
+    // id yoki _id mavjudligini aniqlaymiz:
+    const commentId = editingComment.id || (editingComment as any)._id;
+
+
+    setIsSubmitting(true);
+    try {
+      await baseAPI.patch(`/comments/${commentId}`, {
+        message: editText.trim(),
+      });
+
+      setComments((prev) =>
+        prev.map((c) =>
+          c.id === editingComment.id ? { ...c, message: editText.trim() } : c
+        )
+      );
+      setIsEditModalOpen(false);
+      setEditingComment(null);
+    } catch (error) {
+      console.error("Izohni tahrirlashda xatolik:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const confirmDelete = (id: number) => {
+  // 3. Izohni o'chirish (DELETE)
+  const confirmDelete = (id: number | string) => {
     setDeletingId(id);
     setIsDeleteModalOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deletingId === null) return;
-    setComments((prev) => prev.filter((c) => c.id !== deletingId));
-    if (currentComments.length === 1 && currentPage > 1) {
-      setCurrentPage(currentPage - 1);
+
+    setIsSubmitting(true);
+    try {
+      await baseAPI.delete(`/comments/${deletingId}`);
+
+      // UI'dan olib tashlash
+      setComments((prev) => prev.filter((c) => c.id !== deletingId));
+      if (currentComments.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+      setIsDeleteModalOpen(false);
+      setDeletingId(null);
+    } catch (error) {
+      console.error("Izohni o'chirishda xatolik:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsDeleteModalOpen(false);
-    setDeletingId(null);
   };
 
   return (
@@ -215,7 +197,7 @@ export default function CommentsPage() {
         {/* Table */}
         <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-gray-200 min-w-[900px]">
+            <table className="w-full text-left border-collapse border border-gray-200 min-w-[1000px]">
               <thead>
                 <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
                   <th className="px-5 py-4 w-16 border border-gray-200">ID</th>
@@ -225,6 +207,10 @@ export default function CommentsPage() {
                       size={14}
                       className="inline-block text-gray-400 ml-1"
                     />
+                  </th>
+                  {/* Telefon raqami ustuni izohdan oldinga qo'shildi */}
+                  <th className="px-5 py-4 w-44 border border-gray-200">
+                    Telefon raqami
                   </th>
                   <th className="px-5 py-4 border border-gray-200">
                     Izoh{" "}
@@ -246,66 +232,78 @@ export default function CommentsPage() {
                 </tr>
               </thead>
               <tbody className="text-[14px] text-gray-800">
-                {currentComments.map((comment) => (
-                  <tr
-                    key={comment.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    {/* ID — only shown on first row of each "group" by owner */}
-                    <td className="px-5 py-4 font-medium border border-gray-200 align-middle">
-                      {comment.owner ? comment.id : ""}
-                    </td>
-
-                    {/* Izoh egasi */}
-                    <td className="px-5 py-4 border border-gray-200 align-middle">
-                      <span className="font-semibold text-[13px] text-gray-800">
-                        {comment.owner || ""}
-                      </span>
-                    </td>
-
-                    {/* Izoh + replies badge */}
-                    <td className="px-5 py-4 border border-gray-200 align-middle">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[13px] text-gray-700 leading-snug">
-                          {comment.text}
-                        </span>
-                        {comment.replies > 0 && (
-                          <span className="shrink-0 min-w-[22px] h-[22px] px-1.5 flex items-center justify-center rounded-md bg-gray-700 text-white text-[11px] font-bold">
-                            {comment.replies}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Sana */}
-                    <td className="px-5 py-4 text-[13px] text-gray-600 border border-gray-200 align-middle">
-                      {comment.owner ? comment.date : ""}
-                    </td>
-
-                    {/* Amallar */}
-                    <td className="px-5 py-4 border border-gray-200 align-middle">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => openEditModal(comment)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(comment.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center border border-gray-200">
+                      <div className="flex justify-center items-center gap-2 text-gray-500">
+                        <Loader2 className="animate-spin" size={20} />
+                        <span>Yuklanmoqda...</span>
                       </div>
                     </td>
                   </tr>
-                ))}
+                ) : currentComments.length > 0 ? (
+                  currentComments.map((comment) => (
+                    <tr
+                      key={comment.id}
+                      className="hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="px-5 py-4 font-medium border border-gray-200 align-middle">
+                        {comment.id}
+                      </td>
 
-                {currentComments.length === 0 && (
+                      <td className="px-5 py-4 border border-gray-200 align-middle">
+                        <span className="font-semibold text-[13px] text-gray-800">
+                          {comment.fullName || "—"}
+                        </span>
+                      </td>
+
+                      {/* Telefon raqami */}
+                      <td className="px-5 py-4 text-[13px] text-gray-700 border border-gray-200 align-middle font-mono">
+                        {comment.phone || "—"}
+                      </td>
+
+                      {/* Izoh */}
+                      <td className="px-5 py-4 border border-gray-200 align-middle">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[13px] text-gray-700 leading-snug">
+                            {comment.message}
+                          </span>
+                          {comment.replies !== undefined && comment.replies > 0 && (
+                            <span className="shrink-0 min-w-[22px] h-[22px] px-1.5 flex items-center justify-center rounded-md bg-gray-700 text-white text-[11px] font-bold">
+                              {comment.replies}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 text-[13px] text-gray-600 border border-gray-200 align-middle">
+                        {comment.createdAt
+                          ? new Date(comment.createdAt).toLocaleDateString("uz-UZ")
+                          : "—"}
+                      </td>
+
+                      <td className="px-5 py-4 border border-gray-200 align-middle">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => openEditModal(comment)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={() => confirmDelete(comment.id)}
+                            className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-6 py-10 text-center text-gray-500 border border-gray-200"
                     >
                       Ma'lumot topilmadi
@@ -340,7 +338,7 @@ export default function CommentsPage() {
       {isEditModalOpen && editingComment && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[10px] p-4"
-          onClick={() => setIsEditModalOpen(false)}
+          onClick={() => !isSubmitting && setIsEditModalOpen(false)}
         >
           <div
             className="bg-white relative flex flex-col w-full max-w-[560px] rounded-[10px] p-6"
@@ -351,6 +349,7 @@ export default function CommentsPage() {
                 Izohni tahrirlash
               </h2>
               <button
+                disabled={isSubmitting}
                 onClick={() => setIsEditModalOpen(false)}
                 className="text-gray-500 hover:text-gray-800 transition-colors"
               >
@@ -374,10 +373,15 @@ export default function CommentsPage() {
 
             <div className="mt-4 flex justify-start">
               <button
+                disabled={isSubmitting}
                 onClick={handleSaveEdit}
-                className="flex items-center justify-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm rounded-lg px-5 h-[48px]"
+                className="flex items-center justify-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm rounded-lg px-5 h-[48px] disabled:opacity-50"
               >
-                <Check size={18} strokeWidth={2.5} />
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin" size={18} />
+                ) : (
+                  <Check size={18} strokeWidth={2.5} />
+                )}
                 Saqlash
               </button>
             </div>
@@ -389,7 +393,7 @@ export default function CommentsPage() {
       {isDeleteModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-[4px]"
-          onClick={() => setIsDeleteModalOpen(false)}
+          onClick={() => !isSubmitting && setIsDeleteModalOpen(false)}
         >
           <div
             className="bg-white rounded-[20px] shadow-xl p-8 w-[400px] flex flex-col items-center"
@@ -405,6 +409,7 @@ export default function CommentsPage() {
             </h3>
             <div className="flex items-center justify-center gap-4 w-full">
               <button
+                disabled={isSubmitting}
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeletingId(null);
@@ -414,9 +419,11 @@ export default function CommentsPage() {
                 Bekor qilish
               </button>
               <button
+                disabled={isSubmitting}
                 onClick={handleDelete}
-                className="flex-1 py-3 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
+                className="flex-1 py-3 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
               >
+                {isSubmitting && <Loader2 className="animate-spin" size={16} />}
                 O'chirish
               </button>
             </div>
