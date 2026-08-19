@@ -5,16 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import ImageLogin from "@/app/assets/register_purple.png";
 import { Copy, RefreshCw } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRegisterStore } from "@/store/useRegisterStore";
 import { showToast } from "@/store/useToastStore";
-import { baseAPI } from "@/app/lib/utils";
+import { baseAPI, setToken } from "@/app/lib/utils";
 
 export default function VerificationPage() {
   const [code, setCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(46);
   const { formData, resetFormData } = useRegisterStore();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,17 +24,30 @@ export default function VerificationPage() {
       ...formData,
       otp: code,
     };
+    const search = searchParams.get('courseId');
 
     try {
-      const res = await baseAPI.post("/auth/register", payload);
+      const res = await baseAPI.post(`/auth/register/${search}`, payload);
 
-      if (res.status === 201) {
-        resetFormData();
-        router.push("/dashboard");
+      setToken("accessToken", res.data?.tokens?.accessToken);
+      setToken("refreshToken", res.data?.tokens?.refreshToken);
+
+      if (res.data?.data?.role === "SUPERADMIN" || res.data?.data?.role === "ADMIN") {
+        router.push('/dashboard')
+      } else if (res.data?.data?.role === "MENTOR") {
+        router.push('/dashboard/users/mentors')
+      } else if (res.data?.data?.role === "ASSISTANT") {
+        router.push('/dashboard/users/assistents')
+      } else {
+        router.push('/students')
       }
-    } catch (error) {
-      showToast("Xatolik !");
-      console.error("Xatolik:", error);
+
+    } catch (error: any) {
+      showToast("Xatolik !", {
+        title: error.response?.data?.message,
+        type: "error",
+      });
+      console.error(error);
     }
   };
 

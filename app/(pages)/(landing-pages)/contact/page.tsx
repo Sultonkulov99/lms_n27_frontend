@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Phone, Mail, MapPin, ChevronDown, CheckCircle2, Loader2 } from "lucide-react";
 import { useLanguage } from "@/app/context/LanguageContext";
-import axios from "axios";
+import { baseAPI } from "@/app/lib/utils"; 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -206,8 +206,8 @@ export default function ContactPage() {
     setErrorMessage("");
 
     try {
-      // NestJS POST /comments endpointiga so'rov yuborish
-      await axios.post(`${API_BASE_URL}/comments`, {
+      // Oddiy axios.post(...) o'rniga:
+      await baseAPI.post("/comments", {
         fullName: formData.fullName.trim(),
         phone: `${selectedCountry.prefix}${cleanPhone}`,
         message: formData.message.trim(),
@@ -312,7 +312,7 @@ export default function ContactPage() {
                     isDark ? "text-[#8A99AD]" : "text-slate-500"
                   }`}
                 >
-                  info@itlive.uz
+                  info@kebyu.uz
                 </p>
               </div>
             </div>

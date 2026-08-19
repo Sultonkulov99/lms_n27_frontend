@@ -5,12 +5,13 @@ import Image from "next/image";
 import ImageLogin from "@/app/assets/register_purple.png";
 import Link from "next/link";
 import { User, Smartphone, Eye, EyeOff } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { showToast } from "@/store/useToastStore";
 import { useRegisterStore } from "@/store/useRegisterStore";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [data, setData] = useState({ fullName: "", phone: "", password: "" });
@@ -33,7 +34,8 @@ export default function RegisterPage() {
         });
       }
       setFormData(data);
-      router.push("/verify-otp");
+      const search = searchParams.get('courseId');
+      router.push(`/verify-otp?courseId=${search}`);
     } catch (error) {
       throw error;
     }
