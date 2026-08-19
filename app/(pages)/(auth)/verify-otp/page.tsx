@@ -24,27 +24,48 @@ export default function VerificationPage() {
       ...formData,
       otp: code,
     };
-    const search = searchParams.get('courseId');
+    const courseId = searchParams.get('courseId');
 
     try {
-      const res = await baseAPI.post(`/auth/register/${search}`, payload);
+      // courseId bo'lsa qo'shish, bo'lmasa oddiy register
+      const url = courseId ? `/auth/register/${courseId}` : '/auth/register';
+      const res = await baseAPI.post(url, payload);
 
-      setToken("accessToken", res.data?.tokens?.accessToken);
-      setToken("refreshToken", res.data?.tokens?.refreshToken);
+      // Token ni saqlash
+      if (res.data?.tokens?.accessToken) {
+        setToken("accessToken", res.data.tokens.accessToken);
+        setToken("refreshToken", res.data.tokens.refreshToken);
+      }
 
-      if (res.data?.data?.role === "SUPERADMIN" || res.data?.data?.role === "ADMIN") {
+      // User info'ni saqlash
+      if (res.data?.data) {
+        localStorage.setItem("user", JSON.stringify(res.data.data));
+      }
+
+      // Role bo'yicha yo'naltirish
+      const role = res.data?.data?.role;
+      
+      if (role === "SUPERADMIN" || role === "ADMIN") {
         router.push('/dashboard')
-      } else if (res.data?.data?.role === "MENTOR") {
+      } else if (role === "MENTOR") {
         router.push('/dashboard/users/mentors')
-      } else if (res.data?.data?.role === "ASSISTANT") {
+      } else if (role === "ASSISTANT") {
         router.push('/dashboard/users/assistents')
       } else {
         router.push('/students')
       }
 
+      // Form datani tozalash
+      resetFormData();
+      
+      showToast("Muvaffaqiyatli!", {
+        title: "Ro'yxatdan o'tdingiz!",
+        type: "success",
+      });
+
     } catch (error: any) {
-      showToast("Xatolik !", {
-        title: error.response?.data?.message,
+      showToast("Xatolik!", {
+        title: error.response?.data?.message || "OTP kod noto'g'ri",
         type: "error",
       });
       console.error(error);

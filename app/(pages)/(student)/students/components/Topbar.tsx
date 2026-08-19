@@ -3,14 +3,71 @@
 import Image from "next/image";
 import ismatxurshidov from "../../../../assets/ismatxurshidov.png";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import messagesUz from "../../../../messages/uz.json";
+import messagesRu from "../../../../messages/ru.json";
+import messagesEn from "../../../../messages/en.json";
+
+type LanguageType = "uz" | "ru" | "en";
+
+const messages = {
+  uz: messagesUz,
+  ru: messagesRu,
+  en: messagesEn,
+};
+
+interface StudentInfo {
+  fullName: string;
+  role: string;
+  email?: string;
+}
 
 export default function Topbar() {
+  const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState("O'zbek tili");
+  const [language, setLanguage] = useState<LanguageType>("uz");
+  const [studentInfo, setStudentInfo] = useState<StudentInfo | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const langDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Load language and student info from localStorage on mount
+  useEffect(() => {
+    const savedLang = (localStorage.getItem("language") || "uz") as LanguageType;
+    setLanguage(savedLang);
+
+    // Get student info from localStorage
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        setStudentInfo({
+          fullName: user.fullName || "Student",
+          role: user.role || "STUDENT",
+          email: user.email,
+        });
+      } catch (err) {
+        console.error("Failed to parse user info:", err);
+      }
+    }
+  }, []);
+
+  // Handle language change
+  const handleLanguageChange = (lang: LanguageType) => {
+    setLanguage(lang);
+    localStorage.setItem("language", lang);
+    setIsLangDropdownOpen(false);
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    router.push("/");
+  };
+
+  // Handle click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -24,6 +81,15 @@ export default function Topbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const getLangLabel = () => {
+    const langMap: Record<LanguageType, string> = {
+      uz: "O'zbek tili",
+      ru: "Русский",
+      en: "English",
+    };
+    return langMap[language];
+  };
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
@@ -39,7 +105,7 @@ export default function Topbar() {
 
       <div className="flex items-center gap-4">
         {/* Bell notification */}
-        <button className="relative w-10 h-10 flex items-center justify-center">
+        <button className="relative w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2">
             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
@@ -49,8 +115,8 @@ export default function Topbar() {
           </span>
         </button>
 
-        {/* Hexagon icon */}
-        <button className="w-10 h-10 flex items-center justify-center">
+        {/* Settings icon */}
+        <button className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
@@ -60,9 +126,9 @@ export default function Topbar() {
         <div className="relative" ref={langDropdownRef}>
           <button 
             onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-            className="flex items-center gap-1.5 text-sm text-[#1a1a1a] font-medium px-3 py-1.5"
+            className="flex items-center gap-1.5 text-sm text-[#1a1a1a] font-medium px-3 py-1.5 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            {selectedLang}
+            {getLangLabel()}
             <svg 
               width="14" 
               height="14" 
@@ -79,34 +145,25 @@ export default function Topbar() {
           {isLangDropdownOpen && (
             <div className="absolute right-0 top-full mt-2 w-40 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
               <button 
-                onClick={() => {
-                  setSelectedLang("O'zbek tili");
-                  setIsLangDropdownOpen(false);
-                }}
+                onClick={() => handleLanguageChange("uz")}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                  selectedLang === "O'zbek tili" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
+                  language === "uz" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
                 }`}
               >
                 O&apos;zbek tili
               </button>
               <button 
-                onClick={() => {
-                  setSelectedLang("Русский");
-                  setIsLangDropdownOpen(false);
-                }}
+                onClick={() => handleLanguageChange("ru")}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                  selectedLang === "Русский" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
+                  language === "ru" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
                 }`}
               >
                 Русский
               </button>
               <button 
-                onClick={() => {
-                  setSelectedLang("English");
-                  setIsLangDropdownOpen(false);
-                }}
+                onClick={() => handleLanguageChange("en")}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${
-                  selectedLang === "English" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
+                  language === "en" ? "text-[#4F7FFF] font-semibold" : "text-[#1a1a1a]"
                 }`}
               >
                 English
@@ -119,18 +176,20 @@ export default function Topbar() {
         <div className="relative pl-4 border-l border-gray-200" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2.5 hover:bg-gray-100 px-2 py-1 rounded-lg transition-colors"
           >
             <Image
               src={ismatxurshidov}
-              alt="Ismat Xurshidov"
+              alt={studentInfo?.fullName || "Student"}
               width={32}
               height={32}
               className="rounded-full object-cover"
             />
             <div className="text-left">
-              <p className="text-sm font-semibold text-[#1a1a1a]">Ismat Xurshidov</p>
-              <p className="text-xs text-[#94A3B8]">Administrator</p>
+              <p className="text-sm font-semibold text-[#1a1a1a]">{studentInfo?.fullName || "Student"}</p>
+              <p className="text-xs text-[#94A3B8]">
+                {studentInfo?.role === "STUDENT" ? "O'quvchi" : studentInfo?.role}
+              </p>
             </div>
             <svg 
               width="14" 
@@ -164,7 +223,10 @@ export default function Topbar() {
               
               <div className="h-px bg-gray-200 my-1.5 mx-2"></div>
               
-              <button className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors text-left">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-red-50 transition-colors text-left"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2">
                   <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
                   <polyline points="16 17 21 12 16 7" />
