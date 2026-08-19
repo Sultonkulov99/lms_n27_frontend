@@ -5,7 +5,6 @@ import { Search, X, ChevronDown, Pencil, Trash2, Check, Loader2 } from "lucide-r
 import Pagination from "@/app/components/dashboard/Pagination";
 import { baseAPI } from "@/app/lib/utils";
 
-
 interface Comment {
   id: number | string;
   fullName: string;
@@ -13,7 +12,21 @@ interface Comment {
   message: string;
   replies?: number;
   createdAt?: string;
+  created_at?: string;
+  date?: string;
 }
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr; // Agar tayyor "01.01.2024" ko'rinishida bo'lsa shunday qaytaradi
+
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+
+  return `${day}.${month}.${year}`;
+};
 
 export default function CommentsPage() {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -37,7 +50,6 @@ export default function CommentsPage() {
     setLoading(true);
     try {
       const response = await baseAPI.get("/comments");
-      // Backend'dan kelayotgan data array yoki object { data: [] } ko'rinishida bo'lishi mumkin
       const data = Array.isArray(response.data) ? response.data : response.data?.data || [];
       setComments(data);
     } catch (error) {
@@ -76,7 +88,7 @@ export default function CommentsPage() {
         `"${c.fullName || "—"}"`,
         `"${c.phone || "—"}"`,
         `"${c.message || "—"}"`,
-        c.createdAt ? new Date(c.createdAt).toLocaleDateString("uz-UZ") : "—",
+        formatDate(c.createdAt || c.created_at || c.date),
       ].join(",")
     );
     const csvContent =
@@ -90,7 +102,7 @@ export default function CommentsPage() {
     document.body.removeChild(link);
   };
 
-  // 2. Izohni tahrirlash (PATCH / PUT)
+  // 2. Izohni tahrirlash (PATCH)
   const openEditModal = (comment: Comment) => {
     setEditingComment(comment);
     setEditText(comment.message);
@@ -100,9 +112,7 @@ export default function CommentsPage() {
   const handleSaveEdit = async () => {
     if (!editingComment || !editText.trim()) return;
 
-    // id yoki _id mavjudligini aniqlaymiz:
     const commentId = editingComment.id || (editingComment as any)._id;
-
 
     setIsSubmitting(true);
     try {
@@ -137,7 +147,6 @@ export default function CommentsPage() {
     try {
       await baseAPI.delete(`/comments/${deletingId}`);
 
-      // UI'dan olib tashlash
       setComments((prev) => prev.filter((c) => c.id !== deletingId));
       if (currentComments.length === 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
@@ -208,7 +217,6 @@ export default function CommentsPage() {
                       className="inline-block text-gray-400 ml-1"
                     />
                   </th>
-                  {/* Telefon raqami ustuni izohdan oldinga qo'shildi */}
                   <th className="px-5 py-4 w-44 border border-gray-200">
                     Telefon raqami
                   </th>
@@ -257,12 +265,10 @@ export default function CommentsPage() {
                         </span>
                       </td>
 
-                      {/* Telefon raqami */}
                       <td className="px-5 py-4 text-[13px] text-gray-700 border border-gray-200 align-middle font-mono">
                         {comment.phone || "—"}
                       </td>
 
-                      {/* Izoh */}
                       <td className="px-5 py-4 border border-gray-200 align-middle">
                         <div className="flex items-center gap-3">
                           <span className="text-[13px] text-gray-700 leading-snug">
@@ -276,10 +282,9 @@ export default function CommentsPage() {
                         </div>
                       </td>
 
+                      {/* Sana formatting funksiyasi ulangan joy */}
                       <td className="px-5 py-4 text-[13px] text-gray-600 border border-gray-200 align-middle">
-                        {comment.createdAt
-                          ? new Date(comment.createdAt).toLocaleDateString("uz-UZ")
-                          : "—"}
+                        {formatDate(comment.createdAt || comment.created_at || comment.date)}
                       </td>
 
                       <td className="px-5 py-4 border border-gray-200 align-middle">
