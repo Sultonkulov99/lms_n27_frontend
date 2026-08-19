@@ -3,7 +3,8 @@ import { CourseHero } from "@/app/components/course-details/course-hero";
 import { CourseSidebar } from "@/app/components/course-details/course-sidebar";
 import { AccordionList } from "@/app/components/course-details/accordion-list";
 import { CommentsSection } from "@/app/components/course-details/comments-section";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://63.180.181.4:8080";
+
+const API_URL = process.env.BACKEND_URL || "http://63.180.181.4:8080";
 
 interface PageProps {
   params: Promise<{ id?: string[] }>;
@@ -14,7 +15,7 @@ async function getCourseData(id: string) {
     const res = await fetch(`${API_URL}/api/v1/courses/${id}`, { cache: "no-store" });
     if (!res.ok) return null;
     const data = await res.json();
-    
+
     let lessons: { id: number; sectionId: number; name: string; description?: string }[] = [];
     try {
       const lessonsRes = await fetch(`${API_URL}/api/v1/lessons`, { cache: "no-store" });
@@ -38,7 +39,7 @@ async function getCourseData(id: string) {
           isFree: false, // qulf turadi
         })),
     }));
-    
+
     return {
       title: data.name,
       description: data.description,
