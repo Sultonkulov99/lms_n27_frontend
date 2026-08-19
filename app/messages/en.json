@@ -143,5 +143,13 @@
     },
     "commentForm": {
         "placeholder": "Write your comment..."
+    },
+    "student": {
+        "myCoursesTitle": "My Courses",
+        "noCourses": "You don't have any courses yet",
+        "loadingError": "Error loading courses",
+        "logout": "Sign Out",
+        "backToSite": "Back to Site",
+        "profileInfo": "Profile Information"
     }
 }

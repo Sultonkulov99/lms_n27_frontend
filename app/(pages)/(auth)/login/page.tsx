@@ -29,6 +29,11 @@ export default function LoginPage() {
             setToken("accessToken", res.data?.tokens?.accessToken);
             setToken("refreshToken", res.data?.tokens?.refreshToken);
 
+            // Save user info
+            if (res.data?.data) {
+              localStorage.setItem("user", JSON.stringify(res.data.data));
+            }
+
             if(res.data?.data?.role === "SUPERADMIN" || res.data?.data?.role === "ADMIN") {
                 router.push('/dashboard')
             } else if(res.data?.data?.role === "MENTOR") {

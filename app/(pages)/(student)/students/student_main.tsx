@@ -11,6 +11,13 @@ export default function StudentMain() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [likedCourses, setLikedCourses] = useState<Set<string>>(new Set());
+  const [language, setLanguage] = useState<"uz" | "ru" | "en">("uz");
+
+  // Load language from localStorage
+  useEffect(() => {
+    const savedLang = (localStorage.getItem("language") || "uz") as "uz" | "ru" | "en";
+    setLanguage(savedLang);
+  }, []);
 
   // Fetch courses from backend
   useEffect(() => {
@@ -52,7 +59,9 @@ export default function StudentMain() {
 
         <main className="flex-1 overflow-y-auto bg-[#eef1f4] p-6">
           <h1 className="text-lg font-semibold text-[#1a1a1a] mb-4">
-            Mening kurslarim
+            {language === "uz" && "Mening kurslarim"}
+            {language === "ru" && "Мои курсы"}
+            {language === "en" && "My Courses"}
           </h1>
 
           {/* Loading state */}
@@ -65,7 +74,11 @@ export default function StudentMain() {
           {/* Error state */}
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-              <p className="font-medium">Xatolik:</p>
+              <p className="font-medium">
+                {language === "uz" && "Xatolik:"}
+                {language === "ru" && "Ошибка:"}
+                {language === "en" && "Error:"}
+              </p>
               <p className="text-sm mt-1">{error}</p>
             </div>
           )}
@@ -73,7 +86,11 @@ export default function StudentMain() {
           {/* Empty state */}
           {!loading && !error && courses.length === 0 && (
             <div className="bg-white rounded-lg p-8 text-center">
-              <p className="text-gray-500">Sizda hali kurslar mavjud emas</p>
+              <p className="text-gray-500">
+                {language === "uz" && "Sizda hali kurslar mavjud emas"}
+                {language === "ru" && "У вас еще нет курсов"}
+                {language === "en" && "You don't have any courses yet"}
+              </p>
             </div>
           )}
 
@@ -90,8 +107,8 @@ export default function StudentMain() {
                   thumbnail={item.course.thumbnail || "/bolakay.png"}
                   progress={item.progress || 0}
                   category={item.course.category?.name || "Kurs"}
-                  isLiked={likedCourses.has(item.course.id)}
-                  onLike={() => handleLike(item.course.id)}
+                  isLiked={likedCourses.has(String(item.course.id))}
+                  onLike={() => handleLike(String(item.course.id))}
                 />
               ))}
             </div>

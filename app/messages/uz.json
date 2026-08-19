@@ -143,5 +143,13 @@
     },
     "commentForm": {
         "placeholder": "Fikringizni yozib qoldiring..."
+    },
+    "student": {
+        "myCoursesTitle": "Mening kurslarim",
+        "noCourses": "Sizda hali kurslar mavjud emas",
+        "loadingError": "Kurslarni yuklashda xatolik yuz berdi",
+        "logout": "Profildan chiqish",
+        "backToSite": "Saytga qaytish",
+        "profileInfo": "Profil ma'lumotlari"
     }
 }

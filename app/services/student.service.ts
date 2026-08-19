@@ -2,13 +2,13 @@ import { baseAPI } from "@/app/lib/utils";
 
 // Types
 export interface Course {
-  id: string;
+  id: number;
   title: string;
   description: string;
   thumbnail?: string;
-  categoryId: string;
+  categoryId?: number;
   category?: {
-    id: string;
+    id: number;
     name: string;
   };
   createdAt: string;
@@ -51,7 +51,8 @@ export const studentService = {
   // Get my courses
   async getMyCourses(): Promise<MyCourse[]> {
     const response = await baseAPI.get("/students/my-courses");
-    return response.data;
+    // Backend qaytaradi array sifatida, to'g'ridan-to'g'ri qaytaramiz
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   // Get course details with sections and lessons
