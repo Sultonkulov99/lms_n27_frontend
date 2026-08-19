@@ -62,7 +62,6 @@ export default function AssistentsPage() {
   const [fullNameError, setNameError] = useState(false);
   const [phone, setPhone] = useState("+998");
   const [phoneError, setPhoneError] = useState(false);
-  // course хранит courseId строкой (значение <select>) — "" значит "без курса"
   const [course, setCourse] = useState("");
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
@@ -102,7 +101,6 @@ export default function AssistentsPage() {
     }
   };
 
-  // Курс (если есть) для конкретного ассистента — из /course-assistant, т.к. там связка userId -> courseId
   const linkForUser = (userId: number) =>
     courseLinks.find((l) => l.userId === userId) || null;
 
@@ -130,7 +128,6 @@ export default function AssistentsPage() {
       .replace(",", "");
   };
 
-  // Derived state
   const filteredAssistents = useMemo(() => {
     return assistents.filter((assistent) => {
       const link = linkForUser(assistent.id);
@@ -227,7 +224,6 @@ export default function AssistentsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  // Удаляет ассистента полностью: сначала связку с курсом (если есть), потом самого пользователя
   const handleDeleteAssistent = async () => {
     if (!deletingId) return;
 
@@ -288,7 +284,6 @@ export default function AssistentsPage() {
       setPasswordError(false);
     }
 
-    // Курс НЕ обязателен — специально не валидируется
     if (hasError) return;
 
     try {
@@ -308,7 +303,6 @@ export default function AssistentsPage() {
         userId = created.data.id;
       }
 
-      // Курс объединяем только если реально выбран
       if (course) {
         const courseId = Number(course);
         if (editingLink) {
@@ -317,6 +311,10 @@ export default function AssistentsPage() {
           }
         } else {
           await createCourseAssistant(courseId, userId);
+        }
+      } else {
+        if (editingId && editingLink) {
+          await deleteCourseAssistant(editingLink.id); 
         }
       }
 
@@ -395,7 +393,7 @@ export default function AssistentsPage() {
         </div>
 
         {loading && (
-          <div className="py-10 text-center text-gray-400 text-sm">
+          <div className="py-4 text-center text-gray-500 text-sm">
             Yuklanmoqda...
           </div>
         )}
@@ -437,6 +435,13 @@ export default function AssistentsPage() {
                       </th>
                       <th className="px-5 py-4 border border-gray-200">
                         Yaratilgan vaqt{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Holati{" "}
                         <ChevronDown
                           size={14}
                           className="inline-block text-gray-400 ml-1"
@@ -490,6 +495,11 @@ export default function AssistentsPage() {
                           </td>
                           <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
                             {formatDate(assistent.created_at)}
+                          </td>
+                          <td className="px-5 py-4 border border-gray-200">
+                            <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
+                              Faol
+                            </span>
                           </td>
                           <td className="px-5 py-4 border border-gray-200">
                             <div className="flex items-center justify-center gap-2">

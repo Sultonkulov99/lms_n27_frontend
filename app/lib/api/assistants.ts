@@ -1,5 +1,5 @@
 import axios from "axios";
-import { api } from "../api";
+import { baseAPI } from "@/app/lib/utils";
 
 export interface Assistant {
   id: number;
@@ -22,13 +22,13 @@ function unwrapList<T>(payload: unknown): T[] {
 }
 
 export async function getAssistants(): Promise<Assistant[]> {
-  const { data } = await api.get("/user/assistant");
+  const { data } = await baseAPI.get("/user/assistant");
   return unwrapList<Assistant>(data);
 }
 
 export async function createAssistant(formData: FormData) {
   try {
-    const { data } = await api.post("/user/assistant", formData);
+    const { data } = await baseAPI.post("/user/assistant", formData);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -40,7 +40,7 @@ export async function createAssistant(formData: FormData) {
 
 export async function updateAssistant(id: number, formData: FormData) {
   try {
-    const { data } = await api.patch(`/user/assistant/${id}`, formData);
+    const { data } = await baseAPI.patch(`/user/assistant/${id}`, formData);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -51,6 +51,6 @@ export async function updateAssistant(id: number, formData: FormData) {
 }
 
 export async function deleteAssistant(id: number) {
-  const { data } = await api.delete(`/user/assistant/${id}`);
+  const { data } = await baseAPI.delete(`/user/assistant/${id}`);
   return data;
 }

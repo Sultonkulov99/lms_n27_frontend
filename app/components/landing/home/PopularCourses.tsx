@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "../../../context/LanguageContext";
-import { baseAPI } from "@/app/lib/utils";
+import { baseAPI, fetchCategoriesCached, fetchCoursesCached } from "@/app/lib/utils";
 
 interface Category {
   id: number;
@@ -36,8 +36,8 @@ export default function PopularCourses() {
     const fetchData = async () => {
       try {
         const [coursesRes, categoriesRes] = await Promise.all([
-          baseAPI.get("courses"),
-          baseAPI.get("categories")
+          fetchCoursesCached(),
+          fetchCategoriesCached()
         ]);
         
         setCourses(coursesRes.data || []);

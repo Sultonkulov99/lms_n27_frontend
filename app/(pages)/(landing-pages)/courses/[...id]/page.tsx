@@ -11,7 +11,7 @@ interface PageProps {
 
 async function getCourseData(id: string) {
   try {
-    const res = await fetch(`${API_URL}/courses/${id}`, { cache: "no-store" });
+    const res = await fetch(`${API_URL}/api/v1/courses/${id}`, { cache: "no-store" });
     if (!res.ok) return null;
     const data = await res.json();
     

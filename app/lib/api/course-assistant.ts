@@ -1,5 +1,5 @@
 import axios from "axios";
-import { api } from "../api";
+import { baseAPI } from "@/app/lib/utils";
 
 export interface CourseAssistantUser {
   id: number;
@@ -31,13 +31,13 @@ function unwrapList<T>(payload: unknown): T[] {
 }
 
 export async function getCourseAssistants(): Promise<CourseAssistantLink[]> {
-  const { data } = await api.get("/course-assistant");
+  const { data } = await baseAPI.get("/course-assistant");
   return unwrapList<CourseAssistantLink>(data);
 }
 
 export async function createCourseAssistant(courseId: number, userId: number) {
   try {
-    const { data } = await api.post("/course-assistant", { courseId, userId });
+    const { data } = await baseAPI.post("/course-assistant", { courseId, userId });
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -52,7 +52,7 @@ export async function updateCourseAssistant(
   payload: { courseId?: number; userId?: number },
 ) {
   try {
-    const { data } = await api.patch(`/course-assistant/${id}`, payload);
+    const { data } = await baseAPI.patch(`/course-assistant/${id}`, payload);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -63,6 +63,6 @@ export async function updateCourseAssistant(
 }
 
 export async function deleteCourseAssistant(id: number) {
-  const { data } = await api.delete(`/course-assistant/${id}`);
+  const { data } = await baseAPI.delete(`/course-assistant/${id}`);
   return data;
 }

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { api } from "../api";
+import { baseAPI } from "@/app/lib/utils";
 
 export interface Admin {
   id: number;
@@ -22,7 +22,7 @@ function unwrapList<T>(payload: unknown): T[] {
 }
 
 export async function getAdmins(): Promise<Admin[]> {
-  const { data } = await api.get("/user/admin");
+  const { data } = await baseAPI.get("/user/admin");
   return unwrapList<Admin>(data);
 }
 
@@ -33,7 +33,7 @@ export async function createAdmin(formData: FormData) {
   }
 
   try {
-    const { data } = await api.post("/user/admin", formData);
+    const { data } = await baseAPI.post("/user/admin", formData);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -50,7 +50,7 @@ export async function updateAdmin(id: number, formData: FormData) {
   }
 
   try {
-    const { data } = await api.patch(`/user/admin/${id}`, formData);
+    const { data } = await baseAPI.patch(`/user/admin/${id}`, formData);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -61,7 +61,7 @@ export async function updateAdmin(id: number, formData: FormData) {
 }
 
 export async function deleteAdmin(id: number) {
-  const { data } = await api.delete(`/user/admin/${id}`);
+  const { data } = await baseAPI.delete(`/user/admin/${id}`);
   return data;
 }
 
@@ -77,6 +77,6 @@ export interface DashboardStats {
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const { data } = await api.get("/user/dashboard");
+  const { data } = await baseAPI.get("/user/dashboard");
   return data;
 }

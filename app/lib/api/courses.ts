@@ -1,5 +1,4 @@
-
-import { api } from "../api";
+import { baseAPI } from "@/app/lib/utils";
  
 export interface Course {
   id: number;
@@ -25,7 +24,7 @@ function unwrapList<T>(payload: unknown): T[] {
 }
  
 export async function getCourses(): Promise<Course[]> {
-  const { data } = await api.get("/courses");
+  const { data } = await baseAPI.get("/courses");
   return unwrapList<Course>(data);
 }
  

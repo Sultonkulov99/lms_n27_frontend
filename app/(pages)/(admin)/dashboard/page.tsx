@@ -16,8 +16,8 @@ export default function AdminDashboard() {
         const data = await getDashboardStats();
         setStats(data);
       } catch (err: any) {
-        console.error("Dashboard loading error:", err);
-        setError("Ma'lumotlarni yuklashda xatolik yuz berdi");
+        console.error(err);
+        setError(err.message || "Yuklanmadi");
       } finally {
         setLoading(false);
       }
@@ -28,16 +28,14 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-gray-500 font-medium">
+      <div className="p-6 text-center text-gray-500 text-sm">
         Yuklanmoqda...
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="p-6 text-center text-red-500 font-medium">{error}</div>
-    );
+    return <div className="p-6 text-center text-red-500 text-sm">{error}</div>;
   }
 
   const data = stats?.dashboard || {

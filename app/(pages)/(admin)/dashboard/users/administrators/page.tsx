@@ -79,7 +79,6 @@ export default function AdministratorsPage() {
     }
   };
 
-  // Derived state
   const filteredAdmins = useMemo(() => {
     return admins.filter(
       (admin) =>
@@ -142,15 +141,12 @@ export default function AdministratorsPage() {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow digits and plus
     let val = e.target.value.replace(/[^0-9+]/g, "");
 
-    // Prevent deletion of +998 prefix
     if (!val.startsWith("+998")) {
       val = "+998" + val.replace(/\+998/g, "").trim();
     }
 
-    // Ensure format "+998XXXXXXXXX" by length limit (13 chars)
     if (val.length <= 13) {
       setPhone(val);
       if (phoneError) setPhoneError(false);
@@ -177,7 +173,7 @@ export default function AdministratorsPage() {
     setPhone(admin.phone);
     setPassword("");
     setImageFile(null);
-    setImagePreview(getAvatarUrl(admin.file)); // Show current image in edit mode
+    setImagePreview(getAvatarUrl(admin.file));
     setNameError(false);
     setPasswordError(false);
     setPhoneError(false);
@@ -341,141 +337,156 @@ export default function AdministratorsPage() {
           </button>
         </div>
 
-        {/* Table (Excel Style Borders) */}
-        <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse border border-gray-200 min-w-250">
-              <thead>
-                <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
-                  <th className="px-5 py-4 w-16 border border-gray-200">ID</th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    F.I.Sh{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Telefon raqam{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Yaratilgan vaqt{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Rol{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 border border-gray-200">
-                    Holati{" "}
-                    <ChevronDown
-                      size={14}
-                      className="inline-block text-gray-400 ml-1"
-                    />
-                  </th>
-                  <th className="px-5 py-4 text-center border border-gray-200">
-                    Amallar
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-[14px] text-gray-800">
-                {currentAdmins.map((admin) => (
-                  <tr
-                    key={admin.id}
-                    className="hover:bg-gray-50 transition-colors group"
-                  >
-                    <td className="px-5 py-4 font-medium border border-gray-200">
-                      {admin.id}
-                    </td>
-                    <td className="px-5 py-4 border border-gray-200">
-                      <div
-                        className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
-                        onClick={() => {
-                          setViewingAdmin(admin);
-                          setIsViewModalOpen(true);
-                        }}
-                      >
-                        <img
-                          src={getAvatarUrl(admin.file)}
-                          alt={admin.fullName}
-                          className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
-                        />
-                        <span className="font-semibold text-[13px]">
-                          {admin.fullName}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                      {admin.phone}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                      {formatDate(admin.created_at)}
-                    </td>
-                    <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                      {admin.role}
-                    </td>
-                    <td className="px-5 py-4 border border-gray-200">
-                      <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
-                        {admin.status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 border border-gray-200">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => openEditModal(admin)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={() => confirmDelete(admin.id)}
-                          className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {currentAdmins.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-6 py-10 text-center text-gray-500 border border-gray-200"
-                    >
-                      Ma'lumot topilmadi
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        {loading && (
+          <div className="py-4 text-center text-gray-500 text-sm">
+            Yuklanmoqda...
           </div>
-        </div>
+        )}
+        {!loading && error && (
+          <div className="py-4 text-center text-red-500 text-sm">{error}</div>
+        )}
 
-        {/* Bottom Pagination Component */}
-        <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredAdmins.length}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={setItemsPerPage}
-            onDownloadXLS={handleDownloadXLS}
-          />
-        </div>
+        {!loading && !error && (
+          <>
+            {/* Table (Excel Style Borders) */}
+            <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse border border-gray-200 min-w-250">
+                  <thead>
+                    <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
+                      <th className="px-5 py-4 w-16 border border-gray-200">
+                        ID
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        F.I.Sh{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Telefon raqam{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Yaratilgan vaqt{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Rol{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 border border-gray-200">
+                        Holati{" "}
+                        <ChevronDown
+                          size={14}
+                          className="inline-block text-gray-400 ml-1"
+                        />
+                      </th>
+                      <th className="px-5 py-4 text-center border border-gray-200">
+                        Amallar
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-[14px] text-gray-800">
+                    {currentAdmins.map((admin) => (
+                      <tr
+                        key={admin.id}
+                        className="hover:bg-gray-50 transition-colors group"
+                      >
+                        <td className="px-5 py-4 font-medium border border-gray-200">
+                          {admin.id}
+                        </td>
+                        <td className="px-5 py-4 border border-gray-200">
+                          <div
+                            className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
+                            onClick={() => {
+                              setViewingAdmin(admin);
+                              setIsViewModalOpen(true);
+                            }}
+                          >
+                            <img
+                              src={getAvatarUrl(admin.file)}
+                              alt={admin.fullName}
+                              className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
+                            />
+                            <span className="font-semibold text-[13px]">
+                              {admin.fullName}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                          {admin.phone}
+                        </td>
+                        <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                          {formatDate(admin.created_at)}
+                        </td>
+                        <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                          {admin.role}
+                        </td>
+                        <td className="px-5 py-4 border border-gray-200">
+                          <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
+                            Faol
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 border border-gray-200">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => openEditModal(admin)}
+                              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              onClick={() => confirmDelete(admin.id)}
+                              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {currentAdmins.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="px-6 py-10 text-center text-gray-500 border border-gray-200"
+                        >
+                          Ma'lumot topilmadi
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Bottom Pagination Component */}
+            <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredAdmins.length}
+                startIndex={startIndex}
+                endIndex={endIndex}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={setItemsPerPage}
+                onDownloadXLS={handleDownloadXLS}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Add/Edit Modal Overlay */}

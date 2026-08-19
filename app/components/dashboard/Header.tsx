@@ -11,9 +11,18 @@ import {
   LogOut,
   User,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { removeToken } from "@/app/lib/utils";
 
 export default function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    removeToken("accessToken");
+    removeToken("refreshToken");
+    router.push("/");
+  };
 
   return (
     <header className="h-[88px] flex items-center justify-between px-8 shrink-0 bg-white border-b border-gray-100 shadow-sm z-10">
@@ -92,7 +101,10 @@ export default function Header() {
               </div>
               <ChevronRight size={16} className="text-gray-400" />
             </button>
-            <button className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors mt-1 border-t border-gray-50">
+            <button 
+              onClick={handleLogout}
+              className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors mt-1 border-t border-gray-50"
+            >
               <div className="flex items-center gap-2.5">
                 <LogOut size={16} className="text-gray-400" />
                 <span className="font-medium">Tizimdan chiqish</span>
