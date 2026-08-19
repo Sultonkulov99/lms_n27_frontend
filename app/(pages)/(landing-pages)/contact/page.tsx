@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Phone, Mail, MapPin, ChevronDown, CheckCircle2, Loader2 } from "lucide-react";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { baseAPI } from "@/app/lib/utils"; 
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL
 
 interface FormData {
   fullName: string;
@@ -202,8 +205,14 @@ export default function ContactPage() {
     setIsSubmitting(true);
     setErrorMessage("");
 
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      // Oddiy axios.post(...) o'rniga:
+      await baseAPI.post("/comments", {
+        fullName: formData.fullName.trim(),
+        phone: `${selectedCountry.prefix}${cleanPhone}`,
+        message: formData.message.trim(),
+      });
+
       setIsSubmitted(true);
       setFormData({
         fullName: "",
@@ -215,10 +224,18 @@ export default function ContactPage() {
       setTimeout(() => {
         setIsSubmitted(false);
       }, 5000);
-    }, 800);
-  };
-
-  return (
+    } catch (error: any) {
+      console.error("Murojaat yuborishda xatolik:", error);
+      const serverError = error?.response?.data?.message;
+      setErrorMessage(
+        Array.isArray(serverError)
+          ? serverError.join(", ")
+          : serverError || "Xabar yuborishda xatolik yuz berdi. Qayta urinib ko'ring."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };  return (
     <div
       className={`w-full min-h-screen py-12 md:py-16 transition-colors duration-300 ${
         isDark ? "bg-[#0B0F17] text-white" : "bg-[#F8FAFC] text-[#0F172A]"
@@ -295,7 +312,7 @@ export default function ContactPage() {
                     isDark ? "text-[#8A99AD]" : "text-slate-500"
                   }`}
                 >
-                  info@itlive.uz
+                  info@kebyu.uz
                 </p>
               </div>
             </div>

@@ -7,8 +7,8 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { PrecisionStars } from "@/app/components/course-details/precision-stars";
 import { useLanguage } from "@/app/context/LanguageContext";
-import { baseAPI } from "@/app/lib/utils";
-
+import { getCourses } from "@/app/lib/api/courses";
+import { getCategories } from "@/app/lib/api/categories";
 interface Category {
   id: number;
   name: string;
@@ -124,12 +124,12 @@ function CoursesContent() {
     const fetchData = async () => {
       try {
         const [coursesRes, categoriesRes] = await Promise.all([
-          baseAPI.get("courses"),
-          baseAPI.get("categories")
+          getCourses(),
+          getCategories()
         ]);
         
-        setCourses(coursesRes.data || []);
-        setCategories(categoriesRes.data?.data || []);
+        setCourses((coursesRes as unknown as CourseAPI[]) || []);
+        setCategories(categoriesRes || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
