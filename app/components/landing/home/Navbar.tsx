@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useLanguage, type Language } from "@/app/context/LanguageContext";
-import { baseAPI, fetchCategoriesCached } from "@/app/lib/utils";
+import { getCategories } from "@/app/lib/api/categories";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -28,8 +28,8 @@ export default function Navbar() {
     setMounted(true);
     const fetchCategories = async () => {
       try {
-        const res = await fetchCategoriesCached();
-        setDbCategories(res.data?.data || []);
+        const data = await getCategories();
+        setDbCategories(data || []);
       } catch (e) {
         console.error("Failed to fetch categories:", e);
       }

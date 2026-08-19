@@ -32,9 +32,9 @@ export default function LoginPage() {
             if(res.data?.data?.role === "SUPERADMIN" || res.data?.data?.role === "ADMIN") {
                 router.push('/dashboard')
             } else if(res.data?.data?.role === "MENTOR") {
-                router.push('/dashboard/users/mentors')
+                router.push('/mentors')
             } else if(res.data?.data?.role === "ASSISTANT") {
-                router.push('/dashboard/users/assistents')
+                router.push('/assistents')
             } else {
                 router.push('/students')
             }
