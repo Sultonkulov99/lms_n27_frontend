@@ -103,7 +103,11 @@ export default function Header() {
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div key={notif.id} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex flex-col gap-1" onClick={() => markAsRead(notif.id)}>
+                    <div key={notif.id} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex flex-col gap-1" onClick={() => {
+                      markAsRead(notif.id);
+                      setIsNotificationsOpen(false);
+                      router.push("/dashboard/comments");
+                    }}>
                       <div className="flex justify-between items-start">
                         <span className="font-medium text-sm text-gray-800">{notif.title}</span>
                         <span className="text-[10px] text-gray-400">{new Date(notif.created_at).toLocaleTimeString()}</span>
