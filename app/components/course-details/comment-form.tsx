@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 import { createComment } from "./actions";
 import { useLanguage } from "@/app/context/LanguageContext";
 
-export function CommentForm({ courseId }: { courseId: string }) {
+export function CommentForm({ courseId, onSuccess }: { courseId: string; onSuccess?: () => void }) {
   const { t } = useLanguage();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -14,6 +14,7 @@ export function CommentForm({ courseId }: { courseId: string }) {
       const result = await createComment(courseId, formData);
       if (result.success) {
         formRef.current?.reset();
+        if (onSuccess) onSuccess();
       }
       return result;
     },

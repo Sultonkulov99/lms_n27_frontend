@@ -30,7 +30,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   fetchNotifications: async () => {
     try {
       const token = getToken("accessToken");
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/unread`, {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/notifications/unread`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = res.data;
@@ -43,7 +43,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   markAsRead: async (id: number) => {
     try {
       const token = getToken("accessToken");
-      await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/${id}/read`, {}, {
+      await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/notifications/${id}/read`, {}, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
