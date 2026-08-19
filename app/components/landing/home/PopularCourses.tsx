@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "../../../context/LanguageContext";
-import { baseAPI, fetchCategoriesCached, fetchCoursesCached } from "@/app/lib/utils";
-
+import { getCourses } from "@/app/lib/api/courses";
+import { getCategories } from "@/app/lib/api/categories";
 interface Category {
   id: number;
   name: string;
@@ -36,12 +36,12 @@ export default function PopularCourses() {
     const fetchData = async () => {
       try {
         const [coursesRes, categoriesRes] = await Promise.all([
-          fetchCoursesCached(),
-          fetchCategoriesCached()
+          getCourses(),
+          getCategories()
         ]);
         
-        setCourses(coursesRes.data || []);
-        setCategories(categoriesRes.data?.data || []);
+        setCourses((coursesRes as unknown as CourseAPI[]) || []);
+        setCategories(categoriesRes || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

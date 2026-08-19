@@ -34,8 +34,12 @@ export default function RegisterPage() {
         });
       }
       setFormData(data);
-      const search = searchParams.get('courseId');
-      router.push(`/verify-otp?courseId=${search}`);
+      
+      // courseId mavjud bo'lsa qo'shish, yo'q bo'lsa qo'shmaslik
+      const courseId = searchParams.get('courseId');
+      const verifyUrl = courseId ? `/verify-otp?courseId=${courseId}` : '/verify-otp';
+      
+      router.push(verifyUrl);
     } catch (error) {
       throw error;
     }

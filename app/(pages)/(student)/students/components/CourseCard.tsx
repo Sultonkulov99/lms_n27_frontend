@@ -3,7 +3,7 @@ import Link from "next/link";
  
 import avatar from "@/app/assets/bekzodsafarov.jpg"
 interface CourseCardProps {
-  id: string;
+  id: number;
   title: string;
   instructor: string;
   instructorAvatar: string;

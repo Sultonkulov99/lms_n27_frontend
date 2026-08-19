@@ -143,5 +143,13 @@
     },
     "commentForm": {
         "placeholder": "Оставьте свой комментарий..."
+    },
+    "student": {
+        "myCoursesTitle": "Мои курсы",
+        "noCourses": "У вас еще нет курсов",
+        "loadingError": "Ошибка при загрузке курсов",
+        "logout": "Выход из профиля",
+        "backToSite": "Вернуться на сайт",
+        "profileInfo": "Информация профиля"
     }
 }
