@@ -9,8 +9,8 @@ import {
   Pencil,
   Trash2,
   Check,
-  SlidersHorizontal,
 } from "lucide-react";
+import Pagination from "@/app/components/dashboard/Pagination";
 
 interface Payment {
   id: number;
@@ -44,7 +44,18 @@ const initialPayments: Payment[] = [
     amount: 300000,
     date: "01.01.2024 - 17:31:23",
     paymentType: "Karta",
-    status: "To’landi",
+    status: "Kutilmoqda",
+    confirmed: true,
+  },
+  {
+    id: 3,
+    buyer: "Istamov Fir’davs Hazratqul o’g’li",
+    course: "Frontend dasturlash",
+    direction: "Veb dasturlash",
+    amount: 300000,
+    date: "01.01.2024 - 17:31:23",
+    paymentType: "Karta",
+    status: "Bekor qilindi",
     confirmed: true,
   },
 ];
@@ -91,11 +102,12 @@ export default function PaymentsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+
   const filteredPayments = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-
     if (!query) return payments;
-
     return payments.filter(
       (payment) =>
         payment.buyer.toLowerCase().includes(query) ||
@@ -106,21 +118,48 @@ export default function PaymentsPage() {
     );
   }, [payments, searchQuery]);
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(filteredPayments.length / itemsPerPage),
-  );
-
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, filteredPayments.length);
+  const currentPayments = filteredPayments.slice(startIndex, endIndex);
 
-  const currentPayments = filteredPayments.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
+  const handleDownloadXLS = () => {
+    const headers = [
+      "ID",
+      "Sotib oluvchi",
+      "Kurs nomi",
+      "Yo’nalish",
+      "Summa",
+      "Sana",
+      "Holat",
+      "Tasdiqlash",
+    ];
+    const rows = payments.map((a) =>
+      [
+        a.id,
+        a.buyer,
+        a.course,
+        a.direction,
+        a.amount,
+        a.date,
+        a.status,
+        a.confirmed,
+      ].join(","),
+    );
+    const csvContent =
+      "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "to’lovlar.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const openAddModal = () => {
     setEditingId(null);
-
     setBuyer("");
     setCourse("");
     setDirection("");
@@ -128,13 +167,11 @@ export default function PaymentsPage() {
     setPaymentType("");
     setStatus("Kutilmoqda");
     setConfirmed(false);
-
     setIsModalOpen(true);
   };
 
   const openEditModal = (payment: Payment) => {
     setEditingId(payment.id);
-
     setBuyer(payment.buyer);
     setCourse(payment.course);
     setDirection(payment.direction);
@@ -142,7 +179,6 @@ export default function PaymentsPage() {
     setPaymentType(payment.paymentType);
     setStatus(payment.status);
     setConfirmed(payment.confirmed);
-
     setIsModalOpen(true);
   };
 
@@ -226,7 +262,7 @@ export default function PaymentsPage() {
 
         <button
           onClick={openAddModal}
-          className="mt-4 sm:mt-0 flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+          className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
         >
           <PlusCircle size={18} />
           Qo’shish
@@ -243,7 +279,7 @@ export default function PaymentsPage() {
 
           <input
             type="text"
-            placeholder="Izlash"
+            placeholder="Izlash..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -260,11 +296,19 @@ export default function PaymentsPage() {
             />
           )}
         </div>
-
-        <button className="w-11 h-11 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500">
-          <SlidersHorizontal size={18} />
+        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+          Izlash
         </button>
       </div>
+
+      {/* {loading && (
+        <div className="py-4 text-center text-gray-500 text-sm">
+          Yuklanmoqda...
+        </div>
+      )}
+      {!loading && error && (
+        <div className="py-4 text-center text-red-500 text-sm">{error}</div>
+      )} */}
 
       {/* TABLE */}
       <div className="bg-white rounded-t-xl shadow-sm overflow-hidden">
@@ -374,14 +418,14 @@ export default function PaymentsPage() {
                   {/* TASDIQLASH */}
                   <td className="px-5 py-4 border border-gray-200">
                     {payment.confirmed ? (
-                      <span className="inline-flex items-center gap-1.5 bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold">
+                      <button className="inline-flex items-center gap-1.5 bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold cursor-pointer">
                         <Check size={13} />
                         Tasdiqlangan
-                      </span>
+                      </button>
                     ) : (
-                      <span className="bg-[#FFF4E5] text-[#B06000] px-3 py-1 rounded-full text-[12px] font-semibold">
+                      <button className="bg-[#FFF4E5] text-[#B06000] px-3 py-1 rounded-full text-[12px] font-semibold cursor-pointer">
                         Tasdiqlanmagan
-                      </span>
+                      </button>
                     )}
                   </td>
 
@@ -409,7 +453,7 @@ export default function PaymentsPage() {
                 <tr>
                   <td
                     colSpan={9}
-                    className="px-6 py-10 text-center text-gray-500"
+                    className="px-6 py-10 text-center text-gray-500 border border-gray-200"
                   >
                     Ma’lumot topilmadi
                   </td>
@@ -421,49 +465,18 @@ export default function PaymentsPage() {
       </div>
 
       {/* PAGINATION */}
-      <div className="border border-gray-200 border-t-0 rounded-b-xl bg-[#F8F9FA] px-5 py-4 flex items-center justify-between">
-        <div className="text-[13px] font-medium text-gray-700">
-          Sahifada {filteredPayments.length === 0 ? 0 : startIndex + 1}-
-          {Math.min(startIndex + itemsPerPage, filteredPayments.length)}
-          gacha. Umumiy {filteredPayments.length} ta
-        </div>
-
-        <div className="flex items-center gap-2">
-          <select
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className="border border-gray-200 bg-white rounded-lg px-3 py-2 text-sm outline-none"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
-
-          <button
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-            className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm disabled:opacity-40"
-          >
-            Oldingi
-          </button>
-
-          <span className="px-3 py-2 text-sm">
-            {currentPage} / {totalPages}
-          </span>
-
-          <button
-            disabled={currentPage === totalPages}
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-            }
-            className="px-3 py-2 border border-gray-200 rounded-lg bg-white text-sm disabled:opacity-40"
-          >
-            Keyingi
-          </button>
-        </div>
+      <div className="border border-gray-200 border-t-0 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredPayments.length}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+          onDownloadXLS={handleDownloadXLS}
+        />
       </div>
 
       {/* ADD / EDIT MODAL */}
@@ -671,7 +684,7 @@ export default function PaymentsPage() {
             <div className="mt-4 flex justify-start shrink-0">
               <button
                 onClick={handleSave}
-                className="flex items-center justify-center bg-[#407BFF] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm"
+                className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-sm"
                 style={{
                   width: "129px",
                   height: "48px",
@@ -714,7 +727,7 @@ export default function PaymentsPage() {
 
               <button
                 onClick={handleDelete}
-                className="px-4 py-2 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white text-sm font-medium"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
               >
                 O’chirish
               </button>
