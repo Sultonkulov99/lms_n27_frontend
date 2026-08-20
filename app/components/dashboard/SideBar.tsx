@@ -9,7 +9,7 @@ import {
   CreditCard,
   MessageSquare,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -20,6 +20,15 @@ export default function Sidebar() {
   const [isUsersOpen, setIsUsersOpen] = useState(pathname.includes('/dashboard/users'));
   const [isCoursesOpen, setIsCoursesOpen] = useState(pathname.includes('/dashboard/courses'));
   const userSubLinks = ["administrators", "assistents", "mentors", "students"];
+
+  useEffect(() => {
+    if (pathname.includes('/dashboard/users')) {
+      setIsUsersOpen(true);
+    }
+    if (pathname.includes('/dashboard/courses')) {
+      setIsCoursesOpen(true);
+    }
+  }, [pathname]);
 
   return (
     <aside
