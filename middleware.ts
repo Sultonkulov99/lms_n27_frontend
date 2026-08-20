@@ -13,6 +13,12 @@ function parseJwtRole(token: string): string | null {
         .join(""),
     );
     const parsed = JSON.parse(jsonPayload);
+    
+    // Token yaroqlilik muddatini tekshirish (exp sekundlarda beriladi)
+    if (parsed.exp && parsed.exp * 1000 < Date.now()) {
+      return null;
+    }
+    
     return parsed?.role || parsed?.data?.role || null;
   } catch (error) {
     return null;
@@ -37,8 +43,16 @@ const PROTECTED_PANEL_PREFIXES = [
 ];
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get("accessToken")?.value;
+  let token = request.cookies.get("accessToken")?.value;
   const { pathname } = request.nextUrl;
+
+  let role = null;
+  if (token) {
+    role = parseJwtRole(token);
+    if (!role) {
+      token = undefined; // Token yaroqsiz yoki muddati o'tgan
+    }
+  }
 
   const publicPaths = [
     "/",
@@ -54,23 +68,21 @@ export function middleware(request: NextRequest) {
     pathname === "/" ||
     publicPaths.some((path) => path !== "/" && pathname.startsWith(path));
 
-  const isAuthPage =
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/verify-otp");
-
-  // 1. Token yo'q va yopiq sahifaga kirmoqchi bo'lsa -> landing sahifaga
   if (!isPublicPath && !token) {
-    return NextResponse.redirect(new URL("/", request.url));
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    if (request.cookies.has("accessToken")) {
+      response.cookies.delete("accessToken");
+      response.cookies.delete("refreshToken");
+    }
+    return response;
   }
 
   // 2. Token mavjud bo'lsa -> Rollar bo'yicha qat'iy ajratish
-  if (token) {
-    const role = parseJwtRole(token);
-    const userRoleConfig = (role && ROLE_CONFIG[role]) || ROLE_CONFIG.STUDENT;
+  if (token && role) {
+    const userRoleConfig = ROLE_CONFIG[role] || ROLE_CONFIG.STUDENT;
 
-    // A. Foydalanuvchi auth sahifalariga kirmoqchi bo'lsa -> o'z panelining bosh sahifasiga
-    if (isAuthPage) {
+    // A. Foydalanuvchi public (landing yoki auth) sahifalarga kirmoqchi bo'lsa -> o'z panelining bosh sahifasiga yo'naltirish
+    if (isPublicPath) {
       return NextResponse.redirect(new URL(userRoleConfig.home, request.url));
     }
 
@@ -87,7 +99,15 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  // Agar token cookie'da bo'lsa, lekin yaroqsiz/muddati o'tgan deb topilsa o'chirib yuborish
+  if (request.cookies.get("accessToken") && !token) {
+    response.cookies.delete("accessToken");
+    response.cookies.delete("refreshToken");
+  }
+
+  return response;
 }
 
 export const config = {
