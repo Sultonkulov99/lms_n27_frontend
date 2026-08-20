@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Camera, Check } from "lucide-react";
+import { Camera, Check, Loader2 } from "lucide-react";
 import { useProfileStore } from "@/store/useProfileStore";
 import { baseAPI } from "@/app/lib/utils";
 import { showToast } from "@/store/useToastStore";
@@ -28,11 +28,23 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      setName(profile.fullName || "");
-      setPhone(profile.phone || "");
-      setEmail(profile.email || "");
-      if (profile.file) {
-        setImage(`${process.env.NEXT_PUBLIC_API_URL}${profile.file}`);
+      // Backend qaytargan obyektni to'g'ridan-to'g'ri any ga o'tkazib olamiz
+      const data: any = (profile as any).data || profile;
+
+      setName(data.fullName || data.name || "");
+      setPhone(data.phone || "");
+      setEmail(data.email || "");
+
+      const avatarPath = data.file || data.avatar || data.image;
+      if (avatarPath) {
+        if (avatarPath.startsWith("http")) {
+          setImage(avatarPath);
+        } else {
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL || "";
+          const cleanBase = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+          const cleanPath = avatarPath.startsWith("/") ? avatarPath : `/${avatarPath}`;
+          setImage(`${cleanBase}${cleanPath}`);
+        }
       } else {
         setImage("");
       }
@@ -62,7 +74,7 @@ export default function ProfilePage() {
       if (name) formData.append("fullName", name);
       if (phone) formData.append("phone", phone);
       if (email) formData.append("email", email);
-      
+
       if (imageFile) {
         formData.append("avatar", imageFile);
       }
@@ -73,100 +85,80 @@ export default function ProfilePage() {
         },
       });
 
-      showToast(response.data.message || "Profil muvaffaqiyatli yangilandi", { type: "success" });
-      await fetchProfile(); // refresh store
-    } catch (error: unknown) {
-      const err = error as any;
-      showToast(err.response?.data?.message || "Xatolik yuz berdi", { type: "error" });
+      showToast(response.data?.message || "Profil muvaffaqiyatli yangilandi", {
+        type: "success",
+      });
+
+      // Profil ma'lumotlarini store'da qayta yangilash
+      await fetchProfile();
+    } catch (error: any) {
+      showToast(error.response?.data?.message || "Xatolik yuz berdi", {
+        type: "error",
+      });
     } finally {
       setIsUpdating(false);
     }
   };
 
   if (isLoading && !profile) {
-    return <div className="p-8 text-center text-gray-500">Yuklanmoqda...</div>;
+    return (
+      <div className="flex h-64 items-center justify-center text-gray-500 gap-2">
+        <Loader2 className="animate-spin" size={20} />
+        <span>Yuklanmoqda...</span>
+      </div>
+    );
   }
 
   return (
     <main className="min-h-full w-full bg-[#F3F4F6] px-[13px] py-[17px]">
-      {/* =========================
-          PAGE TITLE
-      ========================== */}
-
       <h1 className="mb-[28px] text-[18px] font-bold leading-[22px] text-[#171717]">
-        {activeTab === "profile"
-          ? "Shaxsiy ma’lumotlar"
-          : "Profil sozlamalari"}
+        {activeTab === "profile" ? "Shaxsiy ma’lumotlar" : "Profil sozlamalari"}
       </h1>
 
-      {/* =========================
-          CONTENT
-      ========================== */}
-
       <div className="grid w-full grid-cols-[256px_minmax(0,1fr)] gap-[12px]">
-        {/* =========================
-            LEFT MENU
-        ========================== */}
-
+        {/* LEFT MENU */}
         <aside className="w-[256px]">
           <div className="flex flex-col gap-[10px]">
-            {/* PROFILE */}
-
             <button
               type="button"
               onClick={() => setActiveTab("profile")}
-              className={`h-[42px] w-full rounded-[5px] px-[12px] text-left text-[14px] font-medium leading-none transition ${
-                activeTab === "profile"
+              className={`h-[42px] w-full rounded-[5px] px-[12px] text-left text-[14px] font-medium leading-none transition ${activeTab === "profile"
                   ? "bg-white text-[#171717]"
                   : "bg-transparent text-[#404040] hover:bg-white/60"
-              }`}
+                }`}
             >
               Shaxsiy ma’lumotlar
             </button>
 
-            {/* SECURITY */}
-
             <button
               type="button"
               onClick={() => setActiveTab("security")}
-              className={`h-[42px] w-full rounded-[5px] px-[12px] text-left text-[14px] font-medium leading-none transition ${
-                activeTab === "security"
+              className={`h-[42px] w-full rounded-[5px] px-[12px] text-left text-[14px] font-medium leading-none transition ${activeTab === "security"
                   ? "bg-white text-[#171717]"
                   : "bg-transparent text-[#404040] hover:bg-white/60"
-              }`}
+                }`}
             >
               Xavfsizlik
             </button>
 
-            {/* NOTIFICATIONS */}
-
             <button
               type="button"
               onClick={() => setActiveTab("notifications")}
-              className={`h-[42px] w-full rounded-[5px] px-[12px] text-left text-[14px] font-medium leading-none transition ${
-                activeTab === "notifications"
+              className={`h-[42px] w-full rounded-[5px] px-[12px] text-left text-[14px] font-medium leading-none transition ${activeTab === "notifications"
                   ? "bg-white text-[#171717]"
                   : "bg-transparent text-[#404040] hover:bg-white/60"
-              }`}
+                }`}
             >
               Bildirishnomalar
             </button>
           </div>
         </aside>
 
-        {/* =========================
-            RIGHT CONTENT
-        ========================== */}
-
+        {/* RIGHT CONTENT */}
         <section className="min-w-0">
-          {/* ==================================================
-              PROFILE
-          ================================================== */}
-
           {activeTab === "profile" && (
             <div className="w-full rounded-[6px] bg-white px-[11px] py-[11px]">
               {/* IMAGE */}
-
               <div className="mb-[18px] flex items-center gap-[10px]">
                 <div className="relative h-[44px] w-[44px] shrink-0">
                   {image ? (
@@ -184,15 +176,8 @@ export default function ProfilePage() {
                     </div>
                   )}
 
-                  {/* CAMERA */}
-
                   <label className="absolute bottom-[-1px] right-[-1px] flex h-[17px] w-[17px] cursor-pointer items-center justify-center rounded-full border-[2px] border-white bg-[#407BFF]">
-                    <Camera
-                      size={9}
-                      strokeWidth={2.5}
-                      className="text-white"
-                    />
-
+                    <Camera size={9} strokeWidth={2.5} className="text-white" />
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -203,64 +188,56 @@ export default function ProfilePage() {
                   </label>
                 </div>
 
-                {/* DELETE */}
-
                 <button
                   type="button"
                   onClick={handleDeleteImage}
-                  className="flex h-[24px] w-[64px] items-center justify-center rounded-full bg-[#F5F6F8] text-[11px] font-medium text-[#8A8F98]"
+                  className="flex h-[24px] w-[64px] items-center justify-center rounded-full bg-[#F5F6F8] text-[11px] font-medium text-[#8A8F98] hover:bg-gray-200 transition"
                 >
                   O&apos;chirish
                 </button>
               </div>
 
               {/* NAME */}
-
               <div className="mb-[9px]">
                 <label className="mb-[5px] block p-[4px] text-[13px] font-medium leading-none text-[#4B5563]">
                   To&apos;liq ism
                 </label>
-
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#7A8494] outline-none transition focus:border-[#407BFF]"
+                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
 
               {/* PHONE */}
-
               <div className="mb-[9px]">
                 <label className="mb-[5px] block p-[4px] text-[13px] font-medium leading-none text-[#4B5563]">
                   Telefon
                 </label>
-
                 <input
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#7A8494] outline-none transition focus:border-[#407BFF]"
+                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
 
               {/* EMAIL */}
-
               <div className="mb-[9px]">
                 <label className="mb-[5px] block p-[4px] text-[13px] font-medium leading-none text-[#4B5563]">
                   Email
                 </label>
-
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#7A8494] outline-none transition focus:border-[#407BFF]"
+                  placeholder="example@mail.com"
+                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
 
-              {/* SAVE */}
-
+              {/* SAVE BUTTON */}
               <button
                 type="button"
                 onClick={handleSaveProfile}
@@ -268,13 +245,10 @@ export default function ProfilePage() {
                 className="flex h-[43px] w-[120px] items-center justify-center gap-[5px] rounded-[5px] bg-[#407BFF] px-[12px] text-[12px] font-medium text-white transition hover:bg-[#306BEF] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isUpdating ? (
-                  "Saqlanmoqda..."
+                  <Loader2 className="animate-spin" size={16} />
                 ) : (
                   <>
-                    <Check
-                      size={11}
-                      strokeWidth={2.5}
-                    />
+                    <Check size={11} strokeWidth={2.5} />
                     Saqlash
                   </>
                 )}
@@ -282,54 +256,38 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* ==================================================
-              SECURITY
-          ================================================== */}
-
+          {/* SECURITY TAB */}
           {activeTab === "security" && (
             <div className="w-full rounded-[6px] bg-white px-[11px] py-[11px]">
-  
-
-              {/* OLD PASSWORD */}
-
               <div className="mb-[9px]">
                 <label className="mb-[5px] block p-[4px] text-[13px] font-medium leading-none text-[#4B5563]">
                   Joriy parol
                 </label>
-
                 <input
                   type="password"
-                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#7A8494] outline-none transition focus:border-[#407BFF]"
+                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
-
-              {/* NEW PASSWORD */}
 
               <div className="mb-[9px]">
                 <label className="mb-[5px] block p-[4px] text-[13px] font-medium leading-none text-[#4B5563]">
                   Yangi parol
                 </label>
-
                 <input
                   type="password"
-                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#7A8494] outline-none transition focus:border-[#407BFF]"
+                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
-
-              {/* CONFIRM PASSWORD */}
 
               <div className="mb-[9px]">
                 <label className="mb-[5px] block p-[4px] text-[13px] font-medium leading-none text-[#4B5563]">
                   Yangi parolni tasdiqlash
                 </label>
-
                 <input
                   type="password"
-                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#7A8494] outline-none transition focus:border-[#407BFF]"
+                  className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
-
-              {/* CHANGE PASSWORD */}
 
               <button
                 type="button"
@@ -340,39 +298,24 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* ==================================================
-              NOTIFICATIONS
-          ================================================== */}
-
+          {/* NOTIFICATIONS TAB */}
           {activeTab === "notifications" && (
             <div className="w-full rounded-[6px] bg-white px-[11px] py-[11px]">
-              {/* TITLE */}
-
               <h2 className="mb-[10px] text-[15px] font-bold leading-none text-[#171717]">
                 Pochta bildirishnomalari
               </h2>
 
-              {/* TOGGLE */}
-
               <div className="mb-[9px] flex items-center gap-[7px]">
                 <button
                   type="button"
-                  onClick={() =>
-                    setNotifications(!notifications)
-                  }
-                  className={`relative h-[16px] w-[30px] shrink-0 rounded-full transition ${
-                    notifications
-                      ? "bg-[#407BFF]"
-                      : "bg-[#E8EBF0]"
-                  }`}
+                  onClick={() => setNotifications(!notifications)}
+                  className={`relative h-[16px] w-[30px] shrink-0 rounded-full transition ${notifications ? "bg-[#407BFF]" : "bg-[#E8EBF0]"
+                    }`}
                   aria-label="Bildirishnomalarni yoqish"
                 >
                   <span
-                    className={`absolute top-[3px] h-[10px] w-[10px] rounded-full bg-white shadow-sm transition ${
-                      notifications
-                        ? "left-[17px]"
-                        : "left-[3px]"
-                    }`}
+                    className={`absolute top-[3px] h-[10px] w-[10px] rounded-full bg-white shadow-sm transition ${notifications ? "left-[17px]" : "left-[3px]"
+                      }`}
                   />
                 </button>
 
@@ -381,16 +324,11 @@ export default function ProfilePage() {
                 </span>
               </div>
 
-              {/* SAVE */}
-
               <button
                 type="button"
                 className="flex h-[43px] w-[120px] items-center justify-center gap-[5px] rounded-[5px] bg-[#407BFF] px-[12px] text-[12px] font-medium text-white transition hover:bg-[#306BEF]"
               >
-                <Check
-                  size={11}
-                  strokeWidth={2.5}
-                />
+                <Check size={11} strokeWidth={2.5} />
                 Saqlash
               </button>
             </div>

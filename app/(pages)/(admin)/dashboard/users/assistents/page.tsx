@@ -358,10 +358,10 @@ export default function AssistentsPage() {
 
           <button
             onClick={openAddModal}
-            className="mt-4 sm:mt-0 flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+            className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
           >
             <PlusCircle size={18} strokeWidth={2} />
-            Qo'shish
+            Qo’shish
           </button>
         </div>
 
@@ -390,7 +390,7 @@ export default function AssistentsPage() {
               />
             )}
           </div>
-          <button className="bg-[#407BFF] hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
             Izlash
           </button>
         </div>
@@ -730,7 +730,7 @@ export default function AssistentsPage() {
             <div className="mt-4 flex justify-start shrink-0">
               <button
                 onClick={handleSaveAssistent}
-                className="flex items-center justify-center bg-[#407BFF] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm"
+                className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-sm"
                 style={{
                   width: "129px",
                   height: "48px",
@@ -770,7 +770,7 @@ export default function AssistentsPage() {
               </button>
               <button
                 onClick={handleDeleteAssistent}
-                className="px-4 py-2 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
                 O'chirish
               </button>
@@ -799,7 +799,7 @@ export default function AssistentsPage() {
             </h3>
             <button
               onClick={() => setIsSuccessModalOpen(false)}
-              className="px-8 py-3 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
+              className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
             >
               Yopish
             </button>
