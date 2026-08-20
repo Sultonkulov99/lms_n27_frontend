@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/navigation";
 import { removeToken } from "@/app/lib/utils";
 import { useProfileStore } from "@/store/useProfileStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
 import Image from "next/image";
 
 export default function Header() {
@@ -23,10 +24,14 @@ export default function Header() {
   const [language, setLanguage] = useState("uz");
   const router = useRouter();
   const { profile, fetchProfile, isLoading } = useProfileStore();
+  const { notifications, unreadCount, fetchNotifications, markAsRead, connectSocket, disconnectSocket } = useNotificationStore();
 
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+    fetchNotifications();
+    connectSocket();
+    return () => disconnectSocket();
+  }, [fetchProfile, fetchNotifications, connectSocket, disconnectSocket]);
 
   const handleLogout = () => {
     removeToken("accessToken");
@@ -73,12 +78,16 @@ export default function Header() {
               }}
             >
               <Bell size={20} />
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 text-[9px] flex items-center justify-center text-white bg-red-500 rounded-full border border-white">
+                  {unreadCount}
+                </span>
+              )}
             </button>
             
             {/* Notification Dropdown Menu */}
             <div
-              className={`absolute right-[-10px] top-12 w-72 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-2 z-50 origin-top-right transition-all duration-200 ease-out ${
+              className={`absolute right-[-10px] top-12 w-80 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-2 z-50 origin-top-right transition-all duration-200 ease-out ${
                 isNotificationsOpen
                   ? "opacity-100 scale-100 translate-y-0 visible"
                   : "opacity-0 scale-95 -translate-y-2 invisible"
@@ -87,8 +96,26 @@ export default function Header() {
               <div className="px-4 py-2 border-b border-gray-50">
                 <span className="font-semibold text-gray-800">Bildirishnomalar</span>
               </div>
-              <div className="px-4 py-8 text-center text-sm text-gray-500">
-                Yangi bildirishnomalar yo&apos;q
+              <div className="max-h-[300px] overflow-y-auto">
+                {unreadCount === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm text-gray-500">
+                    Yangi bildirishnomalar yo&apos;q
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div key={notif.id} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex flex-col gap-1" onClick={() => {
+                      markAsRead(notif.id);
+                      setIsNotificationsOpen(false);
+                      router.push("/dashboard/comments");
+                    }}>
+                      <div className="flex justify-between items-start">
+                        <span className="font-medium text-sm text-gray-800">{notif.title}</span>
+                        <span className="text-[10px] text-gray-400">{new Date(notif.created_at).toLocaleTimeString()}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 line-clamp-2">{notif.message}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

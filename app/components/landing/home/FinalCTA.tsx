@@ -120,6 +120,7 @@ export default function FinalCTA() {
             alt="Kebyu Logo"
             width={160}
             height={50}
+            style={{ width: "auto", height: "auto" }}
             className="h-auto w-[160px] object-contain"
           />
         </div>

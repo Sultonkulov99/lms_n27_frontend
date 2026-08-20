@@ -1,9 +1,10 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 export const baseAPI = axios.create({
   baseURL: `${API_URL}/api/v1`,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -14,28 +15,24 @@ export const baseAPI = axios.create({
 export function getToken(name: string = "accessToken"): string | null {
   if (typeof window === "undefined") return null;
 
-  // 1. Try LocalStorage
-  const localToken = localStorage.getItem(name);
-  if (localToken) return localToken;
-
-  // 2. Fallback to Cookie
+  // Only check cookie, backend will manage it
   const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
   return match ? decodeURIComponent(match[2]) : null;
 }
 
 export function setToken(name: string = "accessToken", value: string) {
-  if (typeof window === "undefined") return;
-
-  localStorage.setItem(name, value);
-  // 1 yillik muddat va xavfsiz SameSite sozlamasi
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax`;
+  if (typeof window !== "undefined") {
+    // We set the cookie manually on the frontend domain so that Next.js middleware
+    // and Axios interceptors can read it, bypassing cross-origin HTTP limitations.
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=604800; SameSite=Lax`;
+  }
 }
 
 export function removeToken(name: string = "accessToken") {
   if (typeof window === "undefined") return;
 
-  localStorage.removeItem(name);
-  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+  // Clear frontend cookie manually in case backend doesn't clear it or for immediate UI update
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }
 
 // --- AXIOS INTERCEPTORS ---
