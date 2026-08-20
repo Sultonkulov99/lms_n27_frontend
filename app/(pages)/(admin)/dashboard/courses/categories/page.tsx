@@ -1,139 +1,233 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import Pagination from "@/app/components/dashboard/Pagination";
+import React, { use, useEffect, useState } from "react";
 import {
-  Search,
-  SlidersHorizontal,
   Plus,
-  Pencil,
+  Filter,
+  Pen,
   Trash2,
   X,
   Check,
+  Loader2,
   HelpCircle,
   AlertTriangle,
 } from "lucide-react";
+import Link from "next/link";
+import Pagination from "@/app/components/dashboard/Pagination";
+import { useCourseStore } from "@/app/store/useCourseStore";
 import { baseAPI } from "@/app/lib/utils";
 
-interface Category {
+interface Section {
   id: number;
   name: string;
-  status?: string;
+  courseId?: number;
 }
 
-export default function CategoriesPage() {
-  // ==========================================
-  // CATEGORIES STATE
-  // ==========================================
+export default function CourseSectionsPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: courseId } = use(params);
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const { courses } = useCourseStore();
+
+  const currentCourse = courses.find(
+    (course) => course.id.toString() === courseId
+  );
+
+  const courseTitle =
+    currentCourse?.title || "Frontend dasturlash";
+
+  // ============================================================
+  // STATES
+  // ============================================================
+
+  const [sections, setSections] = useState<Section[]>([]);
+
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const [searchTerm, setSearchTerm] = useState("");
+  const [error, setError] = useState("");
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // ==========================================
-  // MODALS STATE
-  // ==========================================
+  // ============================================================
+  // MODALS
+  // ============================================================
 
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] =
+    useState(false);
 
-  const [editingCategory, setEditingCategory] =
-    useState<Category | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] =
+    useState(false);
 
-  const [deletingCategoryId, setDeletingCategoryId] =
-    useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] =
+    useState(false);
 
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [newCategoryStatus, setNewCategoryStatus] = useState("ACTIVE");
-
-  const [successMessage, setSuccessMessage] = useState("");
+  const [isSuccessModalOpen, setIsSuccessModalOpen] =
+    useState(false);
 
   // TRUE = warning
   // FALSE = success
-  const [isWarningModal, setIsWarningModal] = useState(false);
+  const [isWarningModal, setIsWarningModal] =
+    useState(false);
 
-  // ==========================================
-  // GET CATEGORIES
-  // GET /api/v1/categories
-  // ==========================================
+  const [successMessage, setSuccessMessage] =
+    useState("");
 
-  const getCategories = async () => {
+  // ============================================================
+  // FORM STATES
+  // ============================================================
+
+  const [newSectionName, setNewSectionName] =
+    useState("");
+
+  const [editingSection, setEditingSection] =
+    useState<Section | null>(null);
+
+  const [deletingSectionId, setDeletingSectionId] =
+    useState<number | null>(null);
+
+  // ============================================================
+  // GET SECTIONS
+  // GET /api/v1/sections
+  // ============================================================
+
+  const getSections = async () => {
     try {
       setLoading(true);
+      setError("");
 
-      const response = await baseAPI.get("/categories");
+      const response = await baseAPI.get("/sections");
 
-      console.log("GET CATEGORIES RESPONSE:", response.data);
+      console.log(
+        "GET SECTIONS RESPONSE:",
+        response.data
+      );
 
-      setCategories(response.data?.data || []);
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data?.data || [];
+
+      console.log("ALL SECTIONS:", data);
+
+      // FAQAT HOZIRGI KURS SECTIONS
+      const filteredSections = data.filter(
+        (section: Section) =>
+          Number(section.courseId) ===
+          Number(courseId)
+      );
+
+      console.log(
+        "CURRENT COURSE ID:",
+        courseId
+      );
+
+      console.log(
+        "FILTERED SECTIONS:",
+        filteredSections
+      );
+
+      setSections(filteredSections);
     } catch (error: any) {
-      console.error("GET CATEGORIES ERROR:", error);
+      console.error(
+        "GET SECTIONS ERROR:",
+        error
+      );
 
       console.error(
         "API ERROR:",
         error?.response?.data
       );
 
-      setCategories([]);
+      setSections([]);
+
+      setError(
+        error?.response?.data?.message ||
+          "Bo'limlarni yuklashda xatolik yuz berdi."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // ==========================================
-  // LOAD CATEGORIES
-  // ==========================================
+  // ============================================================
+  // LOAD
+  // ============================================================
 
   useEffect(() => {
-    getCategories();
-  }, []);
+    getSections();
+  }, [courseId]);
 
-  // ==========================================
-  // ADD CATEGORY
-  // POST /api/v1/categories
-  // ==========================================
+  // ============================================================
+  // ADD SECTION
+  // POST /api/v1/sections
+  // ============================================================
 
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
+  const handleAddSection = async () => {
+    if (!newSectionName.trim()) {
+      setSuccessMessage(
+        "Bo'lim nomini kiriting."
+      );
+
+      setIsWarningModal(true);
+      setIsSuccessModalOpen(true);
+
+      return;
+    }
 
     try {
-      setLoading(true);
+      setSaving(true);
+      setError("");
 
-      const response = await baseAPI.post("/categories", {
-        name: newCategoryName.trim(),
-        status: newCategoryStatus,
-      });
+      const body = {
+        name: newSectionName.trim(),
+        courseId: Number(courseId),
+      };
 
       console.log(
-        "CREATE CATEGORY RESPONSE:",
+        "POST /sections BODY:",
+        body
+      );
+
+      const response = await baseAPI.post(
+        "/sections",
+        body
+      );
+
+      console.log(
+        "CREATE SECTION RESPONSE:",
         response.data
       );
 
-      const newCategory = response.data?.data;
+      // Serverdan qayta olish
+      await getSections();
 
-      if (newCategory) {
-        setCategories((prev) => [
-          ...prev,
-          newCategory,
-        ]);
-      }
+      // Formni tozalash
+      setNewSectionName("");
 
+      // Add modalni yopish
       setIsAddModalOpen(false);
-      setNewCategoryName("");
-      setNewCategoryStatus("ACTIVE");
 
-      // SUCCESS
-      setSuccessMessage("Muvaffaqiyatli qo'shildi");
+      // Birinchi sahifaga qaytish
+      setCurrentPage(1);
+
+      // ========================================================
+      // SUCCESS MODAL
+      // ========================================================
+
+      setSuccessMessage(
+        "Muvaffaqiyatli qo'shildi"
+      );
+
       setIsWarningModal(false);
       setIsSuccessModalOpen(true);
     } catch (error: any) {
       console.error(
-        "CREATE CATEGORY ERROR:",
+        "CREATE SECTION ERROR:",
         error
       );
 
@@ -144,77 +238,72 @@ export default function CategoriesPage() {
 
       setSuccessMessage(
         error?.response?.data?.message ||
-          "Kategoriya qo'shishda xatolik yuz berdi"
+          "Bo'lim qo'shishda xatolik yuz berdi"
       );
 
       setIsWarningModal(true);
       setIsSuccessModalOpen(true);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  // ==========================================
-  // UPDATE CATEGORY
-  // PUT /api/v1/categories/:id
-  // ==========================================
+  // ============================================================
+  // EDIT SECTION
+  // PATCH /api/v1/sections/:id
+  // ============================================================
 
-  const handleEditCategory = async () => {
-    if (
-      !editingCategory ||
-      !editingCategory.name.trim()
-    ) {
+  const handleEditSection = async () => {
+    if (!editingSection) return;
+
+    if (!editingSection.name.trim()) {
+      setSuccessMessage(
+        "Bo'lim nomini kiriting."
+      );
+
+      setIsWarningModal(true);
+      setIsSuccessModalOpen(true);
+
       return;
     }
 
     try {
-      setLoading(true);
+      setSaving(true);
+      setError("");
 
-      const response = await baseAPI.put(
-        `/categories/${editingCategory.id}`,
-        {
-          name: editingCategory.name.trim(),
-          status: editingCategory.status || "ACTIVE",
-        }
+      const body = {
+        name: editingSection.name.trim(),
+        courseId: Number(courseId),
+      };
+
+      console.log(
+        `PATCH /sections/${editingSection.id} BODY:`,
+        body
+      );
+
+      const response = await baseAPI.patch(
+        `/sections/${editingSection.id}`,
+        body
       );
 
       console.log(
-        "UPDATE CATEGORY RESPONSE:",
+        "UPDATE SECTION RESPONSE:",
         response.data
       );
 
-      const updatedCategory =
-        response.data?.data;
+      // Serverdan qayta olish
+      await getSections();
 
-      if (updatedCategory) {
-        setCategories((prev) =>
-          prev.map((category) =>
-            category.id === editingCategory.id
-              ? updatedCategory
-              : category
-          )
-        );
-      } else {
-        // Agar backend updated objectni qaytarmasa,
-        // local state'ni qo'lda yangilaymiz.
-
-        setCategories((prev) =>
-          prev.map((category) =>
-            category.id === editingCategory.id
-              ? {
-                  ...category,
-                name: editingCategory.name.trim(),
-                status: editingCategory.status || "ACTIVE",
-              }
-              : category
-          )
-        );
-      }
-
+      // Edit modalni yopish
       setIsEditModalOpen(false);
-      setEditingCategory(null);
 
-      // SUCCESS
+      // State tozalash
+      setEditingSection(null);
+
+      // ========================================================
+      // SUCCESS MODAL
+      // ========================================================
+
       setSuccessMessage(
         "Muvaffaqiyatli tahrirlandi"
       );
@@ -223,7 +312,7 @@ export default function CategoriesPage() {
       setIsSuccessModalOpen(true);
     } catch (error: any) {
       console.error(
-        "UPDATE CATEGORY ERROR:",
+        "UPDATE SECTION ERROR:",
         error
       );
 
@@ -234,54 +323,64 @@ export default function CategoriesPage() {
 
       setSuccessMessage(
         error?.response?.data?.message ||
-          "Kategoriyani tahrirlashda xatolik yuz berdi"
+          "Bo'limni tahrirlashda xatolik yuz berdi"
       );
 
       setIsWarningModal(true);
-
-      setIsEditModalOpen(false);
-      setEditingCategory(null);
-
       setIsSuccessModalOpen(true);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
-  // ==========================================
-  // DELETE CATEGORY
-  // DELETE /api/v1/categories/:id
-  // ==========================================
+  // ============================================================
+  // DELETE SECTION
+  // DELETE /api/v1/sections/:id
+  // ============================================================
 
-  const handleDeleteCategory = async () => {
-    if (deletingCategoryId === null) return;
+  const handleDeleteSection = async () => {
+    if (deletingSectionId === null) {
+      return;
+    }
 
     try {
-      setLoading(true);
+      setDeleting(true);
+      setError("");
+
+      console.log(
+        `DELETE /sections/${deletingSectionId}`
+      );
 
       const response = await baseAPI.delete(
-        `/categories/${deletingCategoryId}`
+        `/sections/${deletingSectionId}`
       );
 
       console.log(
-        "DELETE CATEGORY RESPONSE:",
+        "DELETE SECTION RESPONSE:",
         response.data
       );
 
-      // Kategoriya muvaffaqiyatli o'chirildi
-      setCategories((prev) =>
+      // ========================================================
+      // LOCAL STATEDAN O'CHIRISH
+      // ========================================================
+
+      setSections((prev) =>
         prev.filter(
-          (category) =>
-            category.id !== deletingCategoryId
+          (section) =>
+            section.id !== deletingSectionId
         )
       );
 
-      setIsDeleteModalOpen(false);
-      setDeletingCategoryId(null);
+      // ========================================================
+      // DELETE MODALNI YOPISH
+      // ========================================================
 
-      // ==========================================
+      setIsDeleteModalOpen(false);
+      setDeletingSectionId(null);
+
+      // ========================================================
       // SUCCESS MODAL
-      // ==========================================
+      // ========================================================
 
       setSuccessMessage(
         "Muvaffaqiyatli o'chirildi"
@@ -291,200 +390,258 @@ export default function CategoriesPage() {
       setIsSuccessModalOpen(true);
     } catch (error: any) {
       console.error(
-        "DELETE CATEGORY ERROR:",
+        "DELETE SECTION ERROR:",
         error
       );
 
-      // ==========================================
-      // AGAR KATEGORIYADA KURSLAR BOR BO'LSA
-      // BACKEND 409 QAYTARADI
-      // ==========================================
+      console.error(
+        "API ERROR:",
+        error?.response?.data
+      );
 
-      if (error?.response?.status === 409) {
+      // ========================================================
+      // 409 - SECTIONDA LESSONLAR BO'LSA
+      // ========================================================
+
+      if (
+        error?.response?.status === 409
+      ) {
         setIsDeleteModalOpen(false);
-        setDeletingCategoryId(null);
+        setDeletingSectionId(null);
 
         setSuccessMessage(
-          "Bu kategoriyada kurslar mavjud. Avval kurslarni o'chiring."
+          error?.response?.data?.message ||
+            "Bu bo'limda ma'lumotlar mavjud. Avval ularni o'chiring."
         );
 
-        // WARNING MODAL
         setIsWarningModal(true);
         setIsSuccessModalOpen(true);
 
         return;
       }
 
-      // ==========================================
+      // ========================================================
       // BOSHQA XATOLAR
-      // ==========================================
+      // ========================================================
 
       setIsDeleteModalOpen(false);
-      setDeletingCategoryId(null);
+      setDeletingSectionId(null);
 
       setSuccessMessage(
         error?.response?.data?.message ||
-          "Kategoriyani o'chirishda xatolik yuz berdi"
+          "Bo'limni o'chirishda xatolik yuz berdi"
       );
 
       setIsWarningModal(true);
       setIsSuccessModalOpen(true);
     } finally {
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
-  // ==========================================
-  // FILTER
-  // ==========================================
+  // ============================================================
+  // CLOSE ADD / EDIT MODAL
+  // ============================================================
 
-  const filteredCategories = useMemo(() => {
-    return categories.filter((cat) =>
-      cat.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    );
-  }, [categories, searchTerm]);
+  const closeFormModal = () => {
+    if (saving) return;
 
-  // ==========================================
-  // PAGINATION
-  // ==========================================
+    setIsAddModalOpen(false);
+    setIsEditModalOpen(false);
 
-  const totalItems = filteredCategories.length;
+    setNewSectionName("");
+    setEditingSection(null);
+  };
 
-  const totalPages = Math.ceil(
-    totalItems / itemsPerPage
+  // ============================================================
+  // FILTER / PAGINATION
+  // ============================================================
+
+  const totalItems = sections.length;
+
+  const totalPages =
+    Math.ceil(
+      totalItems / itemsPerPage
+    ) || 1;
+
+  const startIndex = Math.min(
+    (currentPage - 1) * itemsPerPage,
+    totalItems
   );
-
-  const startIndex =
-    (currentPage - 1) * itemsPerPage;
 
   const endIndex = Math.min(
     startIndex + itemsPerPage,
     totalItems
   );
 
-  const currentCategories =
-    filteredCategories.slice(
+  const paginatedSections =
+    sections.slice(
       startIndex,
       endIndex
     );
 
-  // ==========================================
-  // XLS
-  // ==========================================
+  // ============================================================
+  // DOWNLOAD CSV
+  // ============================================================
 
-  const downloadXLS = () => {
-    console.log("Downloading XLS...");
+  const handleDownloadXLS = () => {
+    const headers = [
+      "ID",
+      "Bo'lim nomi",
+    ];
+
+    const rows = sections.map(
+      (section) =>
+        [
+          section.id,
+          `"${section.name.replace(
+            /"/g,
+            '""'
+          )}"`,
+        ].join(",")
+    );
+
+    const csvContent =
+      "\uFEFF" +
+      [
+        headers.join(","),
+        ...rows,
+      ].join("\n");
+
+    const blob = new Blob(
+      [csvContent],
+      {
+        type: "text/csv;charset=utf-8;",
+      }
+    );
+
+    const url =
+      URL.createObjectURL(blob);
+
+    const link =
+      document.createElement("a");
+
+    link.href = url;
+    link.download =
+      "bolimlar.csv";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
   };
 
-  // ==========================================
+  // ============================================================
   // RENDER
-  // ==========================================
+  // ============================================================
 
   return (
     <>
-      {/* ==========================================
-          DASHBOARD CONTENT
-      ========================================== */}
+      {/* ========================================================
+          MAIN CONTENT
+      ======================================================== */}
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-6 flex flex-col h-full bg-transparent">
 
-        {/* ==========================================
-            BREADCRUMB & TITLE
-        ========================================== */}
+        {/* ======================================================
+            HEADER
+        ====================================================== */}
 
-        <div className="mb-6">
+        <div className="flex items-center justify-between mb-8">
 
-          <div className="text-sm text-gray-500 mb-1 font-medium">
-            Kurslar{" "}
-            <span className="mx-1">\</span>{" "}
-            Kurs kategoriyalari
-          </div>
+          <div>
 
-          <div className="flex justify-between items-center mt-3">
-
-            <h1 className="text-2xl font-bold text-gray-900">
-              Kurs kategoriyalari
+            <h1 className="text-[22px] font-bold text-gray-900 mb-1.5">
+              Bo&apos;limlar
             </h1>
 
-            <button
-              onClick={() =>
-                setIsAddModalOpen(true)
-              }
-              className="bg-[#3366FF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm"
-            >
-              <Plus size={18} />
+            <div className="flex items-center text-[13px] font-medium gap-2">
 
-              Qo&apos;shish
-            </button>
+              <Link
+                href="/dashboard/courses/allCourses"
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Kurslar
+              </Link>
 
-          </div>
-        </div>
+              <span className="w-1 h-1 rounded-full bg-gray-300" />
 
-        {/* ==========================================
-            TABLE CONTAINER
-        ========================================== */}
+              <Link
+                href={`/dashboard/courses/allCourses/${courseId}/sections`}
+                className="text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {courseTitle}
+              </Link>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+              <span className="w-1 h-1 rounded-full bg-gray-300" />
 
-          {/* ==========================================
-              TABLE CONTROLS
-          ========================================== */}
-
-          <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between gap-4 items-center">
-
-            <div className="relative w-full sm:w-[320px]">
-
-              <Search
-                size={18}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-              />
-
-              <input
-                type="text"
-                placeholder="Izlash"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all font-medium"
-              />
-
-              <button className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                <SlidersHorizontal size={16} />
-              </button>
+              <span className="text-gray-900">
+                Bo&apos;limlar
+              </span>
 
             </div>
 
           </div>
 
-          {/* ==========================================
-              TABLE
-          ========================================== */}
+          {/* ADD */}
 
-          <div className="overflow-x-auto min-h-[400px]">
+          <button
+            onClick={() => {
+              setNewSectionName("");
+              setIsAddModalOpen(true);
+            }}
+            className="flex items-center gap-2 bg-[#3366FF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm"
+          >
+            <Plus size={18} />
 
-            <table className="w-full text-left text-sm whitespace-nowrap">
+            Bo&apos;lim qo&apos;shish
+          </button>
 
-              <thead className="bg-gray-50 border-b border-gray-100 text-gray-600 font-semibold text-[13px]">
+        </div>
 
-                <tr>
+        {/* ======================================================
+            ERROR
+        ====================================================== */}
 
-                  <th className="py-4 px-6 w-24">
-                    ID
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        {/* ======================================================
+            TABLE
+        ====================================================== */}
+
+        <div className="flex-1 flex flex-col">
+
+          <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
+
+            <table className="w-full text-left border-collapse min-w-[800px] bg-white">
+
+              <thead className="bg-gray-50">
+
+                <tr className="text-[13px] text-gray-900 font-bold tracking-wide">
+
+                  <th className="px-6 py-4 font-semibold whitespace-nowrap border border-gray-200">
+
+                    <div className="flex items-center gap-2 cursor-pointer group">
+
+                      Bo&apos;lim nomi
+
+                      <Filter
+                        size={14}
+                        className="text-gray-400 group-hover:text-gray-600"
+                      />
+
+                    </div>
+
                   </th>
 
-                  <th className="py-4 px-6">
-                    Kategoriya nomi
-                  </th>
-
-                  <th className="py-4 px-6 text-center">
-                    Holati
-                  </th>
-
-                  <th className="py-4 px-6 w-32 text-center">
+                  <th className="px-6 py-4 font-semibold whitespace-nowrap text-right w-32 border border-gray-200">
                     Amallar
                   </th>
 
@@ -492,88 +649,97 @@ export default function CategoriesPage() {
 
               </thead>
 
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="text-[14px] text-gray-800">
 
                 {/* LOADING */}
 
-                {loading &&
-                categories.length === 0 ? (
-
+                {loading ? (
                   <tr>
 
                     <td
-                      colSpan={3}
-                      className="py-12 text-center text-gray-500 font-medium"
+                      colSpan={2}
+                      className="px-6 py-12 text-center border border-gray-200"
                     >
-                      Yuklanmoqda...
+
+                      <div className="flex items-center justify-center gap-2 text-gray-500">
+
+                        <Loader2
+                          size={20}
+                          className="animate-spin"
+                        />
+
+                        Bo&apos;limlar yuklanmoqda...
+
+                      </div>
+
                     </td>
 
                   </tr>
+                ) : paginatedSections.length > 0 ? (
 
-                ) : currentCategories.length > 0 ? (
-
-                  currentCategories.map(
-                    (category) => (
+                  paginatedSections.map(
+                    (section) => (
 
                       <tr
-                        key={category.id}
-                        className="hover:bg-gray-50/50 transition-colors group"
+                        key={section.id}
+                        className="hover:bg-blue-50/30 transition-colors group"
                       >
 
-                        <td className="py-4 px-6 text-gray-600 font-medium">
-                          {category.id}
+                        {/* SECTION NAME */}
+
+                        <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
+
+                          <Link
+                            href={`/dashboard/courses/allCourses/${courseId}/sections/${section.id}/lessons`}
+                            className="hover:text-blue-600 transition-colors cursor-pointer block w-full"
+                          >
+                            {section.name}
+                          </Link>
+
                         </td>
 
-                        <td className="py-4 px-6 font-semibold text-gray-800">
-                          {category.name}
-                        </td>
+                        {/* ACTIONS */}
 
-                        <td className="py-4 px-6 text-center">
-                          {category.status === 'ACTIVE' ? (
-                            <span className="text-green-600 font-medium text-[13px]">Faol</span>
-                          ) : (
-                            <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
-                          )}
-                        </td>
+                        <td className="px-6 py-4 text-right border border-gray-200">
 
-                        <td className="py-4 px-6">
+                          <div className="flex items-center justify-end gap-3 text-gray-400">
 
-                          <div className="flex items-center justify-center gap-2">
-
-                            {/* ==========================================
-                                EDIT
-                            ========================================== */}
+                            {/* EDIT */}
 
                             <button
                               onClick={() => {
-                                setEditingCategory({
-                                  ...category,
+                                setEditingSection({
+                                  ...section,
                                 });
 
-                                setIsEditModalOpen(true);
+                                setIsEditModalOpen(
+                                  true
+                                );
                               }}
-                              className="p-2 text-gray-400 hover:text-blue-500 rounded-lg hover:bg-blue-50 transition-colors"
+                              className="p-1 hover:text-blue-600 transition-colors"
+                              title="Tahrirlash"
+                              disabled={saving || deleting}
                             >
-                              <Pencil size={18} />
+                              <Pen size={16} />
                             </button>
 
-                            {/* ==========================================
-                                DELETE
-                            ========================================== */}
+                            {/* DELETE */}
 
                             <button
                               onClick={() => {
-                                setDeletingCategoryId(
-                                  category.id
+                                setDeletingSectionId(
+                                  section.id
                                 );
 
                                 setIsDeleteModalOpen(
                                   true
                                 );
                               }}
-                              className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
+                              className="p-1 hover:text-red-500 transition-colors"
+                              title="O'chirish"
+                              disabled={saving || deleting}
                             >
-                              <Trash2 size={18} />
+                              <Trash2 size={16} />
                             </button>
 
                           </div>
@@ -581,7 +747,6 @@ export default function CategoriesPage() {
                         </td>
 
                       </tr>
-
                     )
                   )
 
@@ -590,10 +755,10 @@ export default function CategoriesPage() {
                   <tr>
 
                     <td
-                      colSpan={3}
-                      className="py-12 text-center text-gray-500 font-medium"
+                      colSpan={2}
+                      className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white"
                     >
-                      Ma&apos;lumot topilmadi
+                      Bo&apos;limlar mavjud emas
                     </td>
 
                   </tr>
@@ -606,11 +771,11 @@ export default function CategoriesPage() {
 
           </div>
 
-          {/* ==========================================
+          {/* ====================================================
               PAGINATION
-          ========================================== */}
+          ==================================================== */}
 
-          <div className="border-t border-gray-100">
+          <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl px-2 py-1 shadow-sm">
 
             <Pagination
               currentPage={currentPage}
@@ -624,7 +789,9 @@ export default function CategoriesPage() {
                 setItemsPerPage(limit);
                 setCurrentPage(1);
               }}
-              onDownloadXLS={downloadXLS}
+              onDownloadXLS={
+                handleDownloadXLS
+              }
             />
 
           </div>
@@ -633,17 +800,15 @@ export default function CategoriesPage() {
 
       </div>
 
-      {/* ==========================================
+      {/* ========================================================
           ADD MODAL
-      ========================================== */}
+      ======================================================== */}
 
       {isAddModalOpen && (
 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-          onClick={() =>
-            setIsAddModalOpen(false)
-          }
+          onClick={closeFormModal}
         >
 
           <div
@@ -653,6 +818,8 @@ export default function CategoriesPage() {
             }
           >
 
+            {/* HEADER */}
+
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
 
               <h2 className="text-[17px] font-bold text-gray-900">
@@ -660,64 +827,89 @@ export default function CategoriesPage() {
               </h2>
 
               <button
-                onClick={() =>
-                  setIsAddModalOpen(false)
-                }
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                onClick={closeFormModal}
+                disabled={saving}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
               >
                 <X size={20} />
               </button>
 
             </div>
 
+            {/* BODY */}
+
             <div className="p-6">
+
+              {/* COURSE */}
+
+              <div className="mb-5">
+
+                <label className="block text-[13px] font-semibold text-gray-700 mb-2">
+                  Biriktirilgan kurs
+                </label>
+
+                <input
+                  type="text"
+                  disabled
+                  value={courseTitle}
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed"
+                />
+
+              </div>
+
+              {/* NAME */}
 
               <div className="mb-6">
 
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                  Kategoriya nomi
+                  Bo&apos;lim nomi
                 </label>
 
                 <input
                   type="text"
                   placeholder="Kiriting"
-                  value={newCategoryName}
+                  value={newSectionName}
                   onChange={(e) =>
-                    setNewCategoryName(
+                    setNewSectionName(
                       e.target.value
                     )
                   }
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "Enter" &&
+                      !saving
+                    ) {
+                      handleAddSection();
+                    }
+                  }}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
                 />
 
               </div>
 
-              <div className="mb-6">
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                  Holati
-                </label>
-                <select
-                  value={newCategoryStatus}
-                  onChange={(e) => setNewCategoryStatus(e.target.value)}
-                  className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
-                >
-                  <option value="ACTIVE">Faol</option>
-                  <option value="INACTIVE">Nofaol</option>
-                </select>
-              </div>
+              {/* SAVE */}
 
               <button
-                onClick={handleAddCategory}
-                disabled={loading}
-                className="bg-[#3366FF] hover:bg-blue-600 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
+                onClick={handleAddSection}
+                disabled={saving}
+                className="bg-[#3366FF] hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
               >
 
-                <Check
-                  size={18}
-                  strokeWidth={2.5}
-                />
+                {saving ? (
+                  <Loader2
+                    size={18}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Check
+                    size={18}
+                    strokeWidth={2.5}
+                  />
+                )}
 
-                Saqlash
+                {saving
+                  ? "Saqlanmoqda..."
+                  : "Saqlash"}
 
               </button>
 
@@ -729,18 +921,16 @@ export default function CategoriesPage() {
 
       )}
 
-      {/* ==========================================
+      {/* ========================================================
           EDIT MODAL
-      ========================================== */}
+      ======================================================== */}
 
       {isEditModalOpen &&
-        editingCategory && (
+        editingSection && (
 
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-            onClick={() =>
-              setIsEditModalOpen(false)
-            }
+            onClick={closeFormModal}
           >
 
             <div
@@ -750,6 +940,8 @@ export default function CategoriesPage() {
               }
             >
 
+              {/* HEADER */}
+
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
 
                 <h2 className="text-[17px] font-bold text-gray-900">
@@ -757,70 +949,94 @@ export default function CategoriesPage() {
                 </h2>
 
                 <button
-                  onClick={() =>
-                    setIsEditModalOpen(false)
-                  }
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
+                  onClick={closeFormModal}
+                  disabled={saving}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
                 >
                   <X size={20} />
                 </button>
 
               </div>
 
+              {/* BODY */}
+
               <div className="p-6">
+
+                {/* COURSE */}
+
+                <div className="mb-5">
+
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">
+                    Biriktirilgan kurs
+                  </label>
+
+                  <input
+                    type="text"
+                    disabled
+                    value={courseTitle}
+                    className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed"
+                  />
+
+                </div>
+
+                {/* NAME */}
 
                 <div className="mb-6">
 
                   <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                    Kategoriya nomi
+                    Bo&apos;lim nomi
                   </label>
 
                   <input
                     type="text"
                     placeholder="Kiriting"
-                    value={editingCategory.name}
+                    value={
+                      editingSection.name
+                    }
                     onChange={(e) =>
-                      setEditingCategory({
-                        ...editingCategory,
+                      setEditingSection({
+                        ...editingSection,
                         name: e.target.value,
                       })
                     }
+                    onKeyDown={(e) => {
+                      if (
+                        e.key === "Enter" &&
+                        !saving
+                      ) {
+                        handleEditSection();
+                      }
+                    }}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
                   />
 
                 </div>
 
-                <div className="mb-6">
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                    Holati
-                  </label>
-                  <select
-                    value={editingCategory.status || "ACTIVE"}
-                    onChange={(e) =>
-                      setEditingCategory({
-                        ...editingCategory,
-                        status: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
-                  >
-                    <option value="ACTIVE">Faol</option>
-                    <option value="INACTIVE">Nofaol</option>
-                  </select>
-                </div>
+                {/* SAVE */}
 
                 <button
-                  onClick={handleEditCategory}
-                  disabled={loading}
-                  className="bg-[#3366FF] hover:bg-blue-600 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
+                  onClick={
+                    handleEditSection
+                  }
+                  disabled={saving}
+                  className="bg-[#3366FF] hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
                 >
 
-                  <Check
-                    size={18}
-                    strokeWidth={2.5}
-                  />
+                  {saving ? (
+                    <Loader2
+                      size={18}
+                      className="animate-spin"
+                    />
+                  ) : (
+                    <Check
+                      size={18}
+                      strokeWidth={2.5}
+                    />
+                  )}
 
-                  Saqlash
+                  {saving
+                    ? "Saqlanmoqda..."
+                    : "Saqlash"}
 
                 </button>
 
@@ -829,20 +1045,22 @@ export default function CategoriesPage() {
             </div>
 
           </div>
-
         )}
 
-      {/* ==========================================
+      {/* ========================================================
           DELETE CONFIRMATION MODAL
-      ========================================== */}
+      ======================================================== */}
 
       {isDeleteModalOpen && (
 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-          onClick={() =>
-            setIsDeleteModalOpen(false)
-          }
+          onClick={() => {
+            if (!deleting) {
+              setIsDeleteModalOpen(false);
+              setDeletingSectionId(null);
+            }
+          }}
         >
 
           <div
@@ -851,6 +1069,8 @@ export default function CategoriesPage() {
               e.stopPropagation()
             }
           >
+
+            {/* ICON */}
 
             <div className="w-16 h-16 bg-[#EF4444] text-white rounded-full flex items-center justify-center mb-5 shadow-[0_8px_16px_rgba(239,68,68,0.25)]">
 
@@ -861,29 +1081,61 @@ export default function CategoriesPage() {
 
             </div>
 
+            {/* TITLE */}
+
             <h2 className="text-[17px] font-bold text-gray-900 mb-8">
               Ma&apos;lumotni
               <br />
               o&apos;chirmoqchimisiz?
             </h2>
 
+            {/* BUTTONS */}
+
             <div className="flex items-center gap-3 w-full justify-center">
 
+              {/* CANCEL */}
+
               <button
-                onClick={() =>
-                  setIsDeleteModalOpen(false)
-                }
-                className="px-5 py-3 text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl text-sm font-bold transition-colors flex-1"
+                onClick={() => {
+                  if (deleting) return;
+
+                  setIsDeleteModalOpen(
+                    false
+                  );
+
+                  setDeletingSectionId(
+                    null
+                  );
+                }}
+                disabled={deleting}
+                className="px-5 py-3 text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl text-sm font-bold transition-colors flex-1 disabled:opacity-50"
               >
                 Bekor qilish
               </button>
 
+              {/* DELETE */}
+
               <button
-                onClick={handleDeleteCategory}
-                disabled={loading}
-                className="px-5 py-3 text-white bg-[#3366FF] hover:bg-blue-600 disabled:opacity-50 rounded-xl text-sm font-bold transition-colors shadow-sm flex-1"
+                onClick={
+                  handleDeleteSection
+                }
+                disabled={deleting}
+                className="px-5 py-3 text-white bg-[#3366FF] hover:bg-blue-600 disabled:bg-blue-300 rounded-xl text-sm font-bold transition-colors shadow-sm flex-1 flex items-center justify-center gap-2"
               >
-                O&apos;chirish
+
+                {deleting ? (
+                  <>
+                    <Loader2
+                      size={18}
+                      className="animate-spin"
+                    />
+
+                    O&apos;chirilmoqda...
+                  </>
+                ) : (
+                  "O'chirish"
+                )}
+
               </button>
 
             </div>
@@ -894,17 +1146,21 @@ export default function CategoriesPage() {
 
       )}
 
-      {/* ==========================================
+      {/* ========================================================
           SUCCESS / WARNING MODAL
-      ========================================== */}
+      ======================================================== */}
 
       {isSuccessModalOpen && (
 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-          onClick={() =>
-            setIsSuccessModalOpen(false)
-          }
+          onClick={() => {
+            setIsSuccessModalOpen(
+              false
+            );
+
+            setIsWarningModal(false);
+          }}
         >
 
           <div
@@ -914,9 +1170,9 @@ export default function CategoriesPage() {
             }
           >
 
-            {/* ==========================================
+            {/* ==================================================
                 ICON
-            ========================================== */}
+            ================================================== */}
 
             <div
               className={`w-16 h-16 text-white rounded-full flex items-center justify-center mb-5 ${
@@ -927,38 +1183,37 @@ export default function CategoriesPage() {
             >
 
               {isWarningModal ? (
-
                 <AlertTriangle
                   size={36}
                   strokeWidth={3}
                 />
-
               ) : (
-
                 <Check
                   size={36}
                   strokeWidth={3}
                 />
-
               )}
 
             </div>
 
-            {/* ==========================================
+            {/* ==================================================
                 MESSAGE
-            ========================================== */}
+            ================================================== */}
 
             <h2 className="text-[17px] font-bold text-gray-900 mb-8">
               {successMessage}
             </h2>
 
-            {/* ==========================================
+            {/* ==================================================
                 CLOSE
-            ========================================== */}
+            ================================================== */}
 
             <button
               onClick={() => {
-                setIsSuccessModalOpen(false);
+                setIsSuccessModalOpen(
+                  false
+                );
+
                 setIsWarningModal(false);
               }}
               className="bg-[#3366FF] hover:bg-blue-600 text-white px-8 py-3 rounded-xl text-sm font-bold transition-colors shadow-sm min-w-[140px]"
