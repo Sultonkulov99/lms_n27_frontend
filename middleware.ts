@@ -68,13 +68,8 @@ export function middleware(request: NextRequest) {
     pathname === "/" ||
     publicPaths.some((path) => path !== "/" && pathname.startsWith(path));
 
-  const isAuthPage =
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/register") ||
-    pathname.startsWith("/verify-otp");
-
   if (!isPublicPath && !token) {
-    const response = NextResponse.redirect(new URL("/", request.url));
+    const response = NextResponse.redirect(new URL("/login", request.url));
     if (request.cookies.has("accessToken")) {
       response.cookies.delete("accessToken");
       response.cookies.delete("refreshToken");
@@ -86,8 +81,8 @@ export function middleware(request: NextRequest) {
   if (token && role) {
     const userRoleConfig = ROLE_CONFIG[role] || ROLE_CONFIG.STUDENT;
 
-    // A. Foydalanuvchi auth sahifalariga kirmoqchi bo'lsa -> o'z panelining bosh sahifasiga
-    if (isAuthPage) {
+    // A. Foydalanuvchi public (landing yoki auth) sahifalarga kirmoqchi bo'lsa -> o'z panelining bosh sahifasiga yo'naltirish
+    if (isPublicPath) {
       return NextResponse.redirect(new URL(userRoleConfig.home, request.url));
     }
 
