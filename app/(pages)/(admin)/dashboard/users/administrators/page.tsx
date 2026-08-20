@@ -303,7 +303,7 @@ export default function AdministratorsPage() {
 
           <button
             onClick={openAddModal}
-            className="mt-4 sm:mt-0 flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+            className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
           >
             <PlusCircle size={18} strokeWidth={2} />
             Qo’shish
@@ -335,7 +335,7 @@ export default function AdministratorsPage() {
               />
             )}
           </div>
-          <button className="bg-[#407BFF] hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
             Izlash
           </button>
         </div>
@@ -411,7 +411,7 @@ export default function AdministratorsPage() {
                         </td>
                         <td className="px-5 py-4 border border-gray-200">
                           <div
-                            className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
+                            className="flex items-center gap-3 cursor-pointer hover:text-blue-500 transition-colors"
                             onClick={() => {
                               setViewingAdmin(admin);
                               setIsViewModalOpen(true);
@@ -581,7 +581,7 @@ export default function AdministratorsPage() {
                     if (fullNameError) setNameError(false);
                   }}
                   placeholder="Kiriting"
-                  className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors ${fullNameError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f] placeholder:text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
+                  className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors ${fullNameError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f] placeholder:text-[#ff4d4f]" : "border-gray-200 focus:border-blue-500 text-gray-900"}`}
                 />
                 {fullNameError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
@@ -599,7 +599,7 @@ export default function AdministratorsPage() {
                   type="text"
                   value={phone}
                   onChange={handlePhoneChange}
-                  className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors tracking-wide ${phoneError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
+                  className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors tracking-wide ${phoneError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f]" : "border-gray-200 focus:border-blue-500 text-gray-900"}`}
                 />
                 {phoneError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
@@ -628,7 +628,7 @@ export default function AdministratorsPage() {
                         setPasswordError(false);
                     }}
                     placeholder="******"
-                    className={`w-full h-full px-4 pr-10 rounded-lg border text-[14px] outline-none transition-colors tracking-widest placeholder:tracking-normal ${passwordError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
+                    className={`w-full h-full px-4 pr-10 rounded-lg border text-[14px] outline-none transition-colors tracking-widest placeholder:tracking-normal ${passwordError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f]" : "border-gray-200 focus:border-blue-500 text-gray-900"}`}
                   />
                   <button
                     type="button"
@@ -650,7 +650,7 @@ export default function AdministratorsPage() {
             <div className="mt-4 flex justify-start shrink-0">
               <button
                 onClick={handleSaveAdmin}
-                className="flex items-center justify-center bg-[#407BFF] hover:bg-blue-600 text-white font-medium transition-colors shadow-sm"
+                className="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors shadow-sm"
                 style={{
                   width: "129px",
                   height: "48px",
@@ -697,7 +697,7 @@ export default function AdministratorsPage() {
               </button>
               <button
                 onClick={handleDeleteAdmin}
-                className="flex-1 py-3 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
+                className="flex-1 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
                 O'chirish
               </button>
@@ -726,7 +726,7 @@ export default function AdministratorsPage() {
             </h3>
             <button
               onClick={() => setIsSuccessModalOpen(false)}
-              className="px-8 py-3 rounded-lg bg-[#407BFF] hover:bg-blue-600 text-white transition-colors text-sm font-medium"
+              className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
             >
               Yopish
             </button>
@@ -796,7 +796,7 @@ export default function AdministratorsPage() {
                     Ro'yxatdan o'tgan vaqti
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAdmin.date}
+                    {formatDate(viewingAdmin.created_at)}
                   </p>
                 </div>
               </div>
