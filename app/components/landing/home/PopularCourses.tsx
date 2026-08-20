@@ -40,7 +40,9 @@ export default function PopularCourses() {
           getCategories()
         ]);
         
-        setCourses((coursesRes as unknown as CourseAPI[]) || []);
+        const allCourses = (coursesRes as unknown as CourseAPI[]) || [];
+        const activeCourses = allCourses.filter((c: any) => !c.status || c.status.toLowerCase() !== 'inactive');
+        setCourses(activeCourses);
         setCategories(categoriesRes || []);
       } catch (error) {
         console.error("Error fetching data:", error);

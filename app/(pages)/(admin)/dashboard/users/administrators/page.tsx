@@ -796,7 +796,7 @@ export default function AdministratorsPage() {
                     Ro'yxatdan o'tgan vaqti
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
-                    {viewingAdmin.date}
+                    {formatDate(viewingAdmin.created_at)}
                   </p>
                 </div>
               </div>

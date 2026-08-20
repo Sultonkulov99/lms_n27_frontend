@@ -512,76 +512,32 @@ const createMentor = async () => {
     setSaving(true);
     setApiError("");
 
-    // Majburiy fieldlarni tekshirish
     if (!form.fullName.trim()) {
-      setApiError("Full name majburiy.");
+      setApiError("F.I.Sh majburiy.");
       return;
     }
 
     if (!form.phone.trim()) {
-      setApiError("Phone majburiy.");
+      setApiError("Telefon raqami majburiy.");
       return;
     }
 
     if (!form.password.trim()) {
-      setApiError("Password majburiy.");
+      setApiError("Parol majburiy.");
       return;
     }
 
-    const body: Record<string, string> = {
+    const body = {
       fullName: form.fullName.trim(),
       phone: form.phone.trim(),
       password: form.password.trim(),
     };
 
-    // Ixtiyoriy fieldlar
-    if (form.experience.trim()) {
-      body.experience = form.experience.trim();
-    }
-
-    if (form.profession.trim()) {
-      body.profession = form.profession.trim();
-    }
-
-    if (form.website.trim()) {
-      body.website = form.website.trim();
-    }
-
-    if (form.description.trim()) {
-      body.description = form.description.trim();
-    }
-
-    if (form.facebook.trim()) {
-      body.facebook = form.facebook.trim();
-    }
-
-    if (form.telegram.trim()) {
-      body.telegram = form.telegram.trim();
-    }
-
-    if (form.linkedin.trim()) {
-      body.linkedin = form.linkedin.trim();
-    }
-
-    if (form.instagram.trim()) {
-      body.instagram = form.instagram.trim();
-    }
-
-    if (form.github.trim()) {
-      body.github = form.github.trim();
-    }
-
     console.log("POST /mentors BODY:", body);
 
-    const response = await baseAPI.post(
-      "/mentors",
-      body,
-    );
+    const response = await baseAPI.post("/mentors", body);
 
-    console.log(
-      "POST /mentors RESPONSE:",
-      response.data,
-    );
+    console.log("POST /mentors RESPONSE:", response.data);
 
     await fetchMentors();
 
@@ -592,27 +548,15 @@ const createMentor = async () => {
     });
   } catch (error: any) {
     console.error("CREATE MENTOR ERROR:", error);
-    console.error(
-      "STATUS:",
-      error?.response?.status,
-    );
-    console.error(
-      "BACKEND RESPONSE:",
-      error?.response?.data,
-    );
-    console.error(
-      "BACKEND MESSAGE:",
-      error?.response?.data?.message,
-    );
+    console.error("STATUS:", error?.response?.status);
+    console.error("BACKEND RESPONSE:", error?.response?.data);
 
-    const message =
-      error?.response?.data?.message;
+    const message = error?.response?.data?.message;
 
     setApiError(
       Array.isArray(message)
         ? message.join(", ")
-        : message ??
-          "Mentor qo‘shishda xatolik yuz berdi.",
+        : message ?? "Mentor qo‘shishda xatolik yuz berdi.",
     );
   } finally {
     setSaving(false);
@@ -643,42 +587,6 @@ const updateMentor = async () => {
       body.password = form.password.trim();
     }
 
-    if (form.experience.trim()) {
-      body.experience = form.experience.trim();
-    }
-
-    if (form.profession.trim()) {
-      body.profession = form.profession.trim();
-    }
-
-    if (form.website.trim()) {
-      body.website = form.website.trim();
-    }
-
-    if (form.description.trim()) {
-      body.description = form.description.trim();
-    }
-
-    if (form.facebook.trim()) {
-      body.facebook = form.facebook.trim();
-    }
-
-    if (form.telegram.trim()) {
-      body.telegram = form.telegram.trim();
-    }
-
-    if (form.linkedin.trim()) {
-      body.linkedin = form.linkedin.trim();
-    }
-
-    if (form.instagram.trim()) {
-      body.instagram = form.instagram.trim();
-    }
-
-    if (form.github.trim()) {
-      body.github = form.github.trim();
-    }
-
     console.log(
       `PATCH /mentors/${selectedMentor.id} BODY:`,
       body,
@@ -689,43 +597,27 @@ const updateMentor = async () => {
       body,
     );
 
-    console.log(
-      "PATCH RESPONSE:",
-      response.data,
-    );
+    console.log("PATCH RESPONSE:", response.data);
 
     await fetchMentors();
 
     setModal("successEdit");
   } catch (error: any) {
     console.error("UPDATE MENTOR ERROR:", error);
-    console.error(
-      "STATUS:",
-      error?.response?.status,
-    );
-    console.error(
-      "BACKEND DATA:",
-      error?.response?.data,
-    );
-    console.error(
-      "BACKEND MESSAGE:",
-      error?.response?.data?.message,
-    );
+    console.error("STATUS:", error?.response?.status);
+    console.error("BACKEND DATA:", error?.response?.data);
 
-    const message =
-      error?.response?.data?.message;
+    const message = error?.response?.data?.message;
 
     setApiError(
       Array.isArray(message)
         ? message.join(", ")
-        : message ??
-          "Mentorni tahrirlashda xatolik yuz berdi.",
+        : message ?? "Mentorni tahrirlashda xatolik yuz berdi.",
     );
   } finally {
     setSaving(false);
   }
 };
-
 /* =========================================================
    SAVE
 ======================================================== */

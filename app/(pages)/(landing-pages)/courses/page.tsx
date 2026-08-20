@@ -24,6 +24,8 @@ export interface CourseAPI {
   price: string;
   categoryId: number;
   categories: Category;
+  status?: string;
+  studentsCount?: number;
 }
 
 interface CourseCardProps {
@@ -85,7 +87,14 @@ function CourseCard({ course, priceLabel }: CourseCardProps) {
             {course.description}
           </p>
 
-          <PrecisionStars rating={5.0} stars={5} courseId={course.id.toString()} />
+          <div className="flex items-center justify-between">
+            <PrecisionStars rating={5.0} stars={5} courseId={course.id.toString()} />
+            {course.studentsCount ? (
+              <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                👥 {course.studentsCount} ta o'quvchi
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="mt-auto pt-2">
@@ -128,7 +137,9 @@ function CoursesContent() {
           getCategories()
         ]);
         
-        setCourses((coursesRes as unknown as CourseAPI[]) || []);
+        const allCourses = (coursesRes as unknown as CourseAPI[]) || [];
+        const activeCourses = allCourses.filter((c: any) => !c.status || c.status.toLowerCase() !== 'inactive');
+        setCourses(activeCourses);
         setCategories(categoriesRes || []);
       } catch (error) {
         console.error("Error fetching data:", error);

@@ -1,12 +1,22 @@
 import axios from "axios";
-import { baseAPI } from "../utils";
+import { baseAPI } from "@/app/lib/utils";
 
 export interface Payment {
-  id: Number;
-  userId: Number;
-  courseId: Number;
-  amount: Number;
-  status: Boolean;
+  id: number;
+  userId: number;
+  courseId: number;
+  amount: number | null;
+  status: boolean;
+  created_at: string;
+  updated_at: string;
+  user?: { id: number; fullName: string; phone: string; file?: string | null };
+  course?: {
+    id: number;
+    name: string;
+    price: number;
+    categoryId: number;
+    categories?: { id: number; name: string };
+  };
 }
 
 function unwrapList<T>(payload: unknown): T[] {
@@ -24,9 +34,9 @@ export async function getPayments(): Promise<Payment[]> {
   return unwrapList<Payment>(data);
 }
 
-export async function createPayment(courseId: number, userId: number) {
+export async function createPayment(userId: number, courseId: number) {
   try {
-    const { data } = await baseAPI.post("/payments", { courseId, userId });
+    const { data } = await baseAPI.post("/payments", { userId, courseId });
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -38,7 +48,7 @@ export async function createPayment(courseId: number, userId: number) {
 
 export async function updatePayment(
   id: number,
-  payload: { courseId?: number; userId?: number },
+  payload: { userId?: number; courseId?: number; status?: boolean },
 ) {
   try {
     const { data } = await baseAPI.patch(`/payments/${id}`, payload);

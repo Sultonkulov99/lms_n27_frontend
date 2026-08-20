@@ -16,23 +16,42 @@ import {
   ChevronDown
 } from "lucide-react";
 import Link from "next/link";
-import Header from "@/app/components/dashboard/Header";
-import { useCategoryStore } from "@/app/store/useCategoryStore";
-import { useCourseStore, Course } from "@/app/store/useCourseStore";
+import { getCourses, createCourse, updateCourse, deleteCourse, Course } from "@/app/lib/api/courses";
 import CustomSelect from "@/app/components/dashboard/CustomSelect";
 import Pagination from "@/app/components/dashboard/Pagination";
+import { getCategories, Category } from "@/app/lib/api/categories";
+import { API_URL } from "@/app/lib/utils";
+import { useProfileStore } from "@/store/useProfileStore";
+import { getMentors, Mentor } from "@/app/lib/api/mentors";
 
 export default function AllCoursesPage() {
-  const { categories } = useCategoryStore();
-  const { 
-    courses, 
-    addCourse, 
-    updateCourse, 
-    deleteCourse, 
-    toggleCourseStatus, 
-    assignAssistant, 
-    removeAssistant 
-  } = useCourseStore();
+  const { profile } = useProfileStore();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      const [cats, crs, mnts] = await Promise.all([
+        getCategories(),
+        getCourses(),
+        getMentors().catch(() => [])
+      ]);
+      setCategories(cats);
+      setCourses(crs);
+      setMentors(mnts);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
   
@@ -53,20 +72,26 @@ export default function AllCoursesPage() {
   // Current items
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
 
+  // Removed mentor fetching because backend endpoint might not exist yet
+
   // Form State
   const [formData, setFormData] = useState({
     title: "",
     desc: "",
     price: "",
-    level: "",
+    level: "BEGINNER",
     categoryId: "",
+    teacherId: "",
+    status: "ACTIVE",
+    banner: null as File | null,
+    introVideo: null as File | null,
   });
   const [assistant, setAssistant] = useState("");
 
   // Filtering
   const filteredCourses = useMemo(() => {
     return courses.filter(course => 
-      course.title.toLowerCase().includes(searchTerm.toLowerCase())
+      (course.name || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [courses, searchTerm]);
 
@@ -95,20 +120,26 @@ export default function AllCoursesPage() {
   };
 
   const isAllSelected = currentCourses.length > 0 && selectedRows.length === currentCourses.length;
-  const selectedAreActive = selectedRows.length > 0 && selectedRows.every(id => courses.find(c => c.id === id)?.status === 'active');
+  const selectedAreActive = selectedRows.length > 0 && selectedRows.every(id => courses.find(c => c.id === id)?.status === 'ACTIVE');
   
-  const handleBulkToggle = () => {
+  const handleBulkToggle = async () => {
     if (selectedRows.length === 0) return;
-    const newStatus = selectedAreActive ? 'inactive' : 'active';
-    toggleCourseStatus(selectedRows, newStatus);
-    setSuccessMessage(`Tanlanganlar muvaffaqiyatli ${newStatus === 'active' ? 'faollashtirildi' : 'nofaol qilindi'}`);
-    setIsSuccessModalOpen(true);
-    setSelectedRows([]);
+    const newStatus = selectedAreActive ? 'INACTIVE' : 'ACTIVE';
+    try {
+      await Promise.all(selectedRows.map(id => updateCourse(id, { status: newStatus })));
+      await loadData();
+      setSuccessMessage("Statuslar muvaffaqiyatli o'zgartirildi");
+      setIsSuccessModalOpen(true);
+      setSelectedRows([]);
+    } catch (error) {
+      console.error(error);
+      alert("Xatolik yuz berdi");
+    }
   };
 
   const openAddModal = () => {
     setModalMode("add");
-    setFormData({ title: "", desc: "", price: "", level: "", categoryId: "" });
+    setFormData({ title: "", desc: "", price: "", level: "BEGINNER", categoryId: "", teacherId: "", status: "ACTIVE", banner: null, introVideo: null });
     setCurrentCourse(null);
     setIsModalOpen(true);
   };
@@ -116,60 +147,80 @@ export default function AllCoursesPage() {
   const openEditModal = (course: Course) => {
     setModalMode("edit");
     setFormData({ 
-      title: course.title, 
-      desc: course.desc, 
-      price: course.price.toString(), 
-      level: course.level, 
-      categoryId: course.categoryId.toString() 
+      title: course.name || "", 
+      desc: course.description || "", 
+      price: course.price?.toString() || "", 
+      level: course.level || "BEGINNER", 
+      categoryId: course.categoryId?.toString() || "",
+      teacherId: course.teacherId?.toString() || "",
+      status: course.status || "ACTIVE",
+      banner: null,
+      introVideo: null
     });
     setCurrentCourse(course);
     setIsModalOpen(true);
   };
 
-  const handleSaveCourse = () => {
-    if (!formData.title || !formData.level || !formData.categoryId || !formData.price) return;
+  const handleSaveCourse = async () => {
+    if (!formData.title || !formData.categoryId || !formData.price) return;
     
-    if (modalMode === "add") {
-      addCourse({
-        title: formData.title,
-        desc: formData.desc,
-        price: Number(formData.price),
-        level: formData.level,
-        categoryId: Number(formData.categoryId),
-        status: "active",
-        cover: "bg-gradient-to-br from-blue-400 to-indigo-500",
-        studentsCount: 0,
-        rating: 0
-      });
-      setSuccessMessage("Muvaffaqiyatli qo’shildi");
-    } else if (modalMode === "edit" && currentCourse) {
-      updateCourse(currentCourse.id, {
-        title: formData.title,
-        desc: formData.desc,
-        price: Number(formData.price),
-        level: formData.level,
-        categoryId: Number(formData.categoryId)
-      });
-      setSuccessMessage("Muvaffaqiyatli o’zgartirildi");
+    const fd = new FormData();
+    fd.append("name", formData.title);
+    fd.append("description", formData.desc);
+    fd.append("price", formData.price.toString());
+    fd.append("level", formData.level);
+    fd.append("categoryId", formData.categoryId.toString());
+    fd.append("status", formData.status);
+    
+    if (formData.teacherId) {
+      fd.append("teacherId", formData.teacherId.toString());
     }
     
-    setIsModalOpen(false);
-    setIsSuccessModalOpen(true);
+    if (formData.banner) {
+      fd.append("banner", formData.banner);
+    }
+    if (formData.introVideo) {
+      fd.append("introVideo", formData.introVideo);
+    }
+
+    try {
+      if (modalMode === "add") {
+        await createCourse(fd);
+        setSuccessMessage("Muvaffaqiyatli qo’shildi");
+      } else if (modalMode === "edit" && currentCourse) {
+        await updateCourse(currentCourse.id, fd);
+        setSuccessMessage("Muvaffaqiyatli o’zgartirildi");
+      }
+      
+      await loadData();
+      setIsModalOpen(false);
+      setIsSuccessModalOpen(true);
+    } catch (error) {
+      console.error(error);
+      alert("Xatolik yuz berdi");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (currentCourse) {
-      deleteCourse(currentCourse.id);
-      setIsDeleteModalOpen(false);
-      setSuccessMessage("Muvaffaqiyatli o'chirildi");
-      setIsSuccessModalOpen(true);
-      setSelectedRows(selectedRows.filter(id => id !== currentCourse.id));
+      try {
+        await deleteCourse(currentCourse.id);
+        await loadData();
+        setIsDeleteModalOpen(false);
+        setSuccessMessage("Muvaffaqiyatli o'chirildi");
+        setIsSuccessModalOpen(true);
+        setSelectedRows(selectedRows.filter(id => id !== currentCourse.id));
+      } catch (error) {
+        console.error(error);
+        alert("O'chirishda xatolik yuz berdi");
+      }
     }
   };
 
   const handleAssignAssistant = () => {
     if (currentCourse && assistant) {
-      assignAssistant(currentCourse.id, assistant);
+      // assignAssistant(currentCourse.id, assistant);
+      alert("Backend hozircha assistent biriktirishni qo'llab quvvatlamaydi!");
       setIsAssignModalOpen(false);
       setCurrentCourse({ ...currentCourse, assistant });
       setAssistant("");
@@ -180,7 +231,8 @@ export default function AllCoursesPage() {
 
   const handleRemoveAssistant = () => {
     if (currentCourse) {
-      removeAssistant(currentCourse.id);
+      // removeAssistant(currentCourse.id);
+      alert("Backend hozircha assistent o'chirishni qo'llab quvvatlamaydi!");
       setCurrentCourse({ ...currentCourse, assistant: undefined });
     }
   };
@@ -191,7 +243,7 @@ export default function AllCoursesPage() {
   
   const downloadXLS = () => {
     const headers = ["ID", "Kurs nomi", "Darajasi", "Narxi", "Kategoriya", "Holati"];
-    const rows = courses.map(c => [c.id, c.title, c.level, c.price, getCategoryName(c.categoryId), c.status].join(","));
+    const rows = courses.map(c => [c.id, c.name, c.level, c.price, getCategoryName(c.categoryId), c.status || 'ACTIVE'].join(","));
     const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
     
     const encodedUri = encodeURI(csvContent);
@@ -369,18 +421,22 @@ export default function AllCoursesPage() {
                             />
                           </td>
                           <td className="px-5 py-4">
-                            <div className={`w-[52px] h-[32px] mx-auto rounded ${course.cover || 'bg-gray-200'} shadow-sm`}></div>
+                            {course.banner ? (
+                              <img src={course.banner.startsWith("http") ? course.banner : `${API_URL}${course.banner}`} alt="banner" className="w-[52px] h-[32px] mx-auto rounded shadow-sm object-cover" />
+                            ) : (
+                              <div className={`w-[52px] h-[32px] mx-auto rounded bg-gray-200 shadow-sm`}></div>
+                            )}
                           </td>
                           <td className="px-5 py-4 font-medium text-gray-900">
                             <Link href={`/dashboard/courses/allCourses/${course.id}/sections`} className="hover:text-blue-600 hover:underline transition-colors">
-                              {course.title}
+                              {course.name}
                             </Link>
                           </td>
                           <td className="px-5 py-4 text-gray-600 font-medium capitalize text-center">{course.level}</td>
                           <td className="px-5 py-4 text-gray-900 font-medium text-center">{(course.price).toLocaleString()}</td>
                           <td className="px-5 py-4 text-gray-600 text-center">{getCategoryName(course.categoryId)}</td>
                           <td className="px-5 py-4 text-center">
-                            {course.status === 'active' ? (
+                            {course.status === 'ACTIVE' ? (
                               <span className="text-green-600 font-medium text-[13px]">Faol</span>
                             ) : (
                               <span className="text-red-500 font-medium text-[13px]">Nofaol</span>
@@ -566,13 +622,39 @@ export default function AllCoursesPage() {
                 </div>
               </div>
 
-              {/* Category */}
+              {/* Category & Status */}
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">Kategoriya</label>
+                  <CustomSelect
+                    options={categories.map((cat) => ({ value: cat.id.toString(), label: cat.name }))}
+                    value={formData.categoryId}
+                    onChange={(v) => setFormData({ ...formData, categoryId: v })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">Holati</label>
+                  <CustomSelect
+                    options={[
+                      { value: "ACTIVE", label: "Faol" },
+                      { value: "INACTIVE", label: "Nofaol" },
+                    ]}
+                    value={formData.status}
+                    onChange={(v) => setFormData({ ...formData, status: v })}
+                  />
+                </div>
+              </div>
+
+              {/* Mentor */}
               <div>
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Kategoriya</label>
+                <label className="block text-[13px] font-semibold text-gray-700 mb-2">Mentor (Ixtiyoriy)</label>
                 <CustomSelect
-                  options={categories.map((cat) => ({ value: cat.id.toString(), label: cat.name }))}
-                  value={formData.categoryId}
-                  onChange={(v) => setFormData({ ...formData, categoryId: v })}
+                  options={[
+                    { value: "", label: "Biriktirilmagan" },
+                    ...mentors.map((m) => ({ value: m.id.toString(), label: m.fullName }))
+                  ]}
+                  value={formData.teacherId}
+                  onChange={(v) => setFormData({ ...formData, teacherId: v })}
                 />
               </div>
 
@@ -689,15 +771,34 @@ export default function AllCoursesPage() {
               
               <div>
                 <p className="text-[12px] font-semibold text-gray-500 mb-1">Kurs nomi</p>
-                <p className="text-sm font-medium text-gray-900">{currentCourse.title}</p>
+                <p className="text-sm font-medium text-gray-900">{currentCourse.name}</p>
               </div>
 
               <div>
-                <div className={`w-full h-32 rounded-xl ${currentCourse.cover || 'bg-gray-200'} shadow-sm mb-2`}></div>
-                <div className="flex items-center gap-1.5 text-blue-600 text-[13px] font-medium cursor-pointer hover:underline">
-                  <LinkIcon size={14} />
-                  Banner.jpg
-                </div>
+                {currentCourse.banner ? (
+                    <img src={currentCourse.banner.startsWith("http") ? currentCourse.banner : `${API_URL}${currentCourse.banner}`} alt="banner" className="w-full h-32 rounded-xl shadow-sm mb-2 object-cover" />
+                ) : (
+                    <div className={`w-full h-32 rounded-xl bg-gray-200 shadow-sm mb-2`}></div>
+                )}
+                {currentCourse.banner && (
+                  <div className="flex items-center gap-1.5 text-blue-600 text-[13px] font-medium cursor-pointer hover:underline mb-4">
+                    <LinkIcon size={14} />
+                    <a href={currentCourse.banner.startsWith("http") ? currentCourse.banner : `${API_URL}${currentCourse.banner}`} target="_blank" rel="noreferrer">
+                      Banner.png
+                    </a>
+                  </div>
+                )}
+                
+                {currentCourse.introVideo && (
+                  <div className="mt-2">
+                    <p className="text-[12px] font-semibold text-gray-500 mb-1">Kirish video</p>
+                    <video 
+                      controls 
+                      src={currentCourse.introVideo.startsWith("http") ? currentCourse.introVideo : `${API_URL}${currentCourse.introVideo}`} 
+                      className="w-full h-40 bg-black rounded-xl object-contain shadow-sm"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-y-6 gap-x-4">
@@ -712,7 +813,7 @@ export default function AllCoursesPage() {
                 
                 <div>
                   <p className="text-[12px] font-semibold text-gray-500 mb-1">Sana</p>
-                  <p className="text-sm font-medium text-gray-900">{currentCourse.createdAt}</p>
+                  <p className="text-sm font-medium text-gray-900">{currentCourse.created_at ? new Date(currentCourse.created_at).toLocaleDateString() : 'Noma\'lum'}</p>
                 </div>
                 <div>
                   <p className="text-[12px] font-semibold text-gray-500 mb-1">Kategoriya</p>
@@ -721,12 +822,14 @@ export default function AllCoursesPage() {
                 
                 <div>
                   <p className="text-[12px] font-semibold text-gray-500 mb-1">Mentor</p>
-                  <p className="text-sm font-medium text-gray-900">{currentCourse.mentor || "Biriktirilmagan"}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {currentCourse.user?.fullName || profile?.fullName || "Noma'lum Mentor"} (ID: {currentCourse.teacherId || profile?.id || "Noma'lum"})
+                  </p>
                 </div>
                 <div>
                   <p className="text-[12px] font-semibold text-gray-500 mb-1">Holati</p>
-                  <p className={`text-sm font-medium ${currentCourse.status === 'active' ? 'text-green-600' : 'text-red-500'}`}>
-                    {currentCourse.status === 'active' ? 'Faol' : 'Nofaol'}
+                  <p className={`text-sm font-medium ${currentCourse.status === 'ACTIVE' ? 'text-green-600' : 'text-red-500'}`}>
+                    {currentCourse.status === 'ACTIVE' ? 'Faol' : 'Nofaol'}
                   </p>
                 </div>
                 
