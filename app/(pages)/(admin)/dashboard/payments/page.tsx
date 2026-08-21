@@ -28,7 +28,6 @@ import { Course, getCourses } from "@/app/lib/api/courses";
 import { fetchCategoriesCached } from "@/app/lib/utils";
 // import { Category } from "@/app/lib/api/categories";
 
-
 export default function PaymentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -107,8 +106,8 @@ export default function PaymentsPage() {
     if (!search) return true;
 
     return (
-      (student.fullName?.toLowerCase() || "").includes(search) ||
-      String(student.id).includes(search)
+      student.fullName.toLowerCase().includes(search) ||
+      student.phone?.toLowerCase().includes(search)
     );
   });
 
@@ -603,7 +602,7 @@ export default function PaymentsPage() {
                             autoFocus
                             value={buyerSearch}
                             onChange={(e) => setBuyerSearch(e.target.value)}
-                            placeholder="Ism yoki ID bo'yicha qidiring..."
+                            placeholder="Ism yoki telefon raqam bo'yicha qidiring..."
                             className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-200 text-[13px] outline-none focus:border-blue-500"
                             onClick={(e) => e.stopPropagation()}
                           />
@@ -636,7 +635,7 @@ export default function PaymentsPage() {
                                   </p>
 
                                   <p className="text-[12px] text-gray-400 mt-0.5">
-                                    ID: {student.id}
+                                    {student.phone}
                                   </p>
                                 </div>
 

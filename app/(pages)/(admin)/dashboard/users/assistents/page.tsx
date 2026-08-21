@@ -75,6 +75,12 @@ export default function AssistentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [courseId, setCourseId] = useState("");
+  const [courseIdError, setCourseIdError] = useState(false);
+
+  const [courseSearch, setCourseSearch] = useState("");
+  const [isCourseOpen, setIsCourseOpen] = useState(false);
+
   useEffect(() => {
     loadAll();
   }, []);
@@ -144,6 +150,14 @@ export default function AssistentsPage() {
       );
     });
   }, [assistents, courseLinks, courses, searchQuery]);
+
+  const filteredCourses = courses.filter((course) => {
+    const search = courseSearch.toLowerCase().trim();
+
+    if (!search) return true;
+
+    return course.name.toLowerCase().includes(search);
+  });
 
   const totalPages = Math.ceil(filteredAssistents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -668,25 +682,114 @@ export default function AssistentsPage() {
                   </span>
                 </label>
                 <div className="relative w-full">
-                  <select
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer border-gray-200 focus:border-[#407BFF] ${
-                      course ? "text-gray-900" : "text-gray-400"
-                    }`}
-                  >
-                    <option value="">Kurssiz</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
+                  <div className="relative w-full">
+                    {/* SELECT BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => setIsCourseOpen((prev) => !prev)}
+                      className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors bg-white cursor-pointer flex items-center justify-between text-left ${
+                        courseId ? "text-gray-900" : "text-gray-400"
+                      } ${
+                        courseIdError
+                          ? "border-[#ff4d4f]"
+                          : isCourseOpen
+                            ? "border-blue-500"
+                            : "border-gray-200"
+                      }`}
+                    >
+                      <span>
+                        {courseId
+                          ? courses.find(
+                              (course) =>
+                                String(course.id) === String(courseId),
+                            )?.name
+                          : "Tanlang"}
+                      </span>
+
+                      <ChevronDown
+                        size={18}
+                        className={`text-gray-400 transition-transform ${
+                          isCourseOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* DROPDOWN */}
+                    {isCourseOpen && (
+                      <div className="absolute z-50 top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                        {/* SEARCH */}
+                        <div className="p-2 border-b border-gray-100">
+                          <div className="relative">
+                            <Search
+                              size={17}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            />
+
+                            <input
+                              type="text"
+                              autoFocus
+                              value={courseSearch}
+                              onChange={(e) => setCourseSearch(e.target.value)}
+                              placeholder="Kurs nomi bo'yicha qidiring..."
+                              className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-200 text-[13px] outline-none focus:border-blue-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+
+                        {/* COURSES */}
+                        <div className="max-h-60 overflow-y-auto">
+                          {filteredCourses.length > 0 ? (
+                            filteredCourses.map((course) => (
+                              <button
+                                key={course.id}
+                                type="button"
+                                onClick={() => {
+                                  setCourseId(String(course.id));
+                                  setCourseIdError(false);
+                                  setCourseSearch("");
+                                  setIsCourseOpen(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left hover:bg-[#F5F8FF] transition-colors ${
+                                  String(course.id) === String(courseId)
+                                    ? "bg-[#F5F8FF]"
+                                    : ""
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-[14px] font-medium text-gray-900 truncate">
+                                    {course.name}
+                                  </p>
+
+                                  {String(course.id) === String(courseId) && (
+                                    <Check
+                                      size={18}
+                                      className="text-blue-500 shrink-0"
+                                    />
+                                  )}
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-6 text-center text-[13px] text-gray-400">
+                              Kurs topilmadi
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {courseIdError && (
+                    <p className="text-[#ff4d4f] text-[12px] mt-1.5">
+                      Kurs tanlanmadi
+                    </p>
+                  )}
                 </div>
+                <ChevronDown
+                  size={18}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
               </div>
 
               {/* Parol */}
