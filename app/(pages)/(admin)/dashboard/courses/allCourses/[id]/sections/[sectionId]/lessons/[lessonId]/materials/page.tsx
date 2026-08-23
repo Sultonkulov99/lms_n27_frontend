@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use, useRef } from "react";
+import React, { useState, use, useRef, useEffect, useCallback } from "react";
 import {
   PlusCircle,
   Filter,
@@ -19,20 +19,31 @@ import Pagination from "@/app/components/dashboard/Pagination";
 import { useLessonMeta } from "@/app/components/lesson/useLessonMeta";
 import LessonHeader from "@/app/components/lesson/LessonHeader";
 import LessonTabs from "@/app/components/lesson/LessonTabs";
+import { getMaterials, createMaterial, updateMaterial, deleteMaterial, Material as APIMaterial } from "@/app/lib/api/materials";
+import { API_URL, baseAPI } from "@/app/lib/utils";
+import { useParams } from "next/navigation";
 
 interface AttachedFile {
   id: string;
   name: string;
   size: string;
-  url: string;
+  url?: string;
+  file?: File;
   uploading?: boolean;
 }
 
 interface Material {
   id: number;
+  lessonId?: number;
   title: string;
   description: string;
   files: AttachedFile[];
+}
+
+interface Lesson {
+  id: number;
+  sectionId: number;
+  name: string;
 }
 
 // Maps a file's extension to a display icon, color, and short type label.
@@ -48,43 +59,26 @@ const getFileMeta = (name: string): { Icon: LucideIcon; color: string; label: st
 
 const UPLOAD_ACCEPT = ".pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx,.svg,.png,.jpg,.jpeg,.gif";
 
-// Uploads a single file to the server (saved under public/upload/materials) and returns its public URL.
-async function uploadFileToServer(file: File): Promise<{ url: string; name: string; size: string }> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/materials/upload", { method: "POST", body: formData });
-  if (!res.ok) throw new Error("Upload failed");
-  return res.json();
-}
-
-export default function LessonMaterialsPage({
-  params,
-}: {
-  params: Promise<{ id: string; sectionId: string; lessonId: string }>;
-}) {
-  const { id: courseId, sectionId, lessonId } = use(params);
+export default function LessonMaterialsPage() {
+  const params = useParams();
+  const courseId = params?.id as string;
+  const sectionId = params?.sectionId as string;
+  const lessonId = params?.lessonId as string;
   const { courseTitle, lessonName } = useLessonMeta(courseId, sectionId);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const [materials, setMaterials] = useState<Material[]>([
-    {
-      id: 1,
-      title: "Veb dasturlashga kirish",
-      description: "Frontend dasturlash veb dasturlashning bir qismi hisoblanadi",
-      files: [
-        { id: "seed-1", name: "Kirish.xlsx", size: "1.1 MB", url: "/upload/materials/seed-Kirish.xlsx" },
-        { id: "seed-2", name: "Kirish.pdf", size: "2.4 MB", url: "/upload/materials/seed-Kirish.pdf" }
-      ]
-    }
-  ]);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
 
-  const [newMaterial, setNewMaterial] = useState<{ title: string; description: string; files: AttachedFile[] }>({
+  const [newMaterial, setNewMaterial] = useState<{ lessonId: string; title: string; description: string; files: AttachedFile[] }>({
+    lessonId: lessonId,
     title: "",
     description: "",
     files: []
@@ -95,88 +89,132 @@ export default function LessonMaterialsPage({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getMaterials();
+      
+      let fetchedLessons: Lesson[] = [];
+      try {
+        const { data: resData } = await baseAPI.get("/lessons");
+        fetchedLessons = Array.isArray(resData?.data) ? resData.data : (Array.isArray(resData) ? resData : []);
+        setLessons(fetchedLessons);
+      } catch (err) {
+        console.error("Darslar topilmadi", err);
+      }
+      
+      const filtered = data.filter((m: APIMaterial) => m.lessonId === Number(lessonId));
+      
+      const mapped = filtered.map((m: APIMaterial) => ({
+        id: m.id,
+        lessonId: m.lessonId,
+        title: m.title || "Nomsiz",
+        description: m.description || "",
+        files: (m.file || []).map(url => ({
+          id: url,
+          name: url.split('/').pop() || 'Fayl',
+          size: "Noma'lum",
+          url: url.startsWith("http") ? url : `${API_URL}/${url}`
+        }))
+      }));
+      setMaterials(mapped);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [lessonId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
   const resetForm = () => {
-    setNewMaterial({ title: "", description: "", files: [] });
+    setNewMaterial({ lessonId: lessonId, title: "", description: "", files: [] });
     setEditingMaterial(null);
   };
 
-  const handleAddMaterial = () => {
+  const handleAddMaterial = async () => {
     if (!newMaterial.title.trim()) return;
-    setMaterials([
-      ...materials,
-      {
-        id: Date.now(),
-        title: newMaterial.title.trim(),
-        description: newMaterial.description.trim(),
-        files: newMaterial.files
+    
+    const fd = new FormData();
+    fd.append("title", newMaterial.title.trim());
+    fd.append("description", newMaterial.description.trim());
+    fd.append("lessonId", String(newMaterial.lessonId));
+    
+    newMaterial.files.forEach(f => {
+      if (f.file) {
+        fd.append("file", f.file);
       }
-    ]);
-    setIsAddModalOpen(false);
-    resetForm();
+    });
+
+    try {
+      await createMaterial(fd);
+      await loadData();
+      setIsAddModalOpen(false);
+      resetForm();
+    } catch (e) {
+      console.error(e);
+      alert("Material qo'shishda xatolik yuz berdi");
+    }
   };
 
-  const handleEditMaterial = () => {
+  const handleEditMaterial = async () => {
     if (!editingMaterial || !editingMaterial.title.trim()) return;
-    setMaterials(materials.map(l => l.id === editingMaterial.id ? {
-      ...l,
-      title: editingMaterial.title.trim(),
-      description: editingMaterial.description.trim(),
-      files: editingMaterial.files
-    } : l));
-    setIsEditModalOpen(false);
-    resetForm();
+    
+    const fd = new FormData();
+    fd.append("title", editingMaterial.title.trim());
+    fd.append("description", editingMaterial.description.trim());
+    fd.append("lessonId", String(editingMaterial.lessonId));
+    
+    editingMaterial.files.forEach(f => {
+      if (f.file) {
+        fd.append("file", f.file);
+      }
+    });
+
+    try {
+      await updateMaterial(editingMaterial.id, fd);
+      await loadData();
+      setIsEditModalOpen(false);
+      resetForm();
+    } catch (e) {
+      console.error(e);
+      alert("Material o'zgartirishda xatolik yuz berdi");
+    }
   };
 
-  const handleDeleteMaterial = () => {
+  const handleDeleteMaterial = async () => {
     if (deletingMaterialId === null) return;
-    setMaterials(materials.filter(l => l.id !== deletingMaterialId));
-    setDeletingMaterialId(null);
-    setIsDeleteModalOpen(false);
+    
+    try {
+      await deleteMaterial(deletingMaterialId);
+      await loadData();
+      setDeletingMaterialId(null);
+      setIsDeleteModalOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert("O'chirishda xatolik yuz berdi");
+    }
   };
 
-  const addFiles = async (fileList: FileList | null) => {
+  const addFiles = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
     const pickedFiles = Array.from(fileList);
     const targetIsEdit = isEditModalOpen;
 
-    // Show an "uploading" placeholder immediately, then patch in the real url once saved.
-    const placeholders: AttachedFile[] = pickedFiles.map((file) => ({
+    const newAttachedFiles: AttachedFile[] = pickedFiles.map((file) => ({
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: file.name,
       size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
-      url: "",
-      uploading: true
+      file: file
     }));
 
     if (targetIsEdit) {
-      setEditingMaterial((prev) => (prev ? { ...prev, files: [...prev.files, ...placeholders] } : prev));
+      setEditingMaterial((prev) => (prev ? { ...prev, files: [...prev.files, ...newAttachedFiles] } : prev));
     } else {
-      setNewMaterial((prev) => ({ ...prev, files: [...prev.files, ...placeholders] }));
+      setNewMaterial((prev) => ({ ...prev, files: [...prev.files, ...newAttachedFiles] }));
     }
-
-    await Promise.all(
-      pickedFiles.map(async (file, index) => {
-        const placeholder = placeholders[index];
-        try {
-          const uploaded = await uploadFileToServer(file);
-          const patch = (files: AttachedFile[]) =>
-            files.map((f) => (f.id === placeholder.id ? { ...f, url: uploaded.url, uploading: false } : f));
-          if (targetIsEdit) {
-            setEditingMaterial((prev) => (prev ? { ...prev, files: patch(prev.files) } : prev));
-          } else {
-            setNewMaterial((prev) => ({ ...prev, files: patch(prev.files) }));
-          }
-        } catch (err) {
-          console.error("Faylni yuklashda xatolik:", err);
-          const drop = (files: AttachedFile[]) => files.filter((f) => f.id !== placeholder.id);
-          if (targetIsEdit) {
-            setEditingMaterial((prev) => (prev ? { ...prev, files: drop(prev.files) } : prev));
-          } else {
-            setNewMaterial((prev) => ({ ...prev, files: drop(prev.files) }));
-          }
-        }
-      })
-    );
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,7 +249,7 @@ export default function LessonMaterialsPage({
         m.id,
         csvEscape(m.title),
         csvEscape(m.description),
-        csvEscape(m.files.map((f) => f.url).join("; ")),
+        csvEscape(m.files.map((f) => f.name).join("; ")),
       ].join(","),
     );
     const csvContent =
@@ -231,12 +269,33 @@ export default function LessonMaterialsPage({
 
     return (
       <div className="p-6 space-y-6">
-        <div>
-          <label className="block text-[14px] font-bold text-gray-900 mb-2">Bo&apos;lim nomi</label>
-          <input type="text" disabled value={lessonName} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[14px] cursor-not-allowed" />
-        </div>
+        {/* We can show Lesson name disabled for edit, dropdown for add */}
         <div>
           <label className="block text-[14px] font-bold text-gray-900 mb-2">Dars nomi</label>
+          {isEdit ? (
+            <input 
+              type="text" 
+              disabled 
+              value={lessons.find(l => l.id === editingMaterial?.lessonId)?.name || lessonName} 
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[14px] cursor-not-allowed" 
+            />
+          ) : (
+            <select
+              value={newMaterial.lessonId}
+              onChange={(e) => setNewMaterial({ ...newMaterial, lessonId: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] bg-white cursor-pointer"
+            >
+              <option value="">Darsni tanlang</option>
+              {lessons.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <div>
+          <label className="block text-[14px] font-bold text-gray-900 mb-2">Material nomi</label>
           <input
             type="text"
             placeholder="Kiriting"
@@ -252,7 +311,7 @@ export default function LessonMaterialsPage({
           />
         </div>
         <div>
-          <label className="block text-[14px] font-bold text-gray-900 mb-2">Dars haqida</label>
+          <label className="block text-[14px] font-bold text-gray-900 mb-2">Material haqida</label>
           <input
             type="text"
             placeholder="Kiriting"
@@ -305,7 +364,7 @@ export default function LessonMaterialsPage({
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-medium text-gray-900 truncate pr-4">{file.name}</p>
                       <p className="text-[12px] text-gray-500">
-                        {file.uploading ? "Yuklanmoqda..." : file.size}
+                        {file.size}
                       </p>
                     </div>
                     <button
@@ -330,6 +389,8 @@ export default function LessonMaterialsPage({
     );
   };
 
+  const paginatedMaterials = materials.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <>
       <div className="flex-1 overflow-y-auto p-6 flex flex-col h-full bg-transparent">
@@ -345,7 +406,7 @@ export default function LessonMaterialsPage({
 
         <div className="flex-1 flex flex-col">
           <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
-            <table className="w-full text-left border-collapse min-w-[1000px] bg-white">
+            <table className="w-full text-left border-collapse min-w-250 bg-white">
               <thead className="bg-gray-50">
                 <tr className="text-[13px] text-gray-900 font-bold tracking-wide">
                   <th className="px-6 py-4 font-semibold whitespace-nowrap border border-gray-200 w-[20%]">
@@ -369,7 +430,13 @@ export default function LessonMaterialsPage({
                 </tr>
               </thead>
               <tbody className="text-[14px] text-gray-800">
-                {materials.length > 0 ? materials.map((material) => (
+                {loading ? (
+                   <tr>
+                     <td colSpan={4} className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white">
+                       Yuklanmoqda...
+                     </td>
+                   </tr>
+                ) : paginatedMaterials.length > 0 ? paginatedMaterials.map((material) => (
                   <tr key={material.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
                       {material.title}
@@ -385,8 +452,8 @@ export default function LessonMaterialsPage({
                             return (
                               <a
                                 key={file.id}
-                                href={file.url}
-                                target="_blank"
+                                href={file.url || "#"}
+                                target={file.url ? "_blank" : undefined}
                                 rel="noopener noreferrer"
                                 title={file.name}
                                 className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-800 hover:border-blue-300 hover:text-blue-600 transition-colors"
@@ -417,7 +484,7 @@ export default function LessonMaterialsPage({
                 )) : (
                   <tr>
                     <td colSpan={4} className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white">
-                      Darslar mavjud emas
+                      Materiallar mavjud emas
                     </td>
                   </tr>
                 )}
@@ -446,9 +513,9 @@ export default function LessonMaterialsPage({
 
       {(isAddModalOpen || isEditModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); resetForm(); }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[480px] flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-120 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">{isEditModalOpen ? "Tahrirlash" : "Qo\u2019shish"}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{isEditModalOpen ? "Tahrirlash" : "Qo&apos;shish"}</h2>
               <button onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); resetForm(); }} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
@@ -460,7 +527,7 @@ export default function LessonMaterialsPage({
 
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}>
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[400px] flex flex-col items-center text-center p-8 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 flex flex-col items-center text-center p-8 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5">
               <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center text-3xl font-bold">?</div>
             </div>

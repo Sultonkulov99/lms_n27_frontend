@@ -12,12 +12,20 @@ export default function ProfilePage() {
 
   const { profile, fetchProfile, isLoading } = useProfileStore();
 
+  // Profile Form States
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [image, setImage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
 
+  // Security Form States
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Notifications State
   const [notifications, setNotifications] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,7 +36,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      // Backend qaytargan obyektni to'g'ridan-to'g'ri any ga o'tkazib olamiz
       const data: any = (profile as any).data || profile;
 
       setName(data.fullName || data.name || "");
@@ -89,7 +96,6 @@ export default function ProfilePage() {
         type: "success",
       });
 
-      // Profil ma'lumotlarini store'da qayta yangilash
       await fetchProfile();
     } catch (error: any) {
       showToast(error.response?.data?.message || "Xatolik yuz berdi", {
@@ -97,6 +103,46 @@ export default function ProfilePage() {
       });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      showToast("Barcha maydonlarni to'ldiring", { type: "error" });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      showToast("Yangi parollar bir-biriga mos kelmadi", { type: "error" });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      showToast("Yangi parol kamida 6 ta belgi bo'lishi kerak", { type: "error" });
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      const response = await baseAPI.patch("/profile/change-password", {
+        oldPassword,
+        newPassword,
+      });
+
+      showToast(response.data?.message || "Parol muvaffaqiyatli o'zgartirildi", {
+        type: "success",
+      });
+
+      setOldPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      showToast(
+        error.response?.data?.message || "Parolni o'zgartirishda xatolik yuz berdi",
+        { type: "error" }
+      );
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -265,6 +311,9 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="••••••••"
                   className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
@@ -275,6 +324,9 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
                   className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
@@ -285,15 +337,27 @@ export default function ProfilePage() {
                 </label>
                 <input
                   type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
                   className="h-[40px] w-full rounded-[5px] border border-[#DDE1E7] bg-white px-[8px] text-[12px] text-[#171717] outline-none transition focus:border-[#407BFF]"
                 />
               </div>
 
               <button
                 type="button"
-                className="flex h-[43px] w-[160px] items-center justify-center rounded-[5px] bg-[#407BFF] px-[12px] text-[12px] font-medium text-white transition hover:bg-[#306BEF]"
+                onClick={handlePasswordChange}
+                disabled={isChangingPassword}
+                className="flex h-[43px] w-[160px] items-center justify-center gap-[6px] rounded-[5px] bg-[#407BFF] px-[12px] text-[12px] font-medium text-white transition hover:bg-[#306BEF] disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Parolni o&apos;zgartirish
+                {isChangingPassword ? (
+                  <>
+                    <Loader2 className="animate-spin" size={16} />
+                    <span>Saqlanmoqda...</span>
+                  </>
+                ) : (
+                  "Parolni o'zgartirish"
+                )}
               </button>
             </div>
           )}

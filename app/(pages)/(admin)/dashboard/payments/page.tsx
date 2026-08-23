@@ -26,11 +26,8 @@ import {
 import { Student, getStudents } from "@/app/lib/api/students";
 import { Course, getCourses } from "@/app/lib/api/courses";
 import { fetchCategoriesCached } from "@/app/lib/utils";
+// import { Category } from "@/app/lib/api/categories";
 
-interface Category {
-  id: number;
-  name: string;
-}
 
 export default function PaymentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,12 +46,14 @@ export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [userId, setUserId] = useState("");
   const [userIdError, setUserIdError] = useState(false);
+  const [buyerSearch, setBuyerSearch] = useState("");
+  const [isBuyerOpen, setIsBuyerOpen] = useState(false);
   const [categoryId, setCategoryId] = useState("");
   const [courseId, setCourseId] = useState("");
   const [courseIdError, setCourseIdError] = useState(false);
@@ -79,10 +78,10 @@ export default function PaymentsPage() {
       setPayments(paymentsData);
       setStudents(studentsData);
       setCourses(coursesData);
-      const catList = Array.isArray(categoriesRaw)
-        ? categoriesRaw
-        : (categoriesRaw?.data ?? categoriesRaw?.result ?? []);
-      setCategories(catList);
+      // const catList = Array.isArray(categoriesRaw)
+      //   ? categoriesRaw
+      //   : (categoriesRaw?.data ?? categoriesRaw?.result ?? []);
+      // setCategories(catList);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Yuklanmadi");
@@ -101,6 +100,17 @@ export default function PaymentsPage() {
         : courses,
     [courses, categoryId],
   );
+
+  const filteredStudents = students.filter((student) => {
+    const search = buyerSearch.toLowerCase().trim();
+
+    if (!search) return true;
+
+    return (
+      (student.fullName?.toLowerCase() || "").includes(search) ||
+      String(student.id).includes(search)
+    );
+  });
 
   const selectedCourse = courseId ? courseById(Number(courseId)) : undefined;
 
@@ -274,6 +284,7 @@ export default function PaymentsPage() {
 
       await loadAll();
       setIsModalOpen(false);
+      setIsSuccessModalOpen(true);
       resetForm();
     } catch (err: any) {
       console.error(err);
@@ -368,13 +379,13 @@ export default function PaymentsPage() {
                           className="inline-block text-gray-400 ml-1"
                         />
                       </th>
-                      <th className="px-5 py-4 border border-gray-200">
+                      {/* <th className="px-5 py-4 border border-gray-200">
                         Yo'nalish{" "}
                         <ChevronDown
                           size={14}
                           className="inline-block text-gray-400 ml-1"
                         />
-                      </th>
+                      </th> */}
                       <th className="px-5 py-4 border border-gray-200">
                         Summa{" "}
                         <ChevronDown
@@ -434,13 +445,13 @@ export default function PaymentsPage() {
                           <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
                             {course?.name || "—"}
                           </td>
-                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                          {/* <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
                             {course?.categories?.name ||
                               categories.find(
                                 (c) => c.id === course?.categoryId,
                               )?.name ||
                               "—"}
-                          </td>
+                          </td> */}
                           <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
                             {formatAmount(payment.amount)}
                           </td>
@@ -545,31 +556,109 @@ export default function PaymentsPage() {
                 <label className="block text-[13px] font-bold text-gray-900 mb-1.5">
                   Sotib oluvchi
                 </label>
+
                 <div className="relative w-full">
-                  <select
-                    value={userId}
-                    onChange={(e) => {
-                      setUserId(e.target.value);
-                      if (userIdError) setUserIdError(false);
-                    }}
-                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer ${
+                  {/* SELECT BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => setIsBuyerOpen((prev) => !prev)}
+                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors bg-white cursor-pointer flex items-center justify-between text-left ${
                       userId ? "text-gray-900" : "text-gray-400"
-                    } ${userIdError ? "border-[#ff4d4f]" : "border-gray-200 focus:border-blue-500"}`}
+                    } ${
+                      userIdError
+                        ? "border-[#ff4d4f]"
+                        : isBuyerOpen
+                          ? "border-blue-500"
+                          : "border-gray-200"
+                    }`}
                   >
-                    <option value="" disabled hidden>
-                      Tanlang
-                    </option>
-                    {students.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.fullName}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
+                    <span>
+                      {userId
+                        ? students.find((s) => String(s.id) === String(userId))
+                            ?.fullName
+                        : "Tanlang"}
+                    </span>
+
+                    <ChevronDown
+                      size={18}
+                      className={`text-gray-400 transition-transform ${
+                        isBuyerOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* DROPDOWN */}
+                  {isBuyerOpen && (
+                    <div className="absolute z-50 top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                      {/* SEARCH */}
+                      <div className="p-2 border-b border-gray-100">
+                        <div className="relative">
+                          <Search
+                            size={17}
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          />
+
+                          <input
+                            type="text"
+                            autoFocus
+                            value={buyerSearch}
+                            onChange={(e) => setBuyerSearch(e.target.value)}
+                            placeholder="Ism yoki ID bo'yicha qidiring..."
+                            className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-200 text-[13px] outline-none focus:border-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+
+                      {/* STUDENTS */}
+                      <div className="max-h-60 overflow-y-auto">
+                        {filteredStudents.length > 0 ? (
+                          filteredStudents.map((student) => (
+                            <button
+                              key={student.id}
+                              type="button"
+                              onClick={() => {
+                                setUserId(String(student.id));
+                                setUserIdError(false);
+                                setBuyerSearch("");
+                                setIsBuyerOpen(false);
+                              }}
+                              className={`w-full px-4 py-3 text-left hover:bg-[#F5F8FF] transition-colors ${
+                                String(student.id) === String(userId)
+                                  ? "bg-[#F5F8FF]"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-[14px] font-medium text-gray-900 truncate">
+                                    {student.fullName}
+                                  </p>
+
+                                  <p className="text-[12px] text-gray-400 mt-0.5">
+                                    ID: {student.id}
+                                  </p>
+                                </div>
+
+                                {String(student.id) === String(userId) && (
+                                  <Check
+                                    size={18}
+                                    className="text-blue-500 shrink-0"
+                                  />
+                                )}
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-[13px] text-gray-400">
+                            Foydalanuvchi topilmadi
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
+
                 {userIdError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
                     Sotib oluvchi tanlanmadi
@@ -578,7 +667,7 @@ export default function PaymentsPage() {
               </div>
 
               {/* Yo'nalish — faqat filtr, backendga yubormaymiz */}
-              <div className="flex flex-col shrink-0">
+              {/* <div className="flex flex-col shrink-0">
                 <label className="block text-[13px] font-bold text-gray-900 mb-1.5">
                   Yo'nalish{" "}
                   <span className="text-gray-400 font-normal ml-1">
@@ -608,7 +697,7 @@ export default function PaymentsPage() {
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* Kurs */}
               <div className="flex flex-col shrink-0">
@@ -775,6 +864,34 @@ export default function PaymentsPage() {
                 O'chirish
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {isSuccessModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs"
+          onClick={() => setIsSuccessModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-[20px] shadow-xl p-8 w-100 flex flex-col items-center animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-21 h-21 rounded-full bg-[#E6F4EA] flex items-center justify-center mb-6">
+              <div className="w-15 h-15 rounded-full bg-[#137333] flex items-center justify-center text-white">
+                <Check size={32} strokeWidth={3} />
+              </div>
+            </div>
+            <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">
+              Muvaffaqiyatli qo'shildi
+            </h3>
+            <button
+              onClick={() => setIsSuccessModalOpen(false)}
+              className="px-8 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
+            >
+              Yopish
+            </button>
           </div>
         </div>
       )}

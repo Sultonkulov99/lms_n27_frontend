@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { showToast } from "@/store/useToastStore";
 import { useRegisterStore } from "@/store/useRegisterStore";
 
-export default function RegisterPage() {
+function RegisterFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -35,7 +35,6 @@ export default function RegisterPage() {
       }
       setFormData(data);
       
-      // courseId mavjud bo'lsa qo'shish, yo'q bo'lsa qo'shmaslik
       const courseId = searchParams.get('courseId');
       const verifyUrl = courseId ? `/verify-otp?courseId=${courseId}` : '/verify-otp';
       
@@ -68,15 +67,6 @@ export default function RegisterPage() {
       <div className="flex flex-col justify-between p-6 sm:p-10 lg:p-12 relative min-h-screen">
         <div className="flex justify-end w-full">
           <div className="relative h-10 w-32 flex items-center justify-end">
-            {/* Logo rasmi uchun placeholder:
-                <Image 
-                  src="/logo.svg" 
-                  alt="IT LIVE Logo" 
-                  width={120} 
-                  height={40} 
-                  className="object-contain"
-                /> 
-            */}
             <div className="flex items-center gap-1 font-extrabold text-2xl tracking-wide">
               <Image src="/Kebyu_logo_purple.png" alt="Kebyu Logo" width={140} height={40} className="object-contain" />
             </div>
@@ -197,5 +187,13 @@ export default function RegisterPage() {
         <div className="w-full text-center text-xs text-gray-400"></div>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <RegisterFormContent />
+    </React.Suspense>
   );
 }

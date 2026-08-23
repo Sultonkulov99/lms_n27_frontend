@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import ImageLogin from "@/app/assets/register_purple.png";
@@ -10,7 +10,7 @@ import { useRegisterStore } from "@/store/useRegisterStore";
 import { showToast } from "@/store/useToastStore";
 import { baseAPI, setToken } from "@/app/lib/utils";
 
-export default function VerificationPage() {
+function VerificationContent() {
   const [code, setCode] = useState("");
   const [timeLeft, setTimeLeft] = useState(46);
   const { formData, resetFormData } = useRegisterStore();
@@ -118,21 +118,6 @@ export default function VerificationPage() {
       <div className="flex flex-col justify-between p-6 sm:p-10 lg:p-12 relative min-h-screen">
         <div className="flex justify-end w-full">
           <div className="relative h-10 w-32 flex items-center justify-end">
-            {/* Logo rasmi uchun placeholder:
-                <Image 
-                  src="/logo.svg" 
-                  alt="IT LIVE Logo" 
-                  width={120} 
-                  height={40} 
-                  className="object-contain"
-                /> 
-            */}
-            {/* <div className="flex items-center gap-1 font-extrabold text-2xl tracking-wide">
-              <span className="text-black">IT</span>
-              <span className="bg-[#3B82F6] text-white px-2 py-0.5 rounded-md text-xl">
-                LIVE
-              </span>
-            </div> */}
           </div>
         </div>
 
@@ -190,5 +175,13 @@ export default function VerificationPage() {
         <div className="w-full text-center text-xs text-gray-400"></div>
       </div>
     </div>
+  );
+}
+
+export default function VerificationPage() {
+  return (
+    <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-white"><div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <VerificationContent />
+    </React.Suspense>
   );
 }

@@ -1,23 +1,36 @@
 "use client";
 
-import React, { useState, use, useRef } from "react";
-import Link from "next/link";
-import { useCourseStore } from "@/app/store/useCourseStore";
+import React, { useState, use, useRef, useEffect, useCallback } from "react";
 import { PlusCircle, Filter, Pen, Trash2, X, Check, UploadCloud, Image as ImageIcon, FileSpreadsheet, FileText, File as FileIcon, type LucideIcon } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
+import { useLessonMeta } from "@/app/components/lesson/useLessonMeta";
+import LessonHeader from "@/app/components/lesson/LessonHeader";
+import LessonTabs from "@/app/components/lesson/LessonTabs";
+import { getHomeworks, createHomework, updateHomework, deleteHomework, Homework as APIHomework } from "@/app/lib/api/homeworks";
+import { API_URL, baseAPI } from "@/app/lib/utils";
+import { useParams } from "next/navigation";
 
 interface AttachedFile {
   id: string;
   name: string;
   size: string;
   url?: string;
+  file?: File;
+  uploading?: boolean;
 }
 
-interface Task {
+interface Homework {
   id: number;
-  lesson: string;
-  task: string;
+  lessonId?: number;
+  title: string;
+  description: string;
   files: AttachedFile[];
+}
+
+interface Lesson {
+  id: number;
+  sectionId: number;
+  name: string;
 }
 
 const getFileMeta = (name: string): { Icon: LucideIcon; color: string; label: string } => {
@@ -32,125 +45,164 @@ const getFileMeta = (name: string): { Icon: LucideIcon; color: string; label: st
 
 const UPLOAD_ACCEPT = ".pdf,.xls,.xlsx,.csv,.doc,.docx,.ppt,.pptx,.svg,.png,.jpg,.jpeg,.gif";
 
-const filesFromFileList = (fileList: FileList): AttachedFile[] =>
-  Array.from(fileList).map((file) => ({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: file.name,
-    size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
-    url: URL.createObjectURL(file)
-  }));
-
 export default function TasksPage({ params }: { params: Promise<{ id: string; sectionId: string; lessonId: string }> }) {
   const { id: courseId, sectionId, lessonId } = use(params);
-  const { courses } = useCourseStore();
-  const currentCourse = courses.find((c) => c.id.toString() === courseId);
-  const courseTitle = currentCourse?.title || "Frontend dasturlash";
-
-  // Mock section and lesson name
-  const isBackend = courseTitle.toLowerCase().includes("backend");
-  let sectionName = "CSS asoslari";
-  if (sectionId === "1") {
-    sectionName = isBackend ? "Node JS" : "Veb dasturlashga kirish";
-  } else if (sectionId === "2") {
-    sectionName = isBackend ? "SQL asoslari" : "CSS asoslari";
-  }
-  const lessonTitle = "Veb dasturlashga kirish";
-
-  const [tasks, setTasks] = useState<Task[]>([
-    { 
-      id: 1, 
-      lesson: lessonTitle, 
-      task: "Vazifani bajaring", 
-      files: [{ id: "seed-1", name: "Kodlar.pdf", size: "4.2 MB" }] 
-    }
-  ]);
+  const { courseTitle, lessonName } = useLessonMeta(courseId, sectionId);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
 
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
 
-  const [newTaskName, setNewTaskName] = useState("");
-  const [newTaskFiles, setNewTaskFiles] = useState<AttachedFile[]>([]);
+  const [tasks, setTasks] = useState<Homework[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+
+  const [newTask, setNewTask] = useState<{ lessonId: string; title: string; description: string; files: AttachedFile[] }>({
+    lessonId: lessonId,
+    title: "",
+    description: "",
+    files: []
+  });
+
+  const [editingTask, setEditingTask] = useState<Homework | null>(null);
+  const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Derived state
-  const totalPages = Math.ceil(tasks.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, tasks.length);
-  const currentTasks = tasks.slice(startIndex, endIndex);
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getHomeworks();
+      
+      let fetchedLessons: Lesson[] = [];
+      try {
+        const { data: resData } = await baseAPI.get("/lessons");
+        fetchedLessons = Array.isArray(resData?.data) ? resData.data : (Array.isArray(resData) ? resData : []);
+        setLessons(fetchedLessons);
+      } catch (err) {
+        console.error("Darslar topilmadi", err);
+      }
+      
+      const filtered = data.filter((h: APIHomework) => h.lessonId === Number(lessonId));
+      
+      const mapped = filtered.map((h: APIHomework) => ({
+        id: h.id,
+        lessonId: h.lessonId,
+        title: h.title || "Nomsiz",
+        description: h.description || "",
+        files: (h.file || []).map(url => ({
+          id: url,
+          name: url.split('/').pop() || 'Fayl',
+          size: "Noma'lum",
+          url: url.startsWith("http") ? url : `${API_URL}/${url}`
+        }))
+      }));
+      setTasks(mapped);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [lessonId]);
 
-  const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
-
-  const handleDownloadXLS = () => {
-    const headers = ["ID", "Dars", "Topshiriq", "Fayllar"];
-    const rows = tasks.map(t => [
-      t.id, 
-      csvEscape(t.lesson), 
-      csvEscape(t.task), 
-      csvEscape(t.files.map((f) => f.name).join("; "))
-    ].join(","));
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "vazifalar.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  useEffect(() => {
+    let mounted = true;
+    if (mounted) {
+      loadData();
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [loadData]);
 
   const resetForm = () => {
-    setNewTaskName("");
-    setNewTaskFiles([]);
+    setNewTask({ lessonId: lessonId, title: "", description: "", files: [] });
     setEditingTask(null);
   };
 
-  const handleAddTask = () => {
-    if (!newTaskName.trim()) return;
-    const newTask: Task = {
-      id: Date.now(),
-      lesson: lessonTitle,
-      task: newTaskName.trim(),
-      files: newTaskFiles
-    };
-    setTasks([...tasks, newTask]);
-    setIsAddModalOpen(false);
-    resetForm();
+  const handleAddTask = async () => {
+    if (!newTask.title.trim()) return;
+    
+    const fd = new FormData();
+    fd.append("title", newTask.title.trim());
+    fd.append("description", newTask.description.trim());
+    fd.append("lessonId", String(newTask.lessonId));
+    
+    newTask.files.forEach(f => {
+      if (f.file) {
+        fd.append("file", f.file);
+      }
+    });
+
+    try {
+      await createHomework(fd);
+      await loadData();
+      setIsAddModalOpen(false);
+      resetForm();
+    } catch (e) {
+      console.error(e);
+      alert("Topshiriq qo'shishda xatolik yuz berdi");
+    }
   };
 
-  const handleEditTask = () => {
-    if (!editingTask || !newTaskName.trim()) return;
-    setTasks(tasks.map(t => t.id === editingTask.id ? { 
-      ...t, 
-      task: newTaskName.trim(),
-      files: editingTask.files
-    } : t));
-    setIsEditModalOpen(false);
-    resetForm();
+  const handleEditTask = async () => {
+    if (!editingTask || !editingTask.title.trim()) return;
+    
+    const fd = new FormData();
+    fd.append("title", editingTask.title.trim());
+    fd.append("description", editingTask.description.trim());
+    fd.append("lessonId", String(editingTask.lessonId));
+    
+    editingTask.files.forEach(f => {
+      if (f.file) {
+        fd.append("file", f.file);
+      }
+    });
+
+    try {
+      await updateHomework(editingTask.id, fd);
+      await loadData();
+      setIsEditModalOpen(false);
+      resetForm();
+    } catch (e) {
+      console.error(e);
+      alert("Topshiriq tahrirlashda xatolik yuz berdi");
+    }
   };
 
-  const handleDeleteTask = () => {
+  const handleDeleteTask = async () => {
     if (deletingTaskId === null) return;
-    setTasks(tasks.filter(t => t.id !== deletingTaskId));
-    setDeletingTaskId(null);
-    setIsDeleteModalOpen(false);
+    
+    try {
+      await deleteHomework(deletingTaskId);
+      await loadData();
+      setDeletingTaskId(null);
+      setIsDeleteModalOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert("O'chirishda xatolik yuz berdi");
+    }
   };
 
   const addFiles = (fileList: FileList | null) => {
     if (!fileList || fileList.length === 0) return;
-    const picked = filesFromFileList(fileList);
-    if (isEditModalOpen && editingTask) {
-      setEditingTask({ ...editingTask, files: [...editingTask.files, ...picked] });
+    const pickedFiles = Array.from(fileList);
+    const targetIsEdit = isEditModalOpen;
+
+    const newAttachedFiles: AttachedFile[] = pickedFiles.map((file) => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      name: file.name,
+      size: (file.size / (1024 * 1024)).toFixed(1) + " MB",
+      file: file
+    }));
+
+    if (targetIsEdit) {
+      setEditingTask((prev) => (prev ? { ...prev, files: [...prev.files, ...newAttachedFiles] } : prev));
     } else {
-      setNewTaskFiles(prev => [...prev, ...picked]);
+      setNewTask((prev) => ({ ...prev, files: [...prev.files, ...newAttachedFiles] }));
     }
   };
 
@@ -168,41 +220,95 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
     if (isEdit && editingTask) {
       setEditingTask({ ...editingTask, files: editingTask.files.filter(f => f.id !== fileId) });
     } else {
-      setNewTaskFiles(prev => prev.filter(f => f.id !== fileId));
+      setNewTask(prev => ({ ...prev, files: prev.files.filter(f => f.id !== fileId) }));
     }
   };
 
-  const openEditModal = (task: Task) => {
+  const openEditModal = (task: Homework) => {
     setEditingTask({ ...task, files: [...task.files] });
-    setNewTaskName(task.task);
     setIsEditModalOpen(true);
   };
 
-  const baseUrl = `/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lessonId}`;
+  const csvEscape = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+  const handleDownloadXLS = () => {
+    const headers = ["ID", "Dars", "Topshiriq nomi", "Topshiriq izohi", "Fayllar"];
+    const rows = tasks.map(t => [
+      t.id, 
+      csvEscape(lessons.find(l => l.id === t.lessonId)?.name || lessonName), 
+      csvEscape(t.title), 
+      csvEscape(t.description), 
+      csvEscape(t.files.map((f) => f.name).join("; "))
+    ].join(","));
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "vazifalar.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const renderModalContent = (isEdit: boolean) => {
-    const currentFiles = isEdit ? (editingTask?.files || []) : newTaskFiles;
+    const currentFiles = isEdit ? (editingTask?.files || []) : newTask.files;
 
     return (
       <div className="p-6 space-y-6">
         <div>
-          <label className="block text-[14px] font-bold text-gray-900 mb-2">Dars</label>
-          <div className="relative">
-            <select disabled className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-[14px] appearance-none cursor-not-allowed">
-              <option>{lessonTitle}</option>
+          <label className="block text-[14px] font-bold text-gray-900 mb-2">Dars nomi</label>
+          {isEdit ? (
+            <input 
+              type="text" 
+              disabled 
+              value={lessons.find(l => l.id === editingTask?.lessonId)?.name || lessonName} 
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[14px] cursor-not-allowed" 
+            />
+          ) : (
+            <select
+              value={newTask.lessonId}
+              onChange={(e) => setNewTask({ ...newTask, lessonId: e.target.value })}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] bg-white cursor-pointer"
+            >
+              <option value="">Darsni tanlang</option>
+              {lessons.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
             </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
-              <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
+          )}
         </div>
         <div>
-          <label className="block text-[14px] font-bold text-gray-900 mb-2">Topshiriq</label>
+          <label className="block text-[14px] font-bold text-gray-900 mb-2">Topshiriq nomi</label>
           <input 
             type="text" 
             placeholder="Kiriting" 
-            value={newTaskName}
-            onChange={(e) => setNewTaskName(e.target.value)}
+            value={isEdit ? (editingTask?.title || "") : newTask.title}
+            onChange={(e) => {
+              if (isEdit && editingTask) {
+                setEditingTask({ ...editingTask, title: e.target.value });
+              } else {
+                setNewTask({ ...newTask, title: e.target.value });
+              }
+            }}
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]" 
+          />
+        </div>
+        <div>
+          <label className="block text-[14px] font-bold text-gray-900 mb-2">Topshiriq haqida (izoh)</label>
+          <input 
+            type="text" 
+            placeholder="Kiriting" 
+            value={isEdit ? (editingTask?.description || "") : newTask.description}
+            onChange={(e) => {
+              if (isEdit && editingTask) {
+                setEditingTask({ ...editingTask, description: e.target.value });
+              } else {
+                setNewTask({ ...newTask, description: e.target.value });
+              }
+            }}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]" 
           />
         </div>
@@ -218,9 +324,9 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
               <UploadCloud size={20} className="text-gray-500" />
             </div>
             <p className="text-[14px] text-gray-600 text-center">
-              <span className="text-blue-600 font-medium">Click to upload</span> or drag and drop
+              <span className="text-blue-600 font-medium">Bu yerga bosing</span> yoki faylni suring
             </p>
-            <p className="text-[12px] text-gray-400 mt-1">SVG, PNG, JPG or GIF (max. 800x400px)</p>
+            <p className="text-[12px] text-gray-400 mt-1">PDF, Excel, Word, rasm va h.k.</p>
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -250,16 +356,7 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
                           <button onClick={() => removeFile(file.id, isEdit)} className="p-1 hover:bg-gray-100 rounded-md transition-colors text-gray-400 hover:text-red-500">
                             <X size={16} />
                           </button>
-                          <div className="w-5 h-5 bg-blue-600 rounded-md flex items-center justify-center text-white shrink-0">
-                            <Check size={14} />
-                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center mt-1.5">
-                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-full bg-blue-600 rounded-full" style={{ width: "100%" }}></div>
-                        </div>
-                        <span className="text-[12px] text-gray-500 ml-3 font-medium w-[30px] text-right">100%</span>
                       </div>
                     </div>
                   </div>
@@ -270,8 +367,7 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
         </div>
         <button 
           onClick={isEdit ? handleEditTask : handleAddTask}
-          disabled={!newTaskName.trim()}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-2 disabled:opacity-50" 
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-2" 
         >
           <Check size={18} /> Saqlash
         </button>
@@ -279,55 +375,21 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
     );
   };
 
+  const paginatedTasks = tasks.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <>
       <div className="flex-1 overflow-y-auto p-6 flex flex-col h-full bg-transparent">
-        
-        {/* Box Header */}
-        <div className="mb-6">
-          <h1 className="text-[22px] font-bold text-gray-900 mb-1.5">Darslar</h1>
-          <div className="flex items-center text-[13px] font-medium gap-2">
-            <Link href="/dashboard/courses/allCourses" className="text-gray-500 hover:text-gray-700 transition-colors">Kurslar</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <Link href={`/dashboard/courses/allCourses/${courseId}`} className="text-gray-500 hover:text-gray-700 transition-colors">{courseTitle}</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <Link href={`/dashboard/courses/allCourses/${courseId}/sections`} className="text-gray-500 hover:text-gray-700 transition-colors">Bo&apos;limlar</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <Link href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons`} className="text-gray-500 hover:text-gray-700 transition-colors">Darslar</Link>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-            <span className="text-gray-900">{sectionName}</span>
-          </div>
-        </div>
+        <LessonHeader courseId={courseId} sectionId={sectionId} courseTitle={courseTitle} />
 
-        {/* Tabs + Add button */}
         <div className="flex items-center justify-between mb-6">
-          <div className="inline-flex items-center bg-white border border-gray-200 rounded-xl p-1 gap-1">
-            <Link
-              href={`${baseUrl}/materials`}
-              className={`px-5 py-2 rounded-lg text-[14px] font-medium transition-colors text-gray-600 hover:bg-gray-50`}
-            >
-              Materiallar
-            </Link>
-            <Link
-              href={`${baseUrl}/tasks`}
-              className={`px-5 py-2 rounded-lg text-[14px] font-medium transition-colors bg-blue-600 text-white`}
-            >
-              Vazifalar
-            </Link>
-            <Link
-              href={`${baseUrl}/exams`}
-              className={`px-5 py-2 rounded-lg text-[14px] font-medium transition-colors text-gray-600 hover:bg-gray-50`}
-            >
-              Imtihonlar
-            </Link>
-          </div>
+          <LessonTabs courseId={courseId} sectionId={sectionId} lessonId={lessonId} active="tasks" />
           <button onClick={() => { resetForm(); setIsAddModalOpen(true); }} className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm">
             <PlusCircle size={18} />
             Qo&apos;shish
           </button>
         </div>
 
-        {/* Table Container */}
         <div className="flex-1 flex flex-col">
           <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
             <table className="w-full text-left border-collapse min-w-250 bg-white">
@@ -354,49 +416,38 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
                 </tr>
               </thead>
               <tbody className="text-[14px] text-gray-800">
-                {currentTasks.length > 0 ? currentTasks.map((task) => (
+                {loading ? (
+                   <tr>
+                     <td colSpan={4} className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white">
+                       Yuklanmoqda...
+                     </td>
+                   </tr>
+                ) : paginatedTasks.length > 0 ? paginatedTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
-                      {task.lesson}
+                      {task.title}
                     </td>
                     <td className="px-6 py-4 border border-gray-200 text-gray-600 text-[13px]">
-                      {task.task}
+                      {task.description}
                     </td>
                     <td className="px-6 py-4 border border-gray-200">
                       {task.files.length > 0 ? (
                         <div className="flex flex-wrap items-center gap-2">
                           {task.files.map((file) => {
-                            const { Icon, color } = getFileMeta(file.name);
+                            const { Icon, color, label } = getFileMeta(file.name);
                             return (
                               <a 
                                 key={file.id} 
                                 href={file.url || "#"} 
-                                target="_blank" 
+                                target={file.url ? "_blank" : undefined} 
                                 rel="noopener noreferrer"
-                                download={file.name}
-                                onClick={(e) => {
-                                  if (!file.url) {
-                                    e.preventDefault();
-                                    
-                                    // Fallback for mock file
-                                    const blob = new Blob(["Bu mock fayl mazmuni"], { type: "text/plain" });
-                                    const url = URL.createObjectURL(blob);
-                                    const link = document.createElement("a");
-                                    link.href = url;
-                                    link.download = file.name;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    URL.revokeObjectURL(url);
-                                  }
-                                }}
                                 title={file.name}
-                                className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-800 hover:bg-gray-50 transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-2 pl-1.5 pr-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-800 hover:border-blue-300 hover:text-blue-600 transition-colors"
                               >
                                 <span className={`w-6 h-6 rounded-md text-white flex items-center justify-center shrink-0 ${color}`}>
                                   <Icon size={13} />
                                 </span>
-                                {file.name.length > 15 ? file.name.slice(0, 15) + '...' : file.name}
+                                {label}
                               </a>
                             );
                           })}
@@ -427,14 +478,13 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
             </table>
           </div>
           
-          {/* Pagination */}
           <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl px-2 py-1 shadow-sm">
             <Pagination
               currentPage={currentPage}
-              totalPages={totalPages}
+              totalPages={Math.ceil(tasks.length / itemsPerPage) || 1}
               totalItems={tasks.length}
-              startIndex={startIndex}
-              endIndex={endIndex}
+              startIndex={Math.min((currentPage - 1) * itemsPerPage, tasks.length)}
+              endIndex={Math.min(currentPage * itemsPerPage, tasks.length)}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
               onItemsPerPageChange={(limit) => {
@@ -445,15 +495,13 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
             />
           </div>
         </div>
-
       </div>
 
-      {/* Add/Edit Modal */}
       {(isAddModalOpen || isEditModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); resetForm(); }}>
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-120 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">{isEditModalOpen ? "Tahrirlash" : "Qo\u2019shish"}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{isEditModalOpen ? "Tahrirlash" : "Qo&apos;shish"}</h2>
               <button onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); resetForm(); }} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
@@ -463,7 +511,6 @@ export default function TasksPage({ params }: { params: Promise<{ id: string; se
         </div>
       )}
 
-      {/* Delete Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}>
           <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 flex flex-col items-center text-center p-8 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>

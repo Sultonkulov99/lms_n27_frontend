@@ -43,7 +43,10 @@ export default function PopularCourses() {
         const allCourses = (coursesRes as unknown as CourseAPI[]) || [];
         const activeCourses = allCourses.filter((c: any) => !c.status || c.status.toLowerCase() !== 'inactive');
         setCourses(activeCourses);
-        setCategories(categoriesRes || []);
+        
+        const activeCategoryIds = new Set(activeCourses.map(c => c.categoryId));
+        const filteredCategories = (categoriesRes || []).filter(cat => activeCategoryIds.has(cat.id));
+        setCategories(filteredCategories);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

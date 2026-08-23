@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useLanguage, type Language } from "@/app/context/LanguageContext";
 import { getCategories } from "@/app/lib/api/categories";
+import { getCourses } from "@/app/lib/api/courses";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -28,8 +29,20 @@ export default function Navbar() {
     setMounted(true);
     const fetchCategories = async () => {
       try {
-        const data = await getCategories();
-        setDbCategories(data || []);
+        const [categoriesData, coursesData] = await Promise.all([
+          getCategories(),
+          getCourses()
+        ]);
+        
+        const allCourses = (coursesData as any[]) || [];
+        const activeCategoryIds = new Set(
+          allCourses
+            .filter((c: any) => !c.status || c.status.toLowerCase() !== 'inactive')
+            .map((c: any) => c.categoryId)
+        );
+        
+        const filteredCategories = (categoriesData || []).filter((c: any) => activeCategoryIds.has(c.id));
+        setDbCategories(filteredCategories);
       } catch (e) {
         console.error("Failed to fetch categories:", e);
       }

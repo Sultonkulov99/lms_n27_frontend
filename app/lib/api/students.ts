@@ -1,4 +1,3 @@
-
 import { baseAPI } from "@/app/lib/utils";
 
 export interface Student {
@@ -10,7 +9,7 @@ export interface Student {
   created_at: string;
   updated_at: string;
 }
- 
+
 function unwrapList<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) return payload;
   if (payload && typeof payload === "object") {
@@ -20,9 +19,8 @@ function unwrapList<T>(payload: unknown): T[] {
   }
   return [];
 }
- 
+
 export async function getStudents(): Promise<Student[]> {
   const { data } = await baseAPI.get("/students");
   return unwrapList<Student>(data);
 }
- 
