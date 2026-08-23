@@ -17,14 +17,20 @@ export function getToken(name: string = "accessToken"): string | null {
 
   // Only check cookie, backend will manage it
   const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
-  return match ? decodeURIComponent(match[2]) : null;
+  const val = match ? decodeURIComponent(match[2]) : null;
+  if (val === "undefined" || val === "null" || val === "") return null;
+  return val;
 }
 
-export function setToken(name: string = "accessToken", value: string) {
+export function setToken(name: string = "accessToken", value: string | undefined | null) {
   if (typeof window !== "undefined") {
+    if (!value || value === "undefined" || value === "null") {
+      removeToken(name);
+      return;
+    }
     // We set the cookie manually on the frontend domain so that Next.js middleware
     // and Axios interceptors can read it, bypassing cross-origin HTTP limitations.
-    document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=604800; SameSite=Lax`;
+    document.cookie = `${name}=${encodeURIComponent(value as string)}; path=/; max-age=604800; SameSite=Lax`;
   }
 }
 
@@ -57,18 +63,22 @@ baseAPI.interceptors.request.use(
   },
 );
 
-// Response Interceptor: 401 Unauthorized holatida tozalash va login sahifasiga yo'naltirish
+// Response Interceptor: 401 Unauthorized holatida tozalash va landing sahifasiga yo'naltirish
 baseAPI.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       removeToken("accessToken");
+      removeToken("refreshToken");
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("user");
+      }
 
       if (
         typeof window !== "undefined" &&
-        !window.location.pathname.startsWith("/login")
+        window.location.pathname !== "/"
       ) {
-        window.location.href = "/login";
+        window.location.href = "/?clear_auth=true";
       }
     }
 

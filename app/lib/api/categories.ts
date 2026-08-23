@@ -15,7 +15,29 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
+let categoriesCache: Category[] | null = null;
+let categoriesPromise: Promise<Category[]> | null = null;
+
 export async function getCategories(): Promise<Category[]> {
-  const { data } = await baseAPI.get("/categories");
-  return unwrapList<Category>(data);
+  if (categoriesCache) return categoriesCache;
+  if (categoriesPromise) return categoriesPromise;
+
+  categoriesPromise = baseAPI
+    .get("/categories")
+    .then((res) => {
+      const data = unwrapList<Category>(res.data);
+      categoriesCache = data;
+      return data;
+    })
+    .catch((err) => {
+      categoriesPromise = null;
+      throw err;
+    });
+
+  return categoriesPromise;
+}
+
+export function clearCategoriesCache() {
+  categoriesCache = null;
+  categoriesPromise = null;
 }

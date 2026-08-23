@@ -14,6 +14,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import Pagination from "@/app/components/dashboard/Pagination";
 import { useCourseStore } from "@/app/store/useCourseStore";
 
@@ -24,8 +25,10 @@ interface Lesson {
   video: { name: string; size: string } | null;
 }
 
-export default function LessonsPage({ params }: { params: Promise<{ id: string; sectionId: string }> }) {
-  const { id: courseId, sectionId } = use(params);
+export default function LessonsPage() {
+  const params = useParams();
+  const courseId = params?.id as string;
+  const sectionId = params?.sectionId as string;
   const { courses } = useCourseStore();
   const currentCourse = courses.find((c) => c.id.toString() === courseId);
   const courseTitle = currentCourse?.title || "Frontend dasturlash";

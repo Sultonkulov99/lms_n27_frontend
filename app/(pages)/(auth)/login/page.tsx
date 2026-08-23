@@ -34,8 +34,12 @@ export default function LoginPage() {
                 password: cleanPassword 
             });
 
-            setToken("accessToken", res.data?.tokens?.accessToken);
-            setToken("refreshToken", res.data?.tokens?.refreshToken);
+            if (res.data?.tokens?.accessToken) {
+                setToken("accessToken", res.data.tokens.accessToken);
+            }
+            if (res.data?.tokens?.refreshToken) {
+                setToken("refreshToken", res.data.tokens.refreshToken);
+            }
 
             // Save user info
             if (res.data?.data) {

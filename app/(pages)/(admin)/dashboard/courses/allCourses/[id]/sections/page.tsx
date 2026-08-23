@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import Pagination from "@/app/components/dashboard/Pagination";
 import { useCourseStore } from "@/app/store/useCourseStore";
 import { baseAPI } from "@/app/lib/utils";
@@ -22,12 +23,9 @@ interface Section {
   courseId?: number;
 }
 
-export default function CourseSectionsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id: courseId } = use(params);
+export default function CourseSectionsPage() {
+  const params = useParams();
+  const courseId = params?.id as string;
 
   const { courses } = useCourseStore();
 
