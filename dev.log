@@ -1,0 +1,20 @@
+
+> frontend@0.1.0 dev
+> next dev -p 3001
+
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://10.86.163.1:3001
+- Environments: .env
+✓ Ready in 328ms
+✓ Running next.config.ts took 29ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          17573
+- Dir:          /home/one/one/lms/lms_n27_frontend
+- Log:          .next/dev/logs/next-development.log
+
+You can access the existing server at http://localhost:3000,
+or run kill 17573 to stop it and start a new one.
+[?25h
