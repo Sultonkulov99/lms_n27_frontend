@@ -11,6 +11,14 @@ export interface Course {
     id: number;
     name: string;
   };
+  user?: {
+    fullName: string;
+    file?: string;
+  };
+  teacher?: {
+    fullName: string;
+    file?: string;
+  };
   createdAt: string;
   updatedAt: string;
 }

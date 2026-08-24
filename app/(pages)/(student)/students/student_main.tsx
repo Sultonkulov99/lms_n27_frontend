@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Topbar from "./components/Topbar";
-import Sidebar from "./components/Sidebar";
 import CourseCard from "./components/CourseCard";
 import { studentService, type MyCourse } from "@/app/services/student.service";
 
@@ -51,70 +49,73 @@ export default function StudentMain() {
   };
 
   return (
-    <div className="flex h-screen bg-[#0b0f19]">
-      <Sidebar />
+    <>
+      <h1 className="text-lg font-semibold text-[#1a1a1a] mb-4">
+        {language === "uz" && "Mening kurslarim"}
+        {language === "ru" && "Мои курсы"}
+        {language === "en" && "My Courses"}
+      </h1>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar />
+      {/* Loading state */}
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4F7FFF]"></div>
+        </div>
+      )}
 
-        <main className="flex-1 overflow-y-auto bg-[#eef1f4] p-6">
-          <h1 className="text-lg font-semibold text-[#1a1a1a] mb-4">
-            {language === "uz" && "Mening kurslarim"}
-            {language === "ru" && "Мои курсы"}
-            {language === "en" && "My Courses"}
-          </h1>
+      {/* Error state */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          <p className="font-medium">
+            {language === "uz" && "Xatolik:"}
+            {language === "ru" && "Ошибка:"}
+            {language === "en" && "Error:"}
+          </p>
+          <p className="text-sm mt-1">{error}</p>
+        </div>
+      )}
 
-          {/* Loading state */}
-          {loading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4F7FFF]"></div>
-            </div>
-          )}
+      {/* Empty state */}
+      {!loading && !error && courses.length === 0 && (
+        <div className="bg-white rounded-lg p-8 text-center">
+          <p className="text-gray-500">
+            {language === "uz" && "Sizda hali kurslar mavjud emas"}
+            {language === "ru" && "У вас еще нет курсов"}
+            {language === "en" && "You don't have any courses yet"}
+          </p>
+        </div>
+      )}
 
-          {/* Error state */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-              <p className="font-medium">
-                {language === "uz" && "Xatolik:"}
-                {language === "ru" && "Ошибка:"}
-                {language === "en" && "Error:"}
-              </p>
-              <p className="text-sm mt-1">{error}</p>
-            </div>
-          )}
+      {/* Courses grid */}
+      {!loading && !error && courses.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {courses.map((item) => {
+            const courseUser = item.course.user || item.course.teacher;
+            const instructorName = courseUser?.fullName || "Noma'lum Mentor";
+            const instructorAvatar = courseUser?.file 
+              ? `${process.env.NEXT_PUBLIC_API_URL}${courseUser.file}` 
+              : "/oybeksafarov.png";
+            const thumbnailUrl = item.course.thumbnail 
+              ? `${process.env.NEXT_PUBLIC_API_URL}${item.course.thumbnail}`
+              : "/bolakay.png";
 
-          {/* Empty state */}
-          {!loading && !error && courses.length === 0 && (
-            <div className="bg-white rounded-lg p-8 text-center">
-              <p className="text-gray-500">
-                {language === "uz" && "Sizda hali kurslar mavjud emas"}
-                {language === "ru" && "У вас еще нет курсов"}
-                {language === "en" && "You don't have any courses yet"}
-              </p>
-            </div>
-          )}
-
-          {/* Courses grid */}
-          {!loading && !error && courses.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {courses.map((item) => (
-                <CourseCard
-                  key={item.course.id}
-                  id={item.course.id}
-                  title={item.course.title}
-                  instructor={item.course.category?.name || "Mentor"}
-                  instructorAvatar="/oybeksafarov.png"
-                  thumbnail={item.course.thumbnail || "/bolakay.png"}
-                  progress={item.progress || 0}
-                  category={item.course.category?.name || "Kurs"}
-                  isLiked={likedCourses.has(String(item.course.id))}
-                  onLike={() => handleLike(String(item.course.id))}
-                />
-              ))}
-            </div>
-          )}
-        </main>
-      </div>
-    </div>
+            return (
+              <CourseCard
+                key={item.course.id}
+                id={item.course.id}
+                title={item.course.title}
+                instructor={instructorName}
+                instructorAvatar={instructorAvatar}
+                thumbnail={thumbnailUrl}
+                progress={item.progress || 0}
+                category={item.course.category?.name || "Kurs"}
+                isLiked={likedCourses.has(String(item.course.id))}
+                onLike={() => handleLike(String(item.course.id))}
+              />
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }

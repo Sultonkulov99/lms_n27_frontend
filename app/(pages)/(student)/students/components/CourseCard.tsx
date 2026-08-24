@@ -1,7 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
- 
-import avatar from "@/app/assets/bekzodsafarov.jpg"
 interface CourseCardProps {
   id: number;
   title: string;
@@ -33,6 +31,7 @@ export default function CourseCard({
           src={thumbnail}
           alt={title}
           fill
+          unoptimized
           className="object-cover hover:scale-105 transition-transform duration-300"
           style={{ objectPosition: 'center 20%' }}
         />
@@ -50,8 +49,11 @@ export default function CourseCard({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Image
-              src={avatar}
+              src={instructorAvatar}
               alt={instructor}
+              width={25}
+              height={25}
+              unoptimized
               className="rounded-full object-cover h-[25px] w-[25px]"
             />
             <span className="text-xs font-medium text-[#64748B]">{instructor}</span>
@@ -83,19 +85,7 @@ export default function CourseCard({
           </h3>
         </Link>
 
-        {/* Progress */}
-        <div className="space-y-2 mb-3">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-[#94A3B8]">Ko&apos;rildi:</span>
-            <span className="text-[#1a1a1a] font-semibold">{progress}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#4F7FFF] rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
+
 
         {/* Continue button */}
         <Link
