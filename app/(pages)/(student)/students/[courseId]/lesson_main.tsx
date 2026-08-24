@@ -28,7 +28,7 @@ const materials: Material[] = [
 const tasks: Task[] = [
   {
     id: "t1",
-    title: "CSS'da shriftlar va maros bo'lib o'tadigan xususiyatlar",
+    title: "CSS'da shriftlar va me'ros bo'lib o'tadigan xususiyatlar",
     description: "Ushbu vazifani bajarish orqali CSS bilan ishlash ko'nikmalaringizni rivojlantirasiz",
     fileName: "vazifa.pdf",
     uploadInstructions: "Yuklash va fayl yuklanmagan",

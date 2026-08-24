@@ -640,53 +640,7 @@ export default function LessonPlayer({
 
       {/* Tasks Tab */}
       {activeTab === "tasks" && (
-        <div>
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3 mb-6">
-            <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-[#DC2626] mb-1">
-                Siz modulning darslarini tugallamadingiz
-              </p>
-              <p className="text-sm text-[#991B1B]">
-                Iltimos, to'liq yakunlang va imkon savolariga topshiring
-              </p>
-            </div>
-          </div>
-
-          {tasks.map((task) => (
-            <div key={task.id} className="mb-6">
-              <h3 className="text-base font-bold text-[#1a1a1a] mb-4">{task.title}</h3>
-              <div className="space-y-3 mb-4">
-                <div>
-                  <p className="text-sm text-[#64748B] mb-1">Darajasi: <span className="text-[#1a1a1a] font-medium">O'rta</span></p>
-                </div>
-                <div>
-                  <p className="text-sm text-[#64748B] mb-1">Bajarilish vaqti: <span className="text-[#1a1a1a] font-medium">Cheksiz</span></p>
-                </div>
-                <div>
-                  <p className="text-sm text-[#64748B] mb-1">O'zlashtirgan ball: <span className="text-[#1a1a1a] font-medium">5</span></p>
-                </div>
-              </div>
-              <button className="bg-[#4F7FFF] hover:bg-[#3D6EEE] transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg">
-                Testni boshlash
-              </button>
-              <div className="mt-6 space-y-2">
-                <p className="text-sm font-semibold text-[#1a1a1a]">Natijangiz:</p>
-                <p className="text-sm text-[#64748B]">-</p>
-                <p className="text-sm font-semibold text-[#1a1a1a] mt-4">Sarflangan vaqt</p>
-                <p className="text-sm text-[#64748B]">-</p>
-                <p className="text-sm font-semibold text-[#1a1a1a] mt-4">O'zlashtirilgan ball</p>
-                <p className="text-sm text-[#64748B]">-</p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <TasksTab tasks={tasks} />
       )}
 
       {/* Exams Tab */}
@@ -783,6 +737,87 @@ export default function LessonPlayer({
             <div className="py-10 text-center text-sm text-[#64748B]">Imtihonlar mavjud emas</div>
           )}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Vazifalar Tab komponenti ───────────────────────────────────────────────
+function TasksTab({ tasks }: { tasks: Task[] }) {
+  const [answer, setAnswer] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex flex-col gap-5">
+      {tasks.map((task) => (
+        <div key={task.id} className="flex flex-col gap-4">
+          {/* Topshiriq card */}
+          <div className="bg-[#F5F5F5] rounded-xl border border-gray-200 p-4">
+            <p className="text-[14px] font-bold text-[#1a1a1a] mb-1">Topshiriq</p>
+            <p className="text-[14px] text-[#64748B]">{task.description}</p>
+          </div>
+
+          {/* Topshirilmagan holat */}
+          <p className="text-[14px] text-[#94A3B8]">Hali vazifa topshirilmagan.</p>
+
+          {/* Javob yozish */}
+          <div className="flex flex-col gap-2">
+            <p className="text-[14px] font-bold text-[#1a1a1a]">Vazifa faylini yuklang</p>
+            <textarea
+              rows={4}
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 text-[14px] outline-none focus:border-gray-400 transition-colors resize-y bg-white text-[#1a1a1a]"
+            />
+          </div>
+
+          {/* Fayl yuklash */}
+          <div className="flex items-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-white">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-[13px] font-medium text-[#1a1a1a] hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.64 16.34a2 2 0 01-2.83-2.83l8.49-8.48" />
+              </svg>
+              Yuklash
+            </button>
+            <span className="text-[13px] text-[#94A3B8]">
+              {uploadedFile ? uploadedFile.name : "Fayl yuklanmagan"}
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+            />
+          </div>
+
+          {/* Yuborish tugmasi */}
+          <div>
+            <button
+              type="button"
+              className="bg-[#94A3B8] hover:bg-[#64748B] text-white font-medium px-6 py-2.5 rounded-lg text-[14px] transition-colors"
+            >
+              Yuborish
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {tasks.length === 0 && (
+        <p className="text-[14px] text-[#94A3B8]">Hali vazifalar mavjud emas.</p>
       )}
     </div>
   );

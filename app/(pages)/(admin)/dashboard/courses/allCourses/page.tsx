@@ -355,7 +355,7 @@ export default function AllCoursesPage() {
                     disabled={currentPage === totalPages || totalPages === 0}
                     className="px-2.5 h-7 flex items-center justify-center rounded bg-white border border-gray-200 shadow-sm text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition-colors ml-1 disabled:opacity-50"
                   >
-                    Keyingi
+                    Keyingi     
                   </button>
                 </div>
               </div>
