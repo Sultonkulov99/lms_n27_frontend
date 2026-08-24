@@ -404,18 +404,15 @@ export default function AssistentsPage() {
               />
             )}
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
-            Izlash
-          </button>
         </div>
 
         {loading && (
-          <div className="py-4 text-center text-gray-500 text-sm">
+          <div className="text-center text-gray-500 text-sm">
             Yuklanmoqda...
           </div>
         )}
         {!loading && error && (
-          <div className="py-4 text-center text-red-500 text-sm">{error}</div>
+          <div className="text-center text-red-500 text-sm">{error}</div>
         )}
 
         {!loading && !error && (
@@ -452,13 +449,6 @@ export default function AssistentsPage() {
                       </th>
                       <th className="px-5 py-4 border border-gray-200">
                         Yaratilgan vaqt{" "}
-                        <ChevronDown
-                          size={14}
-                          className="inline-block text-gray-400 ml-1"
-                        />
-                      </th>
-                      <th className="px-5 py-4 border border-gray-200">
-                        Holati{" "}
                         <ChevronDown
                           size={14}
                           className="inline-block text-gray-400 ml-1"
@@ -512,11 +502,6 @@ export default function AssistentsPage() {
                           </td>
                           <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
                             {formatDate(assistent.created_at)}
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
-                              Faol
-                            </span>
                           </td>
                           <td className="px-5 py-4 border border-gray-200">
                             <div className="flex items-center justify-center gap-2">

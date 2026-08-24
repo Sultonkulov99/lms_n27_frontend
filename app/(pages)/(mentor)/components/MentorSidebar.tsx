@@ -6,41 +6,30 @@ import {
   PanelLeftClose,
   Users,
   BookOpen,
-  CreditCard,
-  MessageSquare,
+  ChevronLeft,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-export default function Sidebar() {
+export default function MentorSidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(true);
-  const [isUsersOpen, setIsUsersOpen] = useState(pathname.includes('/dashboard/users'));
-  const [isCoursesOpen, setIsCoursesOpen] = useState(pathname.includes('/dashboard/courses'));
-  const userSubLinks = ["administrators", "assistents", "mentors", "students"];
-
-  useEffect(() => {
-    if (pathname.includes('/dashboard/users')) {
-      setIsUsersOpen(true);
-    }
-    if (pathname.includes('/dashboard/courses')) {
-      setIsCoursesOpen(true);
-    }
-  }, [pathname]);
+  const [isUsersOpen, setIsUsersOpen] = useState(pathname.includes('/mentor/students'));
+  const [isMaterialsOpen, setIsMaterialsOpen] = useState(pathname.includes('/mentor/courses') || pathname.includes('/mentor/qa') || pathname.includes('/mentor/homeworks'));
 
   return (
     <aside
       className={`${
         isOpen ? "w-70" : "w-20"
-      } bg-blue-950 text-white flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-20`}
+      } bg-[#10061e] text-white flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out z-20`}
     >
       {/* Logo Area */}
       <div
-        className={`flex items-center h-16 ${
+        className={`flex items-center h-20 ${
           isOpen ? "px-6 justify-between" : "justify-center"
-        }`}
+        } border-b border-white/5`}
       >
         <div
           className={`flex items-center overflow-hidden transition-all duration-300 ${
@@ -52,17 +41,15 @@ export default function Sidebar() {
             alt="Kebyu" 
             width={160} 
             height={48} 
-            style={{ width: "auto", height: "auto" }}
             className="h-10 w-auto object-contain brightness-0 invert" 
-            priority
           />
         </div>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-gray-400 hover:text-white p-1 rounded bg-white/10 transition-colors"
+          className="text-gray-400 hover:text-white p-1.5 rounded-lg bg-[#27173b] hover:bg-[#34204d] transition-colors cursor-pointer border border-white/5"
         >
           <PanelLeftClose
-            size={18}
+            size={20}
             className={`transition-transform duration-300 ${
               isOpen ? "" : "rotate-180"
             }`}
@@ -71,30 +58,30 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 space-y-6">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden py-6 space-y-6">
         <div>
           <div
-            className={`mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap overflow-hidden transition-all duration-300 ${
+            className={`mb-4 text-[13px] font-bold text-gray-400 uppercase tracking-widest whitespace-nowrap overflow-hidden transition-all duration-300 ${
               isOpen ? "px-6 opacity-100" : "px-0 opacity-0 h-0"
             }`}
           >
-            Boshqaruv Paneli
+            BOSHQARUV PANELI
           </div>
-          <nav className={`space-y-1 ${isOpen ? "px-3" : "px-2"}`}>
+          <nav className={`space-y-2 ${isOpen ? "px-4" : "px-2"}`}>
             <Link
-              href="/dashboard"
-              className={`flex items-center py-2.5 rounded-lg transition-all overflow-hidden ${
-                pathname === "/dashboard" 
-                  ? "bg-white/10 text-white" 
+              href="/mentor"
+              className={`flex items-center py-3.5 rounded-xl transition-all overflow-hidden ${
+                pathname === "/mentor" 
+                  ? "bg-[#2b193d] text-white shadow-sm" 
                   : "text-gray-400 hover:bg-white/5 hover:text-white"
               } ${
-                isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"
+                isOpen ? "px-4 gap-4" : "justify-center px-0 gap-0"
               }`}
               title="Asosiy"
             >
-              <LayoutGrid size={20} className="shrink-0" />
+              <LayoutGrid size={22} strokeWidth={2} className="shrink-0" />
               <span
-                className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${
+                className={`font-medium text-[16px] whitespace-nowrap transition-opacity duration-300 ${
                   isOpen ? "opacity-100" : "opacity-0 w-0"
                 }`}
               >
@@ -113,10 +100,10 @@ export default function Sidebar() {
                     setIsUsersOpen(!isUsersOpen);
                   }
                 }}
-                className={`w-full flex items-center justify-between py-2.5 rounded-lg group transition-all overflow-hidden ${
+                className={`w-full flex items-center justify-between py-2.5 rounded-lg group transition-all overflow-hidden cursor-pointer ${
                   isOpen ? "px-3" : "justify-center px-0"
                 } ${
-                  pathname.includes('/dashboard/users') 
+                  pathname.includes('/mentor/students') 
                     ? "text-white" 
                     : "text-gray-400 hover:bg-white/5 hover:text-white"
                 }`}
@@ -151,41 +138,35 @@ export default function Sidebar() {
                 }`}
               >
                 <div className="pl-11 pr-3 py-1 space-y-1">
-                  {userSubLinks.map((link) => {
-                    const isActive = pathname.includes(`/dashboard/users/${link}`);
-                    return (
-                      <Link
-                        key={link}
-                        href={`/dashboard/users/${link}`}
-                        className={`block px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
-                          isActive
-                            ? "bg-white/10 text-white font-medium"
-                            : "text-gray-400 hover:text-white hover:bg-white/5"
-                        }`}
-                      >
-                        {link}
-                      </Link>
-                    );
-                  })}
+                  <Link
+                    href="/mentor/students"
+                    className={`block px-3 py-2 text-sm rounded-lg capitalize transition-colors ${
+                      pathname.includes('/mentor/students')
+                        ? "bg-white/10 text-white font-medium"
+                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    O'quvchilarim
+                  </Link>
                 </div>
               </div>
             </div>
 
-            {/* Kurslar Accordion */}
+            {/* Materiallar Accordion */}
             <div>
               <button
                 onClick={() => {
                   if (!isOpen) {
                     setIsOpen(true);
-                    setIsCoursesOpen(true);
+                    setIsMaterialsOpen(true);
                   } else {
-                    setIsCoursesOpen(!isCoursesOpen);
+                    setIsMaterialsOpen(!isMaterialsOpen);
                   }
                 }}
-                className={`w-full flex items-center justify-between py-2.5 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg group transition-all overflow-hidden ${
+                className={`w-full flex items-center justify-between py-2.5 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg group transition-all overflow-hidden cursor-pointer ${
                   isOpen ? "px-3" : "justify-center px-0"
                 }`}
-                title="Kurslar"
+                title="Materiallar"
               >
                 <div
                   className={`flex items-center ${isOpen ? "gap-3" : "gap-0"}`}
@@ -196,13 +177,13 @@ export default function Sidebar() {
                       isOpen ? "opacity-100" : "opacity-0 w-0"
                     }`}
                   >
-                    Kurslar
+                    Materiallar
                   </span>
                 </div>
                 <ChevronDown
                   size={16}
                   className={`shrink-0 transition-all duration-300 ${
-                    isCoursesOpen ? "rotate-180" : ""
+                    isMaterialsOpen ? "rotate-180" : ""
                   } ${isOpen ? "opacity-100 w-4 ml-2" : "opacity-0 w-0 ml-0"}`}
                 />
               </button>
@@ -210,15 +191,16 @@ export default function Sidebar() {
               {/* Accordion Content */}
               <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isOpen && isCoursesOpen
+                  isOpen && isMaterialsOpen
                     ? "max-h-96 mt-1 opacity-100"
                     : "max-h-0 opacity-0"
                 }`}
               >
                 <div className="pl-11 pr-3 py-1 space-y-1">
                   {[
-                    { name: "Barcha kurslar", href: "/dashboard/courses/allCourses" },
-                    { name: "Kategoriyalar", href: "/dashboard/courses/categories" },
+                    { name: "Mening kurslarim", href: "/mentor/courses" },
+                    { name: "Savol-javoblar", href: "/mentor/qa" },
+                    { name: "Uyga vazifalar", href: "/mentor/homeworks" },
                   ].map((link) => {
                     const isActive = pathname === link.href;
                     return (
@@ -239,43 +221,6 @@ export default function Sidebar() {
               </div>
             </div>
 
-            <Link
-              href="/dashboard/payments"
-              className={`flex items-center py-2.5 rounded-lg transition-all overflow-hidden ${
-                pathname === "/dashboard/payments"
-                  ? "bg-white/10 text-white"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
-              } ${isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"}`}
-              title="To’lovlar"
-            >
-              <CreditCard size={20} className="shrink-0" />
-              <span
-                className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${
-                  isOpen ? "opacity-100" : "opacity-0 w-0"
-                }`}
-              >
-                To’lovlar
-              </span>
-            </Link>
-
-            <Link
-              href="/dashboard/comments"
-              className={`flex items-center py-2.5 rounded-lg transition-all overflow-hidden ${
-                pathname === "/dashboard/comments"
-                  ? "bg-white/10 text-white"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
-              } ${isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"}`}
-              title="Izohlar"
-            >
-              <MessageSquare size={20} className="shrink-0" />
-              <span
-                className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${
-                  isOpen ? "opacity-100" : "opacity-0 w-0"
-                }`}
-              >
-                Izohlar
-              </span>
-            </Link>
           </nav>
         </div>
       </div>

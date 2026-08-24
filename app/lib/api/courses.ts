@@ -44,9 +44,31 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
+let coursesCache: Course[] | null = null;
+let coursesPromise: Promise<Course[]> | null = null;
+
 export async function getCourses(): Promise<Course[]> {
-  const { data } = await baseAPI.get("/courses");
-  return unwrapList<Course>(data);
+  if (coursesCache) return coursesCache;
+  if (coursesPromise) return coursesPromise;
+
+  coursesPromise = baseAPI
+    .get("/courses")
+    .then((res) => {
+      const data = unwrapList<Course>(res.data);
+      coursesCache = data;
+      return data;
+    })
+    .catch((err) => {
+      coursesPromise = null;
+      throw err;
+    });
+
+  return coursesPromise;
+}
+
+export function clearCoursesCache() {
+  coursesCache = null;
+  coursesPromise = null;
 }
 
 export async function getCourseById(id: number | string): Promise<Course> {

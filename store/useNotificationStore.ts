@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
-import axios from "axios";
-import { getToken } from "@/app/lib/utils";
+import { baseAPI } from "@/app/lib/utils";
 
 export interface Notification {
   id: number;
@@ -29,10 +28,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   fetchNotifications: async () => {
     try {
-      const token = getToken("accessToken");
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/notifications/unread`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await baseAPI.get("/notifications/unread");
       const data = res.data;
       set({ notifications: data, unreadCount: data.length });
     } catch (error) {
@@ -42,10 +38,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
   markAsRead: async (id: number) => {
     try {
-      const token = getToken("accessToken");
-      await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/notifications/${id}/read`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await baseAPI.patch(`/notifications/${id}/read`);
       
       set((state) => {
         const newNotifications = state.notifications.filter(n => n.id !== id);

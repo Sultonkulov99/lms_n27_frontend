@@ -1,5 +1,6 @@
 import axios from "axios";
 import { baseAPI } from "@/app/lib/utils";
+import { Status } from "./status";
 
 export interface Admin {
   id: number;
@@ -8,7 +9,7 @@ export interface Admin {
   phone: string;
   created_at: string;
   role: string;
-  status: "Faol" | "Nofaol";
+  status: Status;
 }
 
 function unwrapList<T>(payload: unknown): T[] {
@@ -69,8 +70,8 @@ export interface DashboardStats {
   dashboard: {
     ADMIN: number;
     MENTOR: number;
-    ASSISTANT: number;   
-    STUDENT: number;     
+    ASSISTANT: number;
+    STUDENT: number;
     totalCourses: number;
     [key: string]: number;
   };

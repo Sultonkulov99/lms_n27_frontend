@@ -1,85 +1,175 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, useEffect, useCallback } from "react";
 import { PlusCircle, Filter, Pen, Trash2, X, Check } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 import { useLessonMeta } from "@/app/components/lesson/useLessonMeta";
 import LessonHeader from "@/app/components/lesson/LessonHeader";
 import LessonTabs from "@/app/components/lesson/LessonTabs";
+import { getExams, createExam, updateExam, deleteExam, Exam as APIExam } from "@/app/lib/api/exams";
+import { baseAPI } from "@/app/lib/utils";
+import { useParams } from "next/navigation";
 
-type AnswerKey = "A" | "B" | "C" | "D";
+interface Lesson {
+  id: number;
+  sectionId: number;
+  name: string;
+}
+
+type AnswerKey = "variantA" | "variantB" | "variantC" | "variantD";
 
 interface ExamQuestion {
   id: number;
+  lessonId: number;
   question: string;
   answers: Record<AnswerKey, string>;
   correctAnswer: AnswerKey;
 }
 
-const ANSWER_KEYS: AnswerKey[] = ["A", "B", "C", "D"];
+const ANSWER_KEYS: AnswerKey[] = ["variantA", "variantB", "variantC", "variantD"];
+const SHORT_KEYS: Record<AnswerKey, string> = { variantA: "A", variantB: "B", variantC: "C", variantD: "D" };
 
-const emptyQuestionDraft = (): { question: string; answers: Record<AnswerKey, string>; correctAnswer: AnswerKey } => ({
+const emptyQuestionDraft = (lessonId: number): Omit<ExamQuestion, "id"> => ({
+  lessonId,
   question: "",
-  answers: { A: "", B: "", C: "", D: "" },
-  correctAnswer: "A"
+  answers: { variantA: "", variantB: "", variantC: "", variantD: "" },
+  correctAnswer: "variantA"
 });
 
-export default function LessonExamsPage({
-  params,
-}: {
-  params: Promise<{ id: string; sectionId: string; lessonId: string }>;
-}) {
-  const { id: courseId, sectionId, lessonId } = use(params);
-  const { courseTitle } = useLessonMeta(courseId, sectionId);
+export default function LessonExamsPage() {
+  const params = useParams();
+  const courseId = params?.id as string;
+  const sectionId = params?.sectionId as string;
+  const lessonId = params?.lessonId as string;
+  const { courseTitle, lessonName } = useLessonMeta(courseId, sectionId);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [loading, setLoading] = useState(true);
 
-  const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([
-    {
-      id: 1,
-      question: "CSS kengaytmasini toping",
-      answers: {
-        A: "Cascading Style Sheets",
-        B: "Cascading Style Sheets",
-        C: "Cascading Style Sheets",
-        D: "Cascading Style Sheets"
-      },
-      correctAnswer: "A"
-    }
-  ]);
+  const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>([]);
+  const [lessons, setLessons] = useState<Lesson[]>([]);
 
   const [isAddExamModalOpen, setIsAddExamModalOpen] = useState(false);
   const [isEditExamModalOpen, setIsEditExamModalOpen] = useState(false);
   const [isDeleteExamModalOpen, setIsDeleteExamModalOpen] = useState(false);
-  const [newQuestion, setNewQuestion] = useState(emptyQuestionDraft());
+  
+  const [newQuestion, setNewQuestion] = useState(emptyQuestionDraft(Number(lessonId)));
   const [editingQuestion, setEditingQuestion] = useState<ExamQuestion | null>(null);
   const [deletingQuestionId, setDeletingQuestionId] = useState<number | null>(null);
 
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await getExams(lessonId);
+
+      let fetchedLessons: Lesson[] = [];
+      try {
+        const { data: resData } = await baseAPI.get("/lessons");
+        fetchedLessons = Array.isArray(resData?.data) ? resData.data : (Array.isArray(resData) ? resData : []);
+        setLessons(fetchedLessons);
+      } catch (err) {
+        console.error("Darslar topilmadi", err);
+      }
+
+      const mapped = data.map((e: APIExam) => ({
+        id: e.id,
+        lessonId: e.lessonId,
+        question: e.questoin, // Misspelled in backend schema
+        answers: {
+          variantA: e.variantA,
+          variantB: e.variantB,
+          variantC: e.variantC,
+          variantD: e.variantD
+        },
+        correctAnswer: e.answer as AnswerKey
+      }));
+      setExamQuestions(mapped);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, [lessonId]);
+
+  useEffect(() => {
+    let mounted = true;
+    if (mounted) {
+      loadData();
+    }
+    return () => {
+      mounted = false;
+    };
+  }, [loadData]);
+
   const resetExamForm = () => {
-    setNewQuestion(emptyQuestionDraft());
+    setNewQuestion(emptyQuestionDraft(Number(lessonId)));
     setEditingQuestion(null);
   };
 
-  const handleAddQuestion = () => {
-    if (!newQuestion.question.trim()) return;
-    setExamQuestions([...examQuestions, { id: Date.now(), ...newQuestion }]);
-    setIsAddExamModalOpen(false);
-    resetExamForm();
+  const handleAddQuestion = async () => {
+    if (!newQuestion.question.trim() || !newQuestion.lessonId) {
+      alert("Darsni tanlang va savolni kiriting");
+      return;
+    }
+    
+    const payload = {
+      lessonId: newQuestion.lessonId,
+      questoin: newQuestion.question.trim(),
+      variantA: newQuestion.answers.variantA,
+      variantB: newQuestion.answers.variantB,
+      variantC: newQuestion.answers.variantC,
+      variantD: newQuestion.answers.variantD,
+      answer: newQuestion.correctAnswer
+    };
+
+    try {
+      await createExam(payload);
+      await loadData();
+      setIsAddExamModalOpen(false);
+      resetExamForm();
+    } catch (e) {
+      console.error(e);
+      alert("Savol qo'shishda xatolik yuz berdi");
+    }
   };
 
-  const handleEditQuestion = () => {
+  const handleEditQuestion = async () => {
     if (!editingQuestion || !editingQuestion.question.trim()) return;
-    setExamQuestions(examQuestions.map(q => q.id === editingQuestion.id ? editingQuestion : q));
-    setIsEditExamModalOpen(false);
-    resetExamForm();
+    
+    const payload = {
+      lessonId: Number(lessonId),
+      questoin: editingQuestion.question.trim(),
+      variantA: editingQuestion.answers.variantA,
+      variantB: editingQuestion.answers.variantB,
+      variantC: editingQuestion.answers.variantC,
+      variantD: editingQuestion.answers.variantD,
+      answer: editingQuestion.correctAnswer
+    };
+
+    try {
+      await updateExam(editingQuestion.id, payload);
+      await loadData();
+      setIsEditExamModalOpen(false);
+      resetExamForm();
+    } catch (e) {
+      console.error(e);
+      alert("Savol tahrirlashda xatolik yuz berdi");
+    }
   };
 
-  const handleDeleteQuestion = () => {
+  const handleDeleteQuestion = async () => {
     if (deletingQuestionId === null) return;
-    setExamQuestions(examQuestions.filter(q => q.id !== deletingQuestionId));
-    setDeletingQuestionId(null);
-    setIsDeleteExamModalOpen(false);
+    
+    try {
+      await deleteExam(deletingQuestionId);
+      await loadData();
+      setDeletingQuestionId(null);
+      setIsDeleteExamModalOpen(false);
+    } catch (e) {
+      console.error(e);
+      alert("O'chirishda xatolik yuz berdi");
+    }
   };
 
   const openEditExamModal = (q: ExamQuestion) => {
@@ -95,11 +185,11 @@ export default function LessonExamsPage({
       [
         index + 1,
         csvEscape(q.question),
-        csvEscape(q.answers.A),
-        csvEscape(q.answers.B),
-        csvEscape(q.answers.C),
-        csvEscape(q.answers.D),
-        q.correctAnswer,
+        csvEscape(q.answers.variantA),
+        csvEscape(q.answers.variantB),
+        csvEscape(q.answers.variantC),
+        csvEscape(q.answers.variantD),
+        SHORT_KEYS[q.correctAnswer],
       ].join(","),
     );
     const csvContent =
@@ -144,6 +234,30 @@ export default function LessonExamsPage({
     return (
       <div className="p-6 space-y-6">
         <div>
+          <label className="block text-[14px] font-bold text-gray-900 mb-2">Dars nomi</label>
+          {isEdit ? (
+            <input 
+              type="text" 
+              disabled 
+              value={lessons.find(l => l.id === editingQuestion?.lessonId)?.name || lessonName} 
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[14px] cursor-not-allowed" 
+            />
+          ) : (
+            <select
+              value={newQuestion.lessonId || ""}
+              onChange={(e) => setNewQuestion({ ...newQuestion, lessonId: Number(e.target.value) })}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] bg-white cursor-pointer"
+            >
+              <option value="">Darsni tanlang</option>
+              {lessons.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+        <div>
           <label className="block text-[14px] font-bold text-gray-900 mb-2">Savol matni</label>
           <textarea
             rows={2}
@@ -168,10 +282,10 @@ export default function LessonExamsPage({
                   >
                     {isCorrect && <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
                   </button>
-                  <span className="w-5 text-[13px] font-bold text-gray-500 shrink-0">{key}</span>
+                  <span className="w-5 text-[13px] font-bold text-gray-500 shrink-0">{SHORT_KEYS[key]}</span>
                   <input
                     type="text"
-                    placeholder={`${key} javobi`}
+                    placeholder={`${SHORT_KEYS[key]} javobi`}
                     value={current?.answers[key] || ""}
                     onChange={(e) => updateAnswerText(key, e.target.value)}
                     className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px]"
@@ -180,17 +294,20 @@ export default function LessonExamsPage({
               );
             })}
           </div>
-          <p className="text-[12px] text-gray-400 mt-2">To&apos;g&apos;ri javobni belgilash uchun doiraga bosing</p>
+          <p className="text-[12px] text-gray-400 mt-2">To'g'ri javobni belgilash uchun doiraga bosing</p>
         </div>
         <button
           onClick={isEdit ? handleEditQuestion : handleAddQuestion}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-2"
+          disabled={!current?.question.trim() || Object.values(current.answers).some(a => !a.trim())}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors mt-2 disabled:opacity-50"
         >
           <Check size={18} /> Saqlash
         </button>
       </div>
     );
   };
+
+  const paginatedQuestions = examQuestions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <>
@@ -207,7 +324,7 @@ export default function LessonExamsPage({
 
         <div className="flex-1 flex flex-col">
           <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
-            <table className="w-full text-left border-collapse min-w-[1100px] bg-white">
+            <table className="w-full text-left border-collapse min-w-275 bg-white">
               <thead className="bg-gray-50">
                 <tr className="text-[13px] text-gray-900 font-bold tracking-wide">
                   <th className="px-6 py-4 font-semibold whitespace-nowrap border border-gray-200 w-[5%]">
@@ -244,7 +361,13 @@ export default function LessonExamsPage({
                 </tr>
               </thead>
               <tbody className="text-[14px] text-gray-800">
-                {examQuestions.length > 0 ? examQuestions.map((q, index) => (
+                {loading ? (
+                   <tr>
+                     <td colSpan={7} className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white">
+                       Yuklanmoqda...
+                     </td>
+                   </tr>
+                ) : paginatedQuestions.length > 0 ? paginatedQuestions.map((q, index) => (
                   <tr key={q.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
                       {index + 1}
@@ -307,9 +430,9 @@ export default function LessonExamsPage({
 
       {(isAddExamModalOpen || isEditExamModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => { setIsAddExamModalOpen(false); setIsEditExamModalOpen(false); resetExamForm(); }}>
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-[480px] flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-120 flex flex-col max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">{isEditExamModalOpen ? "Savolni tahrirlash" : "Savol qo\u2019shish"}</h2>
+              <h2 className="text-xl font-bold text-gray-900">{isEditExamModalOpen ? "Savolni tahrirlash" : "Savol qo&apos;shish"}</h2>
               <button onClick={() => { setIsAddExamModalOpen(false); setIsEditExamModalOpen(false); resetExamForm(); }} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <X size={20} />
               </button>
@@ -321,7 +444,7 @@ export default function LessonExamsPage({
 
       {isDeleteExamModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setIsDeleteExamModalOpen(false)}>
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-[400px] flex flex-col items-center text-center p-8 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-3xl shadow-xl w-full max-w-100 flex flex-col items-center text-center p-8 animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5">
               <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center text-3xl font-bold">?</div>
             </div>

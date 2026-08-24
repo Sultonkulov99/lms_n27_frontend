@@ -1,5 +1,6 @@
 import axios from "axios";
 import { baseAPI } from "@/app/lib/utils";
+import { Status } from "./status";
 
 export interface Assistant {
   id: number;
@@ -7,6 +8,7 @@ export interface Assistant {
   phone: string;
   file?: string | null;
   role: string;
+  status: Status;
   created_at: string;
   updated_at: string;
 }

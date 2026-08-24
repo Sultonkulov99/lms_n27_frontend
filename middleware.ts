@@ -43,8 +43,19 @@ const PROTECTED_PANEL_PREFIXES = [
 ];
 
 export function middleware(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl;
+
+  // Xatolik 401 yoki tizimdan chiqish (logout) vaqtida cookielarni server tomondan tozalash
+  if (searchParams.get("clear_auth") === "true") {
+    const url = new URL(request.url);
+    url.searchParams.delete("clear_auth");
+    const response = NextResponse.redirect(url);
+    response.cookies.delete("accessToken");
+    response.cookies.delete("refreshToken");
+    return response;
+  }
+
   let token = request.cookies.get("accessToken")?.value;
-  const { pathname } = request.nextUrl;
 
   let role = null;
   if (token) {

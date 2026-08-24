@@ -21,7 +21,7 @@ function NotFoundContent() {
         >
           <Home size={20} />
           <span>{t("notFound.backHome")}</span>
-        </Link>
+        </Link> 
       </main>
     </div>
   );

@@ -36,7 +36,8 @@ export default function Header() {
   const handleLogout = () => {
     removeToken("accessToken");
     removeToken("refreshToken");
-    router.push("/");
+    localStorage.removeItem("user");
+    window.location.href = "/?clear_auth=true";
   };
 
   const getProfileImage = () => {
