@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { use, useCallback, useEffect, useState } from "react";
 import {
   Plus,
   Filter,
@@ -23,39 +23,75 @@ interface Section {
   courseId?: number;
 }
 
+interface Course {
+  id: number;
+  name?: string;
+  title?: string;
+  description?: string;
+}
+
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string | string[];
+    };
+  };
+  message?: string;
+}
+
 export default function CourseSectionsPage() {
   const params = useParams();
   const courseId = params?.id as string;
 
   const { courses } = useCourseStore();
 
-  const currentCourse = courses.find(
-    (course) => course.id.toString() === courseId
-  );
+  // ============================================================
+  // COURSE
+  // ============================================================
 
-  const courseTitle = currentCourse?.title || "Frontend dasturlash";
+  const [currentCourse, setCurrentCourse] =
+    useState<Course | null>(null);
 
   // ============================================================
-  // STATES
+  // SECTIONS
   // ============================================================
 
   const [sections, setSections] = useState<Section[]>([]);
 
-  const [loading, setLoading] = useState(false);
+  // ============================================================
+  // LOADING
+  // ============================================================
+
+  const [loadingSections, setLoadingSections] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const [error, setError] = useState("");
+  // ============================================================
+  // MESSAGES
+  // ============================================================
 
-  // SUCCESS MESSAGE
+  const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // ============================================================
+  // PAGINATION
+  // ============================================================
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // ============================================================
+  // MODALS
+  // ============================================================
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  // ============================================================
+  // FORM
+  // ============================================================
 
   const [newSectionName, setNewSectionName] = useState("");
 
@@ -66,74 +102,195 @@ export default function CourseSectionsPage() {
     useState<number | null>(null);
 
   // ============================================================
-  // MESSAGE
+  // COURSE TITLE
   // ============================================================
 
-  const clearMessages = () => {
+  const courseTitle =
+    currentCourse?.name ||
+    currentCourse?.title ||
+    "";
+
+  // ============================================================
+  // CLEAR MESSAGES
+  // ============================================================
+
+  const clearMessages = useCallback(() => {
     setError("");
     setSuccessMessage("");
-  };
+  }, []);
 
-  const showSuccess = (message: string) => {
+  // ============================================================
+  // SUCCESS MESSAGE
+  // ============================================================
+
+  const showSuccess = useCallback((message: string) => {
     setError("");
     setSuccessMessage(message);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setSuccessMessage("");
     }, 3000);
-  };
+  }, []);
+
+  // ============================================================
+  // FIND COURSE
+  // ============================================================
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const findCourse = async () => {
+      try {
+        const numericCourseId = Number(courseId);
+
+        if (!numericCourseId) {
+          return;
+        }
+
+        // 1. Zustand store
+        const storeCourse = courses.find(
+          (course: any) =>
+            Number(course.id) === numericCourseId
+        );
+
+        if (storeCourse) {
+          if (!cancelled) {
+            setCurrentCourse(storeCourse);
+          }
+
+          return;
+        }
+
+        // 2. API
+        const response = await baseAPI.get("/courses");
+
+        if (cancelled) {
+          return;
+        }
+
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data?.data || [];
+
+        const selectedCourse = data.find(
+          (course: Course) =>
+            Number(course.id) === numericCourseId
+        );
+
+        if (selectedCourse) {
+          setCurrentCourse(selectedCourse);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("COURSE GET ERROR:", err);
+        }
+      }
+    };
+
+    findCourse();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, courses]);
 
   // ============================================================
   // GET SECTIONS
   // ============================================================
 
-  const getSections = async () => {
+  const getSections = useCallback(async () => {
+    const numericCourseId = Number(courseId);
+
+    if (!numericCourseId) {
+      return;
+    }
+
     try {
-      setLoading(true);
+      setLoadingSections(true);
       setError("");
+
+      console.log(
+        "GET /sections courseId:",
+        numericCourseId
+      );
 
       const response = await baseAPI.get("/sections");
 
-      console.log("GET SECTIONS RESPONSE:", response.data);
+      console.log(
+        "GET SECTIONS RESPONSE:",
+        response.data
+      );
 
-      const data = Array.isArray(response.data)
+      const data: Section[] = Array.isArray(response.data)
         ? response.data
         : response.data?.data || [];
 
+      console.log(
+        "ALL SECTIONS:",
+        data
+      );
+
       const filteredSections = data.filter(
-        (section: Section) =>
-          Number(section.courseId) === Number(courseId)
+        (section) =>
+          Number(section.courseId) === numericCourseId
+      );
+
+      console.log(
+        "FILTERED SECTIONS:",
+        filteredSections
       );
 
       setSections(filteredSections);
 
       const maxPage =
-        Math.ceil(filteredSections.length / itemsPerPage) || 1;
+        Math.ceil(
+          filteredSections.length / itemsPerPage
+        ) || 1;
 
-      if (currentPage > maxPage) {
-        setCurrentPage(maxPage);
-      }
-    } catch (err: any) {
-      console.error("GET SECTIONS ERROR:", err);
-
-      setError(
-        err.response?.data?.message ||
-          "Bo'limlarni yuklashda xatolik yuz berdi."
+      setCurrentPage((prev) =>
+        prev > maxPage ? maxPage : prev
       );
+    } catch (err) {
+      const errorData = err as ApiError;
+
+      console.error(
+        "GET SECTIONS ERROR:",
+        err
+      );
+
+      console.error(
+        "STATUS:",
+        errorData.response?.status
+      );
+
+      console.error(
+        "DATA:",
+        errorData.response?.data
+      );
+
+      const message =
+        errorData.response?.data?.message;
+
+      if (Array.isArray(message)) {
+        setError(message.join(", "));
+      } else {
+        setError(
+          message ||
+            "Bo'limlarni yuklashda xatolik yuz berdi."
+        );
+      }
     } finally {
-      setLoading(false);
+      setLoadingSections(false);
     }
-  };
+  }, [courseId, itemsPerPage]);
 
   // ============================================================
-  // LOAD
+  // LOAD SECTIONS
   // ============================================================
 
   useEffect(() => {
-    if (courseId) {
-      getSections();
-    }
-  }, [courseId]);
+    getSections();
+  }, [getSections]);
 
   // ============================================================
   // ADD SECTION
@@ -147,20 +304,36 @@ export default function CourseSectionsPage() {
       return;
     }
 
+    const numericCourseId = Number(courseId);
+
+    if (!numericCourseId) {
+      setError("Kurs ID noto'g'ri.");
+      return;
+    }
+
     try {
       setSaving(true);
       clearMessages();
 
       const body = {
         name,
-        courseId: Number(courseId),
+        courseId: numericCourseId,
       };
 
-      console.log("POST /sections:", body);
+      console.log(
+        "POST /sections:",
+        body
+      );
 
-      const response = await baseAPI.post("/sections", body);
+      const response = await baseAPI.post(
+        "/sections",
+        body
+      );
 
-      console.log("CREATE SECTION RESPONSE:", response.data);
+      console.log(
+        "CREATE SECTION RESPONSE:",
+        response.data
+      );
 
       await getSections();
 
@@ -168,19 +341,45 @@ export default function CourseSectionsPage() {
       setIsAddModalOpen(false);
       setCurrentPage(1);
 
-      showSuccess("Bo'lim muvaffaqiyatli qo'shildi!");
-    } catch (err: any) {
-      console.error("CREATE SECTION ERROR:", err);
+      showSuccess(
+        "Bo'lim muvaffaqiyatli qo'shildi!"
+      );
+    } catch (err) {
+      const errorData = err as ApiError;
 
-      if (err.response?.status === 401) {
+      console.error(
+        "CREATE SECTION ERROR:",
+        err
+      );
+
+      console.error(
+        "STATUS:",
+        errorData.response?.status
+      );
+
+      console.error(
+        "DATA:",
+        errorData.response?.data
+      );
+
+      if (
+        errorData.response?.status === 401
+      ) {
         setError(
           "Avtorizatsiya muddati tugagan. Qaytadan login qiling."
         );
       } else {
-        setError(
-          err.response?.data?.message ||
-            "Bo'lim qo'shishda xatolik yuz berdi."
-        );
+        const message =
+          errorData.response?.data?.message;
+
+        if (Array.isArray(message)) {
+          setError(message.join(", "));
+        } else {
+          setError(
+            message ||
+              "Bo'lim qo'shishda xatolik yuz berdi."
+          );
+        }
       }
     } finally {
       setSaving(false);
@@ -222,26 +421,55 @@ export default function CourseSectionsPage() {
         body
       );
 
-      console.log("UPDATE SECTION RESPONSE:", response.data);
+      console.log(
+        "UPDATE SECTION RESPONSE:",
+        response.data
+      );
 
       await getSections();
 
       setEditingSection(null);
       setIsEditModalOpen(false);
 
-      showSuccess("Bo'lim muvaffaqiyatli tahrirlandi!");
-    } catch (err: any) {
-      console.error("UPDATE SECTION ERROR:", err);
+      showSuccess(
+        "Bo'lim muvaffaqiyatli tahrirlandi!"
+      );
+    } catch (err) {
+      const errorData = err as ApiError;
 
-      if (err.response?.status === 401) {
+      console.error(
+        "UPDATE SECTION ERROR:",
+        err
+      );
+
+      console.error(
+        "STATUS:",
+        errorData.response?.status
+      );
+
+      console.error(
+        "DATA:",
+        errorData.response?.data
+      );
+
+      if (
+        errorData.response?.status === 401
+      ) {
         setError(
           "Avtorizatsiya muddati tugagan. Qaytadan login qiling."
         );
       } else {
-        setError(
-          err.response?.data?.message ||
-            "Bo'limni tahrirlashda xatolik yuz berdi."
-        );
+        const message =
+          errorData.response?.data?.message;
+
+        if (Array.isArray(message)) {
+          setError(message.join(", "));
+        } else {
+          setError(
+            message ||
+              "Bo'limni tahrirlashda xatolik yuz berdi."
+          );
+        }
       }
     } finally {
       setSaving(false);
@@ -269,26 +497,55 @@ export default function CourseSectionsPage() {
         `/sections/${deletingSectionId}`
       );
 
-      console.log("DELETE SECTION RESPONSE:", response.data);
+      console.log(
+        "DELETE SECTION RESPONSE:",
+        response.data
+      );
 
       await getSections();
 
       setDeletingSectionId(null);
       setIsDeleteModalOpen(false);
 
-      showSuccess("Bo'lim muvaffaqiyatli o'chirildi!");
-    } catch (err: any) {
-      console.error("DELETE SECTION ERROR:", err);
+      showSuccess(
+        "Bo'lim muvaffaqiyatli o'chirildi!"
+      );
+    } catch (err) {
+      const errorData = err as ApiError;
 
-      if (err.response?.status === 401) {
+      console.error(
+        "DELETE SECTION ERROR:",
+        err
+      );
+
+      console.error(
+        "STATUS:",
+        errorData.response?.status
+      );
+
+      console.error(
+        "DATA:",
+        errorData.response?.data
+      );
+
+      if (
+        errorData.response?.status === 401
+      ) {
         setError(
           "Avtorizatsiya muddati tugagan. Qaytadan login qiling."
         );
       } else {
-        setError(
-          err.response?.data?.message ||
-            "Bo'limni o'chirishda xatolik yuz berdi."
-        );
+        const message =
+          errorData.response?.data?.message;
+
+        if (Array.isArray(message)) {
+          setError(message.join(", "));
+        } else {
+          setError(
+            message ||
+              "Bo'limni o'chirishda xatolik yuz berdi."
+          );
+        }
       }
     } finally {
       setDeleting(false);
@@ -331,26 +588,41 @@ export default function CourseSectionsPage() {
   // ============================================================
 
   const handleDownloadXLS = () => {
-    const headers = ["ID", "Bo'lim nomi"];
+    const headers = [
+      "ID",
+      "Bo'lim nomi",
+    ];
 
-    const rows = sections.map((section) =>
-      [
-        section.id,
-        `"${section.name.replace(/"/g, '""')}"`,
-      ].join(",")
+    const rows = sections.map(
+      (section) =>
+        [
+          section.id,
+          `"${section.name.replace(
+            /"/g,
+            '""'
+          )}"`,
+        ].join(",")
     );
 
     const csvContent =
       "\uFEFF" +
-      [headers.join(","), ...rows].join("\n");
+      [
+        headers.join(","),
+        ...rows,
+      ].join("\n");
 
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
+    const blob = new Blob(
+      [csvContent],
+      {
+        type: "text/csv;charset=utf-8;",
+      }
+    );
 
-    const url = URL.createObjectURL(blob);
+    const url =
+      URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
+    const link =
+      document.createElement("a");
 
     link.href = url;
     link.download = "bolimlar.csv";
@@ -369,22 +641,28 @@ export default function CourseSectionsPage() {
   // ============================================================
 
   const totalPages =
-    Math.ceil(sections.length / itemsPerPage) || 1;
+    Math.ceil(
+      sections.length /
+        itemsPerPage
+    ) || 1;
 
   const startIndex = Math.min(
-    (currentPage - 1) * itemsPerPage,
+    (currentPage - 1) *
+      itemsPerPage,
     sections.length
   );
 
   const endIndex = Math.min(
-    currentPage * itemsPerPage,
+    currentPage *
+      itemsPerPage,
     sections.length
   );
 
-  const paginatedSections = sections.slice(
-    startIndex,
-    endIndex
-  );
+  const paginatedSections =
+    sections.slice(
+      startIndex,
+      endIndex
+    );
 
   // ============================================================
   // UI
@@ -395,19 +673,18 @@ export default function CourseSectionsPage() {
       <div className="flex-1 overflow-y-auto p-6 flex flex-col h-full bg-transparent">
 
         {/* HEADER */}
-
         <div className="flex items-center justify-between mb-8">
-
           <div>
             <h1 className="text-[22px] font-bold text-gray-900 mb-1.5">
               Bo&apos;limlar
             </h1>
 
+            {/* BREADCRUMB */}
             <div className="flex items-center text-[13px] font-medium gap-2">
 
               <Link
                 href="/dashboard/courses/allCourses"
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-gray-500 hover:text-blue-600 transition-colors"
               >
                 Kurslar
               </Link>
@@ -415,10 +692,10 @@ export default function CourseSectionsPage() {
               <span className="w-1 h-1 rounded-full bg-gray-300" />
 
               <Link
-                href={`/dashboard/courses/allCourses/${courseId}/sections`}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                href="/dashboard/courses/allCourses"
+                className="text-gray-500 hover:text-blue-600 transition-colors"
               >
-                {courseTitle}
+                {courseTitle || "Kurs"}
               </Link>
 
               <span className="w-1 h-1 rounded-full bg-gray-300" />
@@ -426,12 +703,10 @@ export default function CourseSectionsPage() {
               <span className="text-gray-900">
                 Bo&apos;limlar
               </span>
-
             </div>
           </div>
 
           {/* ADD BUTTON */}
-
           <button
             onClick={() => {
               clearMessages();
@@ -443,31 +718,27 @@ export default function CourseSectionsPage() {
             <Plus size={18} />
             Bo&apos;lim qo&apos;shish
           </button>
-
         </div>
 
-        {/* SUCCESS MESSAGE */}
-
+        {/* SUCCESS */}
         {successMessage && (
           <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 flex items-center gap-2">
-
             <CheckCircle2 size={18} />
 
-            <span>{successMessage}</span>
-
+            <span>
+              {successMessage}
+            </span>
           </div>
         )}
 
         {/* ERROR */}
-
-        {error && (
+        {error && !isAddModalOpen && !isEditModalOpen && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
           </div>
         )}
 
         {/* TABLE */}
-
         <div className="flex-1 flex flex-col">
 
           <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
@@ -503,115 +774,102 @@ export default function CourseSectionsPage() {
 
               <tbody className="text-[14px] text-gray-800">
 
-                {/* LOADING */}
-
-                {loading ? (
+                {loadingSections ? (
 
                   <tr>
-
                     <td
                       colSpan={2}
-                      className="px-6 py-12 text-center border border-gray-200"
+                      className="px-6 py-10 text-center border border-gray-200"
                     >
-
                       <div className="flex items-center justify-center gap-2 text-gray-500">
-
                         <Loader2
                           size={20}
                           className="animate-spin"
                         />
-
                         Bo&apos;limlar yuklanmoqda...
-
                       </div>
-
                     </td>
-
                   </tr>
 
                 ) : paginatedSections.length > 0 ? (
 
-                  paginatedSections.map((section) => (
+                  paginatedSections.map(
+                    (section) => (
+                      <tr
+                        key={section.id}
+                        className="hover:bg-blue-50/30 transition-colors group"
+                      >
 
-                    <tr
-                      key={section.id}
-                      className="hover:bg-blue-50/30 transition-colors group"
-                    >
+                        {/* SECTION NAME */}
+                        <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
 
-                      {/* NAME */}
-
-                      <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
-
-                        <Link
-                          href={`/dashboard/courses/allCourses/${courseId}/sections/${section.id}/lessons`}
-                          className="hover:text-blue-600 transition-colors cursor-pointer block w-full"
-                        >
-                          {section.name}
-                        </Link>
-
-                      </td>
-
-                      {/* ACTIONS */}
-
-                      <td className="px-6 py-4 text-right border border-gray-200">
-
-                        <div className="flex items-center justify-end gap-3 text-gray-400">
-
-                          {/* EDIT */}
-
-                          <button
-                            onClick={() => {
-                              clearMessages();
-
-                              setEditingSection({
-                                ...section,
-                              });
-
-                              setIsEditModalOpen(true);
-                            }}
-                            className="p-1 hover:text-blue-600 transition-colors"
-                            title="Tahrirlash"
+                          <Link
+                            href={`/dashboard/courses/allCourses/${courseId}/sections/${section.id}/lessons`}
+                            className="hover:text-blue-600 transition-colors cursor-pointer block w-full"
                           >
-                            <Pen size={16} />
-                          </button>
+                            {section.name}
+                          </Link>
 
-                          {/* DELETE */}
+                        </td>
 
-                          <button
-                            onClick={() => {
-                              clearMessages();
+                        {/* ACTIONS */}
+                        <td className="px-6 py-4 text-right border border-gray-200">
 
-                              setDeletingSectionId(
-                                section.id
-                              );
+                          <div className="flex items-center justify-end gap-3 text-gray-400">
 
-                              setIsDeleteModalOpen(true);
-                            }}
-                            className="p-1 hover:text-red-500 transition-colors"
-                            title="O'chirish"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                            {/* EDIT */}
+                            <button
+                              onClick={() => {
+                                clearMessages();
 
-                        </div>
+                                setEditingSection({
+                                  ...section,
+                                });
 
-                      </td>
+                                setIsEditModalOpen(true);
+                              }}
+                              className="p-1 hover:text-blue-600 transition-colors"
+                              title="Tahrirlash"
+                            >
+                              <Pen size={16} />
+                            </button>
 
-                    </tr>
+                            {/* DELETE */}
+                            <button
+                              onClick={() => {
+                                clearMessages();
 
-                  ))
+                                setDeletingSectionId(
+                                  section.id
+                                );
+
+                                setIsDeleteModalOpen(
+                                  true
+                                );
+                              }}
+                              className="p-1 hover:text-red-500 transition-colors"
+                              title="O'chirish"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+
+                          </div>
+
+                        </td>
+
+                      </tr>
+                    )
+                  )
 
                 ) : (
 
                   <tr>
-
                     <td
                       colSpan={2}
                       className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white"
                     >
                       Bo&apos;limlar mavjud emas
                     </td>
-
                   </tr>
 
                 )}
@@ -623,7 +881,6 @@ export default function CourseSectionsPage() {
           </div>
 
           {/* PAGINATION */}
-
           <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl px-2 py-1 shadow-sm">
 
             <Pagination
@@ -644,14 +901,14 @@ export default function CourseSectionsPage() {
           </div>
 
         </div>
-
       </div>
 
       {/* ======================================================
           ADD / EDIT MODAL
       ====================================================== */}
 
-      {(isAddModalOpen || isEditModalOpen) && (
+      {(isAddModalOpen ||
+        isEditModalOpen) && (
 
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
@@ -660,11 +917,12 @@ export default function CourseSectionsPage() {
 
           <div
             className="bg-white rounded-2xl shadow-xl w-full max-w-[480px] flex flex-col animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
 
-            {/* MODAL HEADER */}
-
+            {/* HEADER */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
 
               <h2 className="text-xl font-bold text-gray-900">
@@ -673,7 +931,7 @@ export default function CourseSectionsPage() {
 
                 {isEditModalOpen
                   ? "tahrirlash"
-                  : "qo&apos;shish"}
+                  : "qo'shish"}
 
               </h2>
 
@@ -687,12 +945,10 @@ export default function CourseSectionsPage() {
 
             </div>
 
-            {/* MODAL BODY */}
-
+            {/* BODY */}
             <div className="p-6 space-y-4">
 
               {/* COURSE */}
-
               <div>
 
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">
@@ -709,7 +965,6 @@ export default function CourseSectionsPage() {
               </div>
 
               {/* SECTION NAME */}
-
               <div>
 
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">
@@ -732,14 +987,18 @@ export default function CourseSectionsPage() {
                       isEditModalOpen &&
                       editingSection
                     ) {
+
                       setEditingSection({
                         ...editingSection,
                         name: e.target.value,
                       });
+
                     } else {
+
                       setNewSectionName(
                         e.target.value
                       );
+
                     }
 
                   }}
@@ -765,15 +1024,15 @@ export default function CourseSectionsPage() {
               </div>
 
               {/* MODAL ERROR */}
-
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                  {error}
+                  {Array.isArray(error)
+                    ? error.join(", ")
+                    : error}
                 </div>
               )}
 
               {/* SAVE */}
-
               <button
                 disabled={saving}
                 onClick={
@@ -799,6 +1058,7 @@ export default function CourseSectionsPage() {
 
                   <>
                     <Check size={18} />
+
                     Saqlash
                   </>
 
@@ -832,8 +1092,6 @@ export default function CourseSectionsPage() {
             }
           >
 
-            {/* ICON */}
-
             <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-5">
 
               <div className="w-16 h-16 bg-red-500 text-white rounded-full flex items-center justify-center text-3xl font-bold">
@@ -847,15 +1105,11 @@ export default function CourseSectionsPage() {
             </h2>
 
             <p className="text-sm text-gray-500 mb-8">
-              Bu bo&apos;lim o&apos;chirilgandan keyin
-              qayta tiklab bo&apos;lmaydi.
+              Bu bo&apos;lim o&apos;chirilgandan
+              keyin qayta tiklab bo&apos;lmaydi.
             </p>
 
-            {/* BUTTONS */}
-
             <div className="flex items-center justify-center gap-4 w-full">
-
-              {/* CANCEL */}
 
               <button
                 disabled={deleting}
@@ -864,8 +1118,6 @@ export default function CourseSectionsPage() {
               >
                 Bekor qilish
               </button>
-
-              {/* DELETE */}
 
               <button
                 disabled={deleting}
