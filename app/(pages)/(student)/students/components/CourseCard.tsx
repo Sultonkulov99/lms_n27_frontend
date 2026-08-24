@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { User } from "lucide-react";
 interface CourseCardProps {
   id: number;
   title: string;
@@ -48,14 +49,20 @@ export default function CourseCard({
         {/* Instructor */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Image
-              src={instructorAvatar}
-              alt={instructor}
-              width={25}
-              height={25}
-              unoptimized
-              className="rounded-full object-cover h-[25px] w-[25px]"
-            />
+            {instructorAvatar ? (
+              <Image
+                src={instructorAvatar}
+                alt={instructor}
+                width={25}
+                height={25}
+                unoptimized
+                className="rounded-full object-cover h-[25px] w-[25px]"
+              />
+            ) : (
+              <div className="flex h-[25px] w-[25px] items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-gray-400">
+                <User size={14} />
+              </div>
+            )}
             <span className="text-xs font-medium text-[#64748B]">{instructor}</span>
           </div>
           <button

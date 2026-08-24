@@ -94,7 +94,7 @@ export default function StudentMain() {
             const instructorName = courseUser?.fullName || "Noma'lum Mentor";
             const instructorAvatar = courseUser?.file 
               ? `${process.env.NEXT_PUBLIC_API_URL}${courseUser.file}` 
-              : "/oybeksafarov.png";
+              : "";
             const thumbnailUrl = item.course.thumbnail 
               ? `${process.env.NEXT_PUBLIC_API_URL}${item.course.thumbnail}`
               : "/bolakay.png";
