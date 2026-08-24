@@ -24,3 +24,13 @@ export async function getStudents(): Promise<Student[]> {
   const { data } = await baseAPI.get("/students");
   return unwrapList<Student>(data);
 }
+
+export async function getStudentCourseDetails(courseId: number | string): Promise<any> {
+  const { data } = await baseAPI.get(`/students/my-courses/${courseId}`);
+  return data;
+}
+
+export async function postCourseComment(courseId: number, text: string, parentId?: number): Promise<any> {
+  const { data } = await baseAPI.post('/course-comments', { courseId, text, parentId });
+  return data;
+}

@@ -5,12 +5,24 @@ import Image, { StaticImageData } from "next/image";
 
 type TabId = "qa" | "materials" | "tasks" | "exams";
 
+export type Reply = {
+  id: string;
+  name: string;
+  role?: string;
+  text: string;
+  date: string;
+  avatarColor: string;
+  nameColor: string;
+};
+
 export type Question = {
   id: string;
   name: string;
-  avatar: StaticImageData;
   text: string;
-  likes: number;
+  date: string;
+  avatarColor: string;
+  nameColor: string;
+  replies?: Reply[];
 };
 
 export type Material = {
@@ -71,6 +83,9 @@ export default function LessonPlayer({
   exams = [],
   onNextLesson,
   videoUrl,
+  onSubmitQuestion,
+  onSubmitReply,
+  hasNextLesson,
 }: {
   title: string;
   thumbnail?: StaticImageData;
@@ -80,8 +95,11 @@ export default function LessonPlayer({
   materials?: Material[];
   tasks?: Task[];
   exams?: Exam[];
+  hasNextLesson?: boolean;
   onNextLesson?: () => void;
   videoUrl?: string;
+  onSubmitQuestion?: (text: string) => Promise<void>;
+  onSubmitReply?: (parentId: string, text: string) => Promise<void>;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("qa");
   const [rating, setRating] = useState(0);
@@ -100,6 +118,12 @@ export default function LessonPlayer({
   const [quality, setQuality] = useState("auto");
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showSpeed, setShowSpeed] = useState(false);
+  const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
+  const [questionText, setQuestionText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState("");
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
@@ -257,7 +281,7 @@ export default function LessonPlayer({
         <h2 className="text-base font-bold text-[#1a1a1a]">{title}</h2>
         <button 
           onClick={onNextLesson}
-          className="shrink-0 bg-[#4F7FFF] hover:bg-[#3D6EEE] transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg"
+          className="shrink-0 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg"
         >
           Keyingi dars
         </button>
@@ -501,7 +525,7 @@ export default function LessonPlayer({
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
               activeTab === tab.id
-                ? "bg-[#4F7FFF] text-white shadow-sm"
+                ? "bg-blue-600 text-white shadow-sm"
                 : "text-[#64748B] hover:text-[#1a1a1a] hover:bg-gray-50"
             }`}
           >
@@ -520,84 +544,89 @@ export default function LessonPlayer({
                 Savollar: {questionsCount} ta • Javoblar: {totalAnswers ?? 9} ta
               </p>
             </div>
-            <button className="shrink-0 bg-[#4F7FFF] hover:bg-[#3D6EEE] transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg">
-              Savol so&apos;rash
+            <button 
+              onClick={() => setIsQuestionModalOpen(true)}
+              className="shrink-0 bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg"
+            >
+              Savol so'rash
             </button>
           </div>
 
-          <h4 className="text-sm font-semibold text-[#1a1a1a] mb-4">Barcha savollar</h4>
+          <h4 className="text-sm font-semibold text-[#1a1a1a] mb-6">Barcha savollar</h4>
 
           <div className="flex flex-col gap-6">
             {questions.map((q) => {
-              const isLiked = likedQuestions.has(q.id);
-              const isDisliked = dislikedQuestions.has(q.id);
-              const displayLikes = isLiked ? q.likes + 1 : q.likes;
-              
               return (
-                <div key={q.id} className="flex gap-3.5">
-                  <div className="shrink-0">
-                    <Image
-                      src={q.avatar}
-                      alt={q.name}
-                      width={48}
-                      height={48}
-                      className="rounded-xl object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-[#4F7FFF] mb-1.5">{q.name}</p>
-                    <p className="text-sm text-[#1a1a1a] leading-relaxed mb-3">{q.text}</p>
-                    <div className="flex items-center gap-4 text-sm">
-                      {/* Like */}
+                <div key={q.id} className="flex flex-col gap-4">
+                  {/* Question */}
+                  <div className="flex gap-4">
+                    <div className="shrink-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold text-lg ${q.avatarColor}`}>
+                        {q.name.charAt(0).toUpperCase()}
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-sm font-bold mb-1 ${q.nameColor}`}>{q.name}</p>
+                      <p className="text-sm text-[#1a1a1a] leading-relaxed mb-1">{q.text}</p>
+                      <p className="text-xs text-gray-400 font-medium mb-2">{q.date}</p>
                       <button 
-                        onClick={() => handleLikeQuestion(q.id)}
-                        className={`flex items-center gap-1.5 transition-colors ${
-                          isLiked ? "text-[#4F7FFF]" : "text-[#64748B] hover:text-[#1a1a1a]"
-                        }`}
-                        aria-label="Like"
+                        onClick={() => setReplyingTo(replyingTo === q.id ? null : q.id)}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                       >
-                        <svg 
-                          width="18" 
-                          height="18" 
-                          viewBox="0 0 24 24" 
-                          fill={isLiked ? "currentColor" : "none"}
-                          stroke="currentColor" 
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3" />
-                        </svg>
-                        <span className="font-medium">{displayLikes}</span>
-                      </button>
-                      
-                      {/* Dislike */}
-                      <button 
-                        onClick={() => handleDislikeQuestion(q.id)}
-                        className={`flex items-center gap-1.5 transition-colors ${
-                          isDisliked ? "text-[#EF4444]" : "text-[#64748B] hover:text-[#1a1a1a]"
-                        }`}
-                        aria-label="Dislike"
-                      >
-                        <svg 
-                          width="18" 
-                          height="18" 
-                          viewBox="0 0 24 24" 
-                          fill={isDisliked ? "currentColor" : "none"}
-                          stroke="currentColor" 
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17" />
-                        </svg>
-                      </button>
-                      
-                      <button className="text-[#64748B] hover:text-[#4F7FFF] transition-colors font-medium">
                         Javob berish
                       </button>
                     </div>
                   </div>
+                  
+                  {/* Reply Input Box */}
+                  {replyingTo === q.id && (
+                    <div className="ml-14 flex gap-3 items-start">
+                      <textarea 
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder="Javobingizni yozing..."
+                        className="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm text-[#1a1a1a] focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none min-h-[60px]"
+                      />
+                      <button 
+                        disabled={isSubmitting || !replyText.trim()}
+                        onClick={async () => {
+                          if (onSubmitReply) {
+                            setIsSubmitting(true);
+                            await onSubmitReply(q.id, replyText);
+                            setIsSubmitting(false);
+                            setReplyText("");
+                            setReplyingTo(null);
+                          }
+                        }}
+                        className="shrink-0 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Yuborish
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Replies */}
+                  {q.replies && q.replies.length > 0 && (
+                    <div className="ml-14 flex flex-col gap-4">
+                      {q.replies.map((reply) => (
+                        <div key={reply.id} className="flex gap-4">
+                          <div className="shrink-0">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${reply.avatarColor}`}>
+                              {reply.name.charAt(0).toUpperCase()}
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1 bg-[#F8FAFC] rounded-lg p-4 border border-gray-100">
+                            <p className="text-sm font-bold mb-1">
+                              <span className={reply.nameColor}>{reply.name}</span>
+                              {reply.role && <span className="text-gray-400 font-normal ml-1">({reply.role})</span>}
+                            </p>
+                            <p className="text-sm text-[#1a1a1a] leading-relaxed mb-1">{reply.text}</p>
+                            <p className="text-xs text-gray-400 font-medium">{reply.date}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -673,7 +702,7 @@ export default function LessonPlayer({
                   <p className="text-sm text-[#64748B] mb-1">O'zlashtirgan ball: <span className="text-[#1a1a1a] font-medium">5</span></p>
                 </div>
               </div>
-              <button className="bg-[#4F7FFF] hover:bg-[#3D6EEE] transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg">
+              <button className="bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-medium px-5 py-2.5 rounded-lg">
                 Testni boshlash
               </button>
               <div className="mt-6 space-y-2">
@@ -716,7 +745,7 @@ export default function LessonPlayer({
                 <div className="mb-6">
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-[#4F7FFF] transition-all duration-300"
+                      className="h-full bg-blue-600 transition-all duration-300"
                       style={{ width: `${(exams[0].currentQuestion / exams[0].totalQuestions) * 100}%` }}
                     />
                   </div>
@@ -734,14 +763,14 @@ export default function LessonPlayer({
                         onClick={() => setSelectedAnswer(index)}
                         className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                           selectedAnswer === index
-                            ? "border-[#4F7FFF] bg-blue-50"
+                            ? "border-blue-600 bg-blue-50"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
                         <div className="flex items-start gap-3">
                           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
                             selectedAnswer === index
-                              ? "border-[#4F7FFF] bg-[#4F7FFF]"
+                              ? "border-blue-600 bg-blue-600"
                               : "border-gray-300"
                           }`}>
                             {selectedAnswer === index && (
@@ -761,7 +790,7 @@ export default function LessonPlayer({
                   </button>
                   <button 
                     onClick={() => setShowExamResult(true)}
-                    className="px-5 py-2.5 text-sm font-medium text-white bg-[#4F7FFF] rounded-lg hover:bg-[#3D6EEE] transition-colors"
+                    className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Keyingi
                   </button>
@@ -782,6 +811,60 @@ export default function LessonPlayer({
           ) : (
             <div className="py-10 text-center text-sm text-[#64748B]">Imtihonlar mavjud emas</div>
           )}
+        </div>
+      )}
+
+      {/* Modal */}
+      {isQuestionModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 shadow-xl relative">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-[#1a1a1a]">Savol so'rash</h2>
+              <button 
+                onClick={() => setIsQuestionModalOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Savol matni</label>
+              <textarea 
+                value={questionText}
+                onChange={(e) => setQuestionText(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg p-3 min-h-[120px] text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
+                placeholder="Kiriting"
+              />
+            </div>
+
+            <button className="flex items-center gap-2 text-sm text-[#1a1a1a] border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50 transition-colors mb-6">
+              Fayl biriktirish (ixtiyoriy)
+            </button>
+
+            <button 
+              disabled={isSubmitting || !questionText.trim()}
+              onClick={async () => {
+                if (onSubmitQuestion) {
+                  setIsSubmitting(true);
+                  await onSubmitQuestion(questionText);
+                  setIsSubmitting(false);
+                  setQuestionText("");
+                  setIsQuestionModalOpen(false);
+                }
+              }}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors text-white text-sm font-medium px-6 py-2.5 rounded-lg"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              Yuborish
+            </button>
+          </div>
         </div>
       )}
     </div>
