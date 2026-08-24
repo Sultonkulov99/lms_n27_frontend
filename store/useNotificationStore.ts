@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
-import { baseAPI } from "@/app/lib/utils";
+import { baseAPI, getToken } from "@/app/lib/utils";
 
 export interface Notification {
   id: number;
@@ -8,6 +8,7 @@ export interface Notification {
   message: string;
   type: string;
   isRead: boolean;
+  link?: string;
   created_at: string;
 }
 
@@ -50,14 +51,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   },
 
   connectSocket: () => {
-    const currentSocket = get().socket;
-    if (currentSocket) return;
+    const { socket } = get();
+    if (socket) return; // Already initialized
 
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"; // Assuming backend is on port 3000
-    const newSocket = io(socketUrl);
+    const token = getToken("accessToken");
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
+    const newSocket = io(socketUrl, {
+      transports: ["websocket"],
+      auth: { token },
+    });
 
     newSocket.on("connect", () => {
-      console.log("WebSocket connected for notifications");
+      console.log("Connected to notifications socket");
+      newSocket.emit("join_notifications");
     });
 
     newSocket.on("newNotification", (notification: Notification) => {

@@ -2,6 +2,9 @@
 
 import { useState, useRef, useEffect } from "react";
 import Image, { StaticImageData } from "next/image";
+import { motion } from "framer-motion";
+import { usePresenceStore } from "@/store/usePresenceStore";
+import { useExamStore } from "@/store/useExamStore";
 
 type TabId = "qa" | "materials" | "tasks" | "exams";
 
@@ -73,6 +76,7 @@ function formatTime(seconds: number): string {
 }
 
 export default function LessonPlayer({
+  lessonId,
   title,
   thumbnail,
   totalQuestions,
@@ -87,6 +91,7 @@ export default function LessonPlayer({
   onSubmitReply,
   hasNextLesson,
 }: {
+  lessonId?: string;
   title: string;
   thumbnail?: StaticImageData;
   totalQuestions?: number;
@@ -130,6 +135,37 @@ export default function LessonPlayer({
   const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const questionsCount = totalQuestions ?? questions.length;
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  
+  const { connectSocket: connectPresence, emitVideoProgress } = usePresenceStore();
+  const { connectSocket: connectExam, startExam, emitExamTick } = useExamStore();
+
+  useEffect(() => {
+    connectPresence();
+    connectExam();
+  }, [connectPresence, connectExam]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying && lessonId) {
+      interval = setInterval(() => {
+        emitVideoProgress(Number(lessonId), progress, currentTime);
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, progress, currentTime, lessonId, emitVideoProgress]);
+
+  // Exam tick heartbeat
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (activeTab === "exams" && exams.length > 0) {
+      startExam(1, Number(lessonId) || 0); // Mock attemptId
+      interval = setInterval(() => {
+        emitExamTick(1, 1500, exams[0].currentQuestion || 1); // Mock data
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [activeTab, exams, lessonId, startExam, emitExamTick]);
 
   useEffect(() => {
     const video = videoRef.current;
