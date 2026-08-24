@@ -6,7 +6,6 @@ import {
   PanelLeftClose,
   Users,
   BookOpen,
-  ChevronLeft,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -146,7 +145,7 @@ export default function MentorSidebar() {
                         : "text-gray-400 hover:text-white hover:bg-white/5"
                     }`}
                   >
-                    O'quvchilarim
+                    O&apos;quvchilarim
                   </Link>
                 </div>
               </div>
@@ -163,8 +162,14 @@ export default function MentorSidebar() {
                     setIsMaterialsOpen(!isMaterialsOpen);
                   }
                 }}
-                className={`w-full flex items-center justify-between py-2.5 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg group transition-all overflow-hidden cursor-pointer ${
+                className={`w-full flex items-center justify-between py-2.5 rounded-lg group transition-all overflow-hidden cursor-pointer ${
                   isOpen ? "px-3" : "justify-center px-0"
+                } ${
+                  pathname.includes("/mentor/courses") ||
+                  pathname.includes("/mentor/qa") ||
+                  pathname.includes("/mentor/homeworks")
+                    ? "text-white"
+                    : "text-gray-400 hover:bg-white/5 hover:text-white"
                 }`}
                 title="Materiallar"
               >
@@ -202,7 +207,8 @@ export default function MentorSidebar() {
                     { name: "Savol-javoblar", href: "/mentor/qa" },
                     { name: "Uyga vazifalar", href: "/mentor/homeworks" },
                   ].map((link) => {
-                    const isActive = pathname === link.href;
+                    const isActive =
+                      pathname === link.href || pathname.startsWith(`${link.href}/`);
                     return (
                       <Link
                         key={link.name}

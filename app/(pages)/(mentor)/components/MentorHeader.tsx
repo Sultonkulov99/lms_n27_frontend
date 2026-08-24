@@ -12,12 +12,20 @@ import {
   User,
 } from "lucide-react";
 import { useMentorStore } from "@/store/useMentorStore";
+import { removeToken } from "@/app/lib/utils";
 
 export default function MentorHeader() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
   
   const { fullName, profileImage } = useMentorStore();
+
+  const handleLogout = () => {
+    removeToken("accessToken");
+    removeToken("refreshToken");
+    localStorage.removeItem("user");
+    window.location.href = "/?clear_auth=true";
+  };
   
   const languages = [
     { code: "uz", name: "O'zbek tili", flag: "🇺🇿" },
@@ -143,7 +151,10 @@ export default function MentorHeader() {
               </div>
               <ChevronRight size={16} className="text-gray-400" />
             </button>
-            <button className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors mt-1 border-t border-gray-50 cursor-pointer">
+            <button
+              onClick={handleLogout}
+              className="w-full px-4 py-2.5 flex items-center justify-between text-sm text-gray-700 hover:bg-gray-50 transition-colors mt-1 border-t border-gray-50 cursor-pointer"
+            >
               <div className="flex items-center gap-2.5">
                 <LogOut size={16} className="text-gray-400" />
                 <span className="font-medium">Tizimdan chiqish</span>
