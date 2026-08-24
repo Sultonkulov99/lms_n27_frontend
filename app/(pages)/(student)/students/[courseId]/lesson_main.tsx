@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Topbar from "../components/Topbar";
-import Sidebar from "../components/Sidebar";
 import CourseSidebar from "../components/CourseSidebar";
 import LessonPlayer, { Question, Material, Task, Exam } from "../components/LessonPlayer";
-import ismatxurshidov from "../../../../assets/ismatxurshidov.png";
 
-// Darslar ro'yxati
+// Darslar ro'yxati (MOCK)
 const lessons = [
   { id: "l1", title: "IT Live akademiyasi haqida", duration: "10 daqiqa" },
   { id: "l2", title: "Frontend dasturlash nima?", duration: "10 daqiqa" },
@@ -62,71 +59,97 @@ const exams: Exam[] = [
   },
 ];
 
-export default function LessonMain() {
+export default function LessonMain({ courseId }: { courseId?: string }) {
   const [activeLessonId, setActiveLessonId] = useState("l3");
-
-  const questions: Question[] = [
+  const [questions, setQuestions] = useState<Question[]>([
     {
       id: "q1",
-      name: "Xurshid Istamov",
-      avatar: ismatxurshidov,
-      text: "Assalomu aleykum. Jonli efir yaxshi bo'yapti. Faqat ovoz yaxshi eshitilmayapti!",
-      likes: 125,
-    },
-    {
-      id: "q2",
-      name: "Sardor Rahimov",
-      avatar: ismatxurshidov,
-      text: "Zo'r tushuntirasiz! Keyingi darsni kutib qolamiz. Rahmat sizga!",
-      likes: 89,
-    },
-    {
-      id: "q3",
-      name: "Dilshod Karimov",
-      avatar: ismatxurshidov,
-      text: "Bu mavzuni batafsil tushuntirib bera olasizmi? Juda qiziqarli mavzu ekan",
-      likes: 45,
-    },
-  ];
-
-  const currentLesson = lessons.find((l) => l.id === activeLessonId);
-  const currentIndex = lessons.findIndex((l) => l.id === activeLessonId);
+      name: "Alisher",
+      text: "Assalomu alaykum yaxshimisiz? css bu nima",
+      date: "12.08.2026 15:39",
+      avatarColor: "bg-blue-600",
+      nameColor: "text-[#1a1a1a]",
+      replies: [
+        {
+          id: "r1",
+          name: "Oydin",
+          role: "mentor",
+          text: "cascading style shits",
+          date: "12.08.2026 15:45",
+          avatarColor: "bg-[#1E293B]",
+          nameColor: "text-blue-600",
+        }
+      ]
+    }
+  ]);
 
   const handleNextLesson = () => {
+    const currentIndex = lessons.findIndex((l) => l.id === activeLessonId);
     if (currentIndex < lessons.length - 1) {
       setActiveLessonId(lessons[currentIndex + 1].id);
     }
   };
 
-  return (
-    <div className="flex h-screen bg-[#F8FAFC]">
-      <Sidebar />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar />
+  const handleQuestionSubmit = async (text: string) => {
+    const newQuestion: Question = {
+      id: `q${Date.now()}`,
+      name: "Siz (Mock)",
+      text,
+      date: new Date().toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+      avatarColor: "bg-blue-600",
+      nameColor: "text-[#1a1a1a]",
+      replies: []
+    };
+    setQuestions(prev => [...prev, newQuestion]);
+  };
 
-        <main className="flex-1 overflow-hidden bg-[#F8FAFC] p-6">
-          <div className="flex gap-5 items-start h-full max-w-[1600px] mx-auto">
-            <CourseSidebar 
-              courseTitle="Frontend dasturlash" 
-              activeLessonId={activeLessonId}
-              onLessonChange={setActiveLessonId}
-            />
-            <div className="flex-1 overflow-y-auto h-full">
-              <LessonPlayer
-                title={currentLesson?.title || "Nimadan boshlash kerak?"}
-                totalQuestions={questions.length}
-                totalAnswers={12}
-                questions={questions}
-                materials={materials}
-                tasks={tasks}
-                exams={exams}
-                onNextLesson={handleNextLesson}
-                videoUrl="/video_2026-08-10_11-15-10.mp4"
-              />
-            </div>
-          </div>
-        </main>
+  const handleReplySubmit = async (parentId: string, text: string) => {
+    setQuestions(prev => prev.map(q => {
+      if (q.id === parentId) {
+        return {
+          ...q,
+          replies: [
+            ...(q.replies || []),
+            {
+              id: `r${Date.now()}`,
+              name: "Siz (Mock)",
+              text,
+              date: new Date().toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+              avatarColor: "bg-blue-600",
+              nameColor: "text-[#1a1a1a]",
+            }
+          ]
+        };
+      }
+      return q;
+    }));
+  };
+
+  const currentLesson = lessons.find((l) => l.id === activeLessonId);
+  const currentIndex = lessons.findIndex((l) => l.id === activeLessonId);
+
+  return (
+    <div className="flex gap-5 items-start h-full max-w-[1600px] mx-auto">
+      <CourseSidebar 
+        courseTitle="Frontend dasturlash (Mock)" 
+        activeLessonId={activeLessonId}
+        onLessonChange={setActiveLessonId}
+      />
+      <div className="flex-1 overflow-y-auto h-full relative">
+        <LessonPlayer
+          title={currentLesson?.title || "Nimadan boshlash kerak?"}
+          totalQuestions={questions.length}
+          totalAnswers={questions.reduce((acc, q) => acc + (q.replies?.length || 0), 0)}
+          questions={questions}
+          materials={materials}
+          tasks={tasks}
+          exams={exams}
+          onNextLesson={handleNextLesson}
+          hasNextLesson={currentIndex >= 0 && currentIndex < lessons.length - 1}
+          videoUrl={"/video_2026-08-10_11-15-10.mp4"}
+          onSubmitQuestion={handleQuestionSubmit}
+          onSubmitReply={handleReplySubmit}
+        />
       </div>
     </div>
   );
