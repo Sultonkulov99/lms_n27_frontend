@@ -31,6 +31,13 @@ import { baseAPI } from "@/app/lib/utils";
    TYPES
 ========================================================= */
 
+interface Course {
+  id: number;
+  name?: string;
+  title?: string;
+  description?: string;
+}
+
 interface Lesson {
   id: number;
   sectionId: number;
@@ -53,6 +60,16 @@ interface LessonForm {
   file: File | null;
 }
 
+interface ApiError {
+  response?: {
+    status?: number;
+    data?: {
+      message?: string | string[];
+    };
+  };
+  message?: string;
+}
+
 /* =========================================================
    COMPONENT
 ========================================================= */
@@ -62,13 +79,10 @@ export default function LessonsPage() {
      PARAMS
   ======================================================= */
 
-  const params = useParams<{
-    id: string;
-    sectionId: string;
-  }>();
+  const params = useParams();
 
-  const courseId = params?.id;
-  const sectionId = params?.sectionId;
+  const courseId = params?.id as string;
+  const sectionId = params?.sectionId as string;
 
   /* =======================================================
      COURSE STORE
@@ -76,25 +90,30 @@ export default function LessonsPage() {
 
   const { courses } = useCourseStore();
 
-  const currentCourse = courses.find(
-    (course) =>
-      Number(course.id) === Number(courseId)
-  );
+  /* =======================================================
+     CURRENT COURSE
+  ======================================================= */
 
-  const courseTitle =
-    currentCourse?.title ||
-    currentCourse?.name ||
-    "Kurs";
+  const [currentCourse, setCurrentCourse] =
+    useState<Course | null>(null);
 
   /* =======================================================
-     STATES
+     SECTION
   ======================================================= */
 
   const [section, setSection] =
     useState<Section | null>(null);
 
+  /* =======================================================
+     LESSONS
+  ======================================================= */
+
   const [lessons, setLessons] =
     useState<Lesson[]>([]);
+
+  /* =======================================================
+     STATES
+  ======================================================= */
 
   const [loading, setLoading] =
     useState(true);
@@ -165,6 +184,15 @@ export default function LessonsPage() {
     useRef<HTMLInputElement>(null);
 
   /* =========================================================
+     COURSE TITLE
+  ========================================================= */
+
+  const courseTitle =
+    currentCourse?.name ||
+    currentCourse?.title ||
+    "Kurs";
+
+  /* =========================================================
      GET ARRAY DATA
   ========================================================= */
 
@@ -192,130 +220,276 @@ export default function LessonsPage() {
   );
 
   /* =========================================================
+     GET CURRENT COURSE
+     
+     BO'LIMLAR KODIDAGI ISHLAYOTGAN LOGIKA
+  ========================================================= */
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const findCourse = async () => {
+      try {
+        const numericCourseId =
+          Number(courseId);
+
+        if (!numericCourseId) {
+          return;
+        }
+
+        /* -----------------------------------------------
+           1. AVVAL STORE'DAN QIDIRAMIZ
+        ------------------------------------------------ */
+
+        const storeCourse = courses.find(
+          (course: any) =>
+            Number(course.id) ===
+            numericCourseId
+        );
+
+        if (storeCourse) {
+          if (!cancelled) {
+            setCurrentCourse(storeCourse);
+          }
+
+          return;
+        }
+
+        /* -----------------------------------------------
+           2. STORE'DA YO'Q BO'LSA API'DAN OLAMIZ
+        ------------------------------------------------ */
+
+        console.log(
+          "COURSE STORE'DA TOPILMADI. API'DAN OLINMOQDA:",
+          numericCourseId
+        );
+
+        const response =
+          await baseAPI.get("/courses");
+
+        if (cancelled) {
+          return;
+        }
+
+        const data =
+          Array.isArray(response.data)
+            ? response.data
+            : response.data?.data || [];
+
+        console.log(
+          "ALL COURSES:",
+          data
+        );
+
+        const selectedCourse =
+          data.find(
+            (course: Course) =>
+              Number(course.id) ===
+              numericCourseId
+          );
+
+        console.log(
+          "CURRENT COURSE:",
+          selectedCourse
+        );
+
+        if (selectedCourse) {
+          setCurrentCourse(
+            selectedCourse
+          );
+        } else {
+          setCurrentCourse(null);
+
+          console.warn(
+            "KURS TOPILMADI:",
+            numericCourseId
+          );
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error(
+            "COURSE GET ERROR:",
+            error
+          );
+        }
+      }
+    };
+
+    findCourse();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, courses]);
+
+  /* =========================================================
      GET SECTION
   ========================================================= */
 
-  const fetchSection = useCallback(async () => {
-    if (!courseId || !sectionId) return;
+  const fetchSection = useCallback(
+    async () => {
+      if (!courseId || !sectionId) {
+        return;
+      }
 
-    try {
-      const response =
-        await baseAPI.get("/sections");
+      try {
+        const numericCourseId =
+          Number(courseId);
 
-      const sections =
-        getArrayData(response.data);
+        const numericSectionId =
+          Number(sectionId);
 
-      const currentSection =
-        sections.find(
-          (item: Section) =>
-            Number(item.id) ===
-              Number(sectionId) &&
-            Number(item.courseId) ===
-              Number(courseId)
-        );
-
-      if (currentSection) {
-        setSection(currentSection);
-      } else {
-        setSection(null);
-
-        console.warn(
-          "SECTION TOPILMADI",
+        console.log(
+          "GET SECTION:",
           {
-            courseId,
-            sectionId,
+            courseId:
+              numericCourseId,
+            sectionId:
+              numericSectionId,
           }
         );
+
+        const response =
+          await baseAPI.get("/sections");
+
+        const sections =
+          getArrayData(response.data);
+
+        console.log(
+          "ALL SECTIONS:",
+          sections
+        );
+
+        const currentSection =
+          sections.find(
+            (item: Section) =>
+              Number(item.id) ===
+                numericSectionId &&
+              Number(item.courseId) ===
+                numericCourseId
+          );
+
+        console.log(
+          "CURRENT SECTION:",
+          currentSection
+        );
+
+        if (currentSection) {
+          setSection(
+            currentSection
+          );
+        } else {
+          setSection(null);
+
+          console.warn(
+            "SECTION TOPILMADI",
+            {
+              courseId,
+              sectionId,
+            }
+          );
+        }
+      } catch (error: any) {
+        console.error(
+          "GET SECTION ERROR:",
+          error?.response?.data ||
+            error?.message ||
+            error
+        );
       }
-    } catch (error: any) {
-      console.error(
-        "GET SECTION ERROR:",
-        error?.response?.data ||
-          error?.message ||
-          error
-      );
-    }
-  }, [
-    courseId,
-    sectionId,
-    getArrayData,
-  ]);
+    },
+    [
+      courseId,
+      sectionId,
+      getArrayData,
+    ]
+  );
 
   /* =========================================================
      GET LESSONS
   ========================================================= */
 
-  const fetchLessons = useCallback(async () => {
-    if (!sectionId) return;
-
-    try {
-      setLoading(true);
-      setApiError("");
-
-      const response =
-        await baseAPI.get("/lessons", {
-          params: {
-            sectionId: Number(sectionId),
-          },
-        });
-
-      console.log(
-        "GET LESSONS RESPONSE:",
-        response.data
-      );
-
-      const data =
-        getArrayData(response.data);
-
-      const filteredLessons =
-        data.filter(
-          (lesson: Lesson) =>
-            Number(lesson.sectionId) ===
-            Number(sectionId)
-        );
-
-      setLessons(filteredLessons);
-
-      /*
-       * Agar page o'zgarib ketgan bo'lsa,
-       * mavjud pagega qaytaramiz.
-       */
-
-      const totalPages =
-        Math.ceil(
-          filteredLessons.length /
-            itemsPerPage
-        );
-
-      if (
-        currentPage > totalPages &&
-        totalPages > 0
-      ) {
-        setCurrentPage(totalPages);
+  const fetchLessons =
+    useCallback(async () => {
+      if (!sectionId) {
+        return;
       }
-    } catch (error: any) {
-      console.error(
-        "GET LESSONS ERROR:",
-        error?.response?.data ||
-          error?.message ||
-          error
-      );
 
-      setApiError(
-        error?.response?.data?.message ||
-          "Darslarni olishda xatolik yuz berdi"
-      );
+      try {
+        setLoading(true);
+        setApiError("");
 
-      setLessons([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    sectionId,
-    getArrayData,
-    itemsPerPage,
-    currentPage,
-  ]);
+        const response =
+          await baseAPI.get(
+            "/lessons",
+            {
+              params: {
+                sectionId:
+                  Number(sectionId),
+              },
+            }
+          );
+
+        console.log(
+          "GET LESSONS RESPONSE:",
+          response.data
+        );
+
+        const data =
+          getArrayData(response.data);
+
+        const filteredLessons =
+          data.filter(
+            (lesson: Lesson) =>
+              Number(
+                lesson.sectionId
+              ) ===
+              Number(sectionId)
+          );
+
+        setLessons(
+          filteredLessons
+        );
+
+        const totalPages =
+          Math.ceil(
+            filteredLessons.length /
+              itemsPerPage
+          );
+
+        if (
+          currentPage >
+            totalPages &&
+          totalPages > 0
+        ) {
+          setCurrentPage(
+            totalPages
+          );
+        }
+      } catch (error: any) {
+        console.error(
+          "GET LESSONS ERROR:",
+          error?.response?.data ||
+            error?.message ||
+            error
+        );
+
+        setApiError(
+          error?.response?.data
+            ?.message ||
+            "Darslarni olishda xatolik yuz berdi"
+        );
+
+        setLessons([]);
+      } finally {
+        setLoading(false);
+      }
+    }, [
+      sectionId,
+      getArrayData,
+      itemsPerPage,
+      currentPage,
+    ]);
 
   /* =========================================================
      INITIAL LOAD
@@ -353,16 +527,19 @@ export default function LessonsPage() {
     setApiError("");
 
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value =
+        "";
     }
   };
 
   /* =========================================================
-     CLOSE MODALS
+     CLOSE ADD / EDIT MODAL
   ========================================================= */
 
   const closeAddEditModal = () => {
-    if (saving) return;
+    if (saving) {
+      return;
+    }
 
     setIsAddModalOpen(false);
     setIsEditModalOpen(false);
@@ -401,379 +578,239 @@ export default function LessonsPage() {
      CREATE LESSON
   ========================================================= */
 
-  const handleAddLesson = async () => {
-    const name =
-      newLesson.name.trim();
+  const handleAddLesson =
+    async () => {
+      const name =
+        newLesson.name.trim();
 
-    const description =
-      newLesson.description.trim();
+      const description =
+        newLesson.description.trim();
 
-    if (!name) {
-      setNameError(true);
-      return;
-    }
-
-    if (!sectionId) {
-      setApiError(
-        "Section ID topilmadi"
-      );
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setApiError("");
-
-      /*
-       * MUHIM:
-       *
-       * Backend multipart/form-data kutyapti.
-       *
-       * Fieldlar:
-       *
-       * sectionId
-       * name
-       * description
-       * file
-       *
-       * `video` yubormaymiz!
-       */
-
-      const formData = new FormData();
-
-      formData.append(
-        "sectionId",
-        String(Number(sectionId))
-      );
-
-      formData.append(
-        "name",
-        name
-      );
-
-      formData.append(
-        "description",
-        description
-      );
-
-      /*
-       * Video tanlangan bo'lsa,
-       * backenddagi field nomi `file`.
-       */
-
-      if (newLesson.file) {
-        formData.append(
-          "file",
-          newLesson.file
-        );
+      if (!name) {
+        setNameError(true);
+        return;
       }
 
-      console.log(
-        "CREATE LESSON FORM DATA:"
-      );
+      if (!sectionId) {
+        setApiError(
+          "Section ID topilmadi"
+        );
+        return;
+      }
 
-      console.log(
-        "sectionId:",
-        Number(sectionId)
-      );
+      try {
+        setSaving(true);
+        setApiError("");
 
-      console.log(
-        "name:",
-        name
-      );
+        const formData =
+          new FormData();
 
-      console.log(
-        "description:",
-        description
-      );
-
-      console.log(
-        "file:",
-        newLesson.file
-          ? newLesson.file.name
-          : "VIDEO TANLANMAGAN"
-      );
-
-      const response =
-        await baseAPI.post(
-          "/lessons",
-          formData
+        formData.append(
+          "sectionId",
+          String(
+            Number(sectionId)
+          )
         );
 
-      console.log(
-        "CREATE LESSON RESPONSE:",
-        response.data
-      );
+        formData.append(
+          "name",
+          name
+        );
 
-      /*
-       * Modalni yopamiz
-       */
+        formData.append(
+          "description",
+          description
+        );
 
-      setIsAddModalOpen(false);
+        if (newLesson.file) {
+          formData.append(
+            "file",
+            newLesson.file
+          );
+        }
 
-      resetForm();
+        const response =
+          await baseAPI.post(
+            "/lessons",
+            formData
+          );
 
-      /*
-       * Yangi lessonlarni qayta olamiz
-       */
+        console.log(
+          "CREATE LESSON RESPONSE:",
+          response.data
+        );
 
-      await fetchLessons();
-    } catch (error: any) {
-      console.error(
-        "CREATE LESSON ERROR:",
-        error?.response?.data ||
-          error?.message ||
-          error
-      );
+        setIsAddModalOpen(false);
 
-      console.error(
-        "STATUS:",
-        error?.response?.status
-      );
+        resetForm();
 
-      console.error(
-        "DATA:",
-        error?.response?.data
-      );
+        await fetchLessons();
+      } catch (error: any) {
+        console.error(
+          "CREATE LESSON ERROR:",
+          error?.response?.data ||
+            error?.message ||
+            error
+        );
 
-      console.error(
-        "URL:",
-        error?.config?.url
-      );
-
-      console.error(
-        "METHOD:",
-        error?.config?.method
-      );
-
-      setApiError(
-        error?.response?.data?.message ||
-          "Dars qo'shishda xatolik yuz berdi"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+        setApiError(
+          error?.response?.data
+            ?.message ||
+            "Dars qo'shishda xatolik yuz berdi"
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
 
   /* =========================================================
      UPDATE LESSON
   ========================================================= */
 
-  const handleEditLesson = async () => {
-    if (!editingLesson) {
-      return;
-    }
-
-    const name =
-      editingLesson.name.trim();
-
-    const description =
-      editingLesson.description.trim();
-
-    if (!name) {
-      setNameError(true);
-      return;
-    }
-
-    try {
-      setSaving(true);
-      setApiError("");
-
-      /*
-       * EDIT ham FormData.
-       *
-       * Backend:
-       * sectionId
-       * name
-       * description
-       * file
-       */
-
-      const formData = new FormData();
-
-      formData.append(
-        "sectionId",
-        String(Number(sectionId))
-      );
-
-      formData.append(
-        "name",
-        name
-      );
-
-      formData.append(
-        "description",
-        description
-      );
-
-      /*
-       * Agar yangi video tanlangan bo'lsa,
-       * file yuboramiz.
-       *
-       * Eski video o'z holicha qoladi.
-       */
-
-      if (
-        editingLesson.file &&
-        editingLesson.file.startsWith(
-          "blob:"
-        )
-      ) {
-        /*
-         * blob URL bo'lsa bu yangi browser
-         * file emas.
-         *
-         * Shu sababli bu yerda avtomatik
-         * yubormaymiz.
-         */
+  const handleEditLesson =
+    async () => {
+      if (!editingLesson) {
+        return;
       }
 
-      console.log(
-        "UPDATE LESSON:",
-        {
-          id: editingLesson.id,
-          sectionId,
-          name,
-          description,
-        }
-      );
+      const name =
+        editingLesson.name.trim();
 
-      const response =
-        await baseAPI.patch(
-          `/lessons/${editingLesson.id}`,
-          formData
+      const description =
+        editingLesson.description.trim();
+
+      if (!name) {
+        setNameError(true);
+        return;
+      }
+
+      if (!sectionId) {
+        setApiError(
+          "Section ID topilmadi"
+        );
+        return;
+      }
+
+      try {
+        setSaving(true);
+        setApiError("");
+
+        const formData =
+          new FormData();
+
+        formData.append(
+          "sectionId",
+          String(
+            Number(sectionId)
+          )
         );
 
-      console.log(
-        "UPDATE LESSON RESPONSE:",
-        response.data
-      );
+        formData.append(
+          "name",
+          name
+        );
 
-      setIsEditModalOpen(false);
+        formData.append(
+          "description",
+          description
+        );
 
-      resetForm();
+        const response =
+          await baseAPI.patch(
+            `/lessons/${editingLesson.id}`,
+            formData
+          );
 
-      await fetchLessons();
-    } catch (error: any) {
-      console.error(
-        "UPDATE LESSON ERROR:",
-        error?.response?.data ||
-          error?.message ||
-          error
-      );
+        console.log(
+          "UPDATE LESSON RESPONSE:",
+          response.data
+        );
 
-      console.error(
-        "STATUS:",
-        error?.response?.status
-      );
+        setIsEditModalOpen(false);
 
-      console.error(
-        "DATA:",
-        error?.response?.data
-      );
+        resetForm();
 
-      setApiError(
-        error?.response?.data?.message ||
-          "Darsni tahrirlashda xatolik yuz berdi"
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+        await fetchLessons();
+      } catch (error: any) {
+        console.error(
+          "UPDATE LESSON ERROR:",
+          error?.response?.data ||
+            error?.message ||
+            error
+        );
+
+        setApiError(
+          error?.response?.data
+            ?.message ||
+            "Darsni tahrirlashda xatolik yuz berdi"
+        );
+      } finally {
+        setSaving(false);
+      }
+    };
 
   /* =========================================================
      DELETE LESSON
   ========================================================= */
 
-  const handleDeleteLesson = async () => {
-    if (
-      deletingLessonId === null
-    ) {
-      return;
-    }
+  const handleDeleteLesson =
+    async () => {
+      if (
+        deletingLessonId === null
+      ) {
+        return;
+      }
 
-    try {
-      setDeleting(true);
-      setApiError("");
+      try {
+        setDeleting(true);
+        setApiError("");
 
-      console.log(
-        "DELETE LESSON ID:",
-        deletingLessonId
-      );
+        const response =
+          await baseAPI.delete(
+            `/lessons/${deletingLessonId}`
+          );
 
-      /*
-       * DELETE endpoint:
-       *
-       * DELETE /lessons/:id
-       */
-
-      const response =
-        await baseAPI.delete(
-          `/lessons/${deletingLessonId}`
+        console.log(
+          "DELETE LESSON RESPONSE:",
+          response.data
         );
 
-      console.log(
-        "DELETE LESSON RESPONSE:",
-        response.data
-      );
+        setLessons(
+          (prev) =>
+            prev.filter(
+              (lesson) =>
+                Number(lesson.id) !==
+                Number(
+                  deletingLessonId
+                )
+            )
+        );
 
-      /*
-       * Eng muhim qism:
-       * serverdan javob kelgandan keyin
-       * local listdan ham o'chiramiz.
-       */
+        setIsDeleteModalOpen(false);
 
-      setLessons((prev) =>
-        prev.filter(
-          (lesson) =>
-            Number(lesson.id) !==
-            Number(deletingLessonId)
-        )
-      );
+        setDeletingLessonId(null);
 
-      setIsDeleteModalOpen(false);
+        await fetchLessons();
+      } catch (error: any) {
+        console.error(
+          "DELETE LESSON ERROR:",
+          error?.response?.data ||
+            error?.message ||
+            error
+        );
 
-      setDeletingLessonId(null);
-
-      /*
-       * Backenddagi ro'yxatni ham yangilaymiz.
-       */
-
-      await fetchLessons();
-    } catch (error: any) {
-      console.error(
-        "DELETE LESSON ERROR:",
-        error?.response?.data ||
-          error?.message ||
-          error
-      );
-
-      console.error(
-        "DELETE STATUS:",
-        error?.response?.status
-      );
-
-      console.error(
-        "DELETE URL:",
-        error?.config?.url
-      );
-
-      console.error(
-        "DELETE METHOD:",
-        error?.config?.method
-      );
-
-      setApiError(
-        error?.response?.data?.message ||
-          "Darsni o'chirishda xatolik yuz berdi"
-      );
-    } finally {
-      setDeleting(false);
-    }
-  };
+        setApiError(
+          error?.response?.data
+            ?.message ||
+            "Darsni o'chirishda xatolik yuz berdi"
+        );
+      } finally {
+        setDeleting(false);
+      }
+    };
 
   /* =========================================================
-     OPEN DELETE MODAL
+     OPEN DELETE
   ========================================================= */
 
   const openDeleteModal = (
@@ -789,11 +826,13 @@ export default function LessonsPage() {
   };
 
   /* =========================================================
-     CLOSE DELETE MODAL
+     CLOSE DELETE
   ========================================================= */
 
   const closeDeleteModal = () => {
-    if (deleting) return;
+    if (deleting) {
+      return;
+    }
 
     setIsDeleteModalOpen(false);
 
@@ -803,7 +842,7 @@ export default function LessonsPage() {
   };
 
   /* =========================================================
-     FILE SELECT
+     VIDEO VALIDATION
   ========================================================= */
 
   const validateVideoFile = (
@@ -825,7 +864,7 @@ export default function LessonsPage() {
   };
 
   /* =========================================================
-     HANDLE FILE UPLOAD
+     FILE UPLOAD
   ========================================================= */
 
   const handleFileUpload = (
@@ -834,7 +873,9 @@ export default function LessonsPage() {
     const file =
       e.target.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     if (
       !validateVideoFile(file)
@@ -843,14 +884,16 @@ export default function LessonsPage() {
       return;
     }
 
-    setNewLesson((prev) => ({
-      ...prev,
-      file,
-    }));
+    setNewLesson(
+      (prev) => ({
+        ...prev,
+        file,
+      })
+    );
   };
 
   /* =========================================================
-     HANDLE DROP
+     DROP FILE
   ========================================================= */
 
   const handleFileDrop = (
@@ -861,7 +904,9 @@ export default function LessonsPage() {
     const file =
       e.dataTransfer.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     if (
       !validateVideoFile(file)
@@ -869,26 +914,32 @@ export default function LessonsPage() {
       return;
     }
 
-    setNewLesson((prev) => ({
-      ...prev,
-      file,
-    }));
+    setNewLesson(
+      (prev) => ({
+        ...prev,
+        file,
+      })
+    );
   };
 
   /* =========================================================
-     REMOVE SELECTED FILE
+     REMOVE FILE
   ========================================================= */
 
-  const removeSelectedFile = () => {
-    setNewLesson((prev) => ({
-      ...prev,
-      file: null,
-    }));
+  const removeSelectedFile =
+    () => {
+      setNewLesson(
+        (prev) => ({
+          ...prev,
+          file: null,
+        })
+      );
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
+      if (fileInputRef.current) {
+        fileInputRef.current.value =
+          "";
+      }
+    };
 
   /* =========================================================
      VIDEO URL
@@ -902,15 +953,17 @@ export default function LessonsPage() {
     }
 
     if (
-      file.startsWith("http://") ||
-      file.startsWith("https://")
+      file.startsWith(
+        "http://"
+      ) ||
+      file.startsWith(
+        "https://"
+      )
     ) {
       return file;
     }
 
-    if (
-      file.startsWith("/")
-    ) {
+    if (file.startsWith("/")) {
       return `http://63.180.181.4:8080${file}`;
     }
 
@@ -918,82 +971,83 @@ export default function LessonsPage() {
   };
 
   /* =========================================================
-     DOWNLOAD CSV
+     DOWNLOAD XLS
   ========================================================= */
 
-  const handleDownloadXLS = () => {
-    const headers = [
-      "ID",
-      "Biriktirilgan kurs",
-      "Bo'lim",
-      "Dars mavzusi",
-      "Dars haqida",
-    ];
+  const handleDownloadXLS =
+    () => {
+      const headers = [
+        "ID",
+        "Bo'lim",
+        "Dars mavzusi",
+        "Dars haqida",
+      ];
 
-    const rows =
-      lessons.map((lesson) =>
+      const rows =
+        lessons.map(
+          (lesson) =>
+            [
+              lesson.id,
+              section?.name || "",
+              lesson.name,
+              lesson.description,
+            ]
+              .map(
+                (item) =>
+                  `"${String(
+                    item
+                  ).replaceAll(
+                    '"',
+                    '""'
+                  )}"`
+              )
+              .join(",")
+        );
+
+      const csvContent =
+        "\uFEFF" +
         [
-          lesson.id,
-          courseTitle,
-          section?.name || "",
-          lesson.name,
-          lesson.description,
-        ]
-          .map(
-            (item) =>
-              `"${String(item).replaceAll(
-                '"',
-                '""'
-              )}"`
-          )
-          .join(",")
+          headers.join(","),
+          ...rows,
+        ].join("\n");
+
+      const blob =
+        new Blob(
+          [csvContent],
+          {
+            type: "text/csv;charset=utf-8;",
+          }
+        );
+
+      const url =
+        URL.createObjectURL(
+          blob
+        );
+
+      const link =
+        document.createElement(
+          "a"
+        );
+
+      link.href = url;
+
+      link.download =
+        "darslar.csv";
+
+      document.body.appendChild(
+        link
       );
 
-    const csvContent =
-      "\uFEFF" +
-      [
-        headers.join(","),
-        ...rows,
-      ].join("\n");
+      link.click();
 
-    const blob =
-      new Blob(
-        [csvContent],
-        {
-          type:
-            "text/csv;charset=utf-8;",
-        }
+      document.body.removeChild(
+        link
       );
 
-    const url =
-      URL.createObjectURL(
-        blob
+      URL.revokeObjectURL(
+        url
       );
-
-    const link =
-      document.createElement(
-        "a"
-      );
-
-    link.href = url;
-
-    link.download =
-      "darslar.csv";
-
-    document.body.appendChild(
-      link
-    );
-
-    link.click();
-
-    document.body.removeChild(
-      link
-    );
-
-    URL.revokeObjectURL(
-      url
-    );
-  };
+    };
 
   /* =========================================================
      PAGINATION
@@ -1003,12 +1057,11 @@ export default function LessonsPage() {
     (currentPage - 1) *
     itemsPerPage;
 
-  const endIndex =
-    Math.min(
-      startIndex +
-        itemsPerPage,
-      lessons.length
-    );
+  const endIndex = Math.min(
+    startIndex +
+      itemsPerPage,
+    lessons.length
+  );
 
   const paginatedLessons =
     lessons.slice(
@@ -1088,9 +1141,9 @@ export default function LessonsPage() {
                     prev
                       ? {
                           ...prev,
-                          name:
-                            e.target
-                              .value,
+                          name: e
+                            .target
+                            .value,
                         }
                       : prev
                 );
@@ -1098,9 +1151,9 @@ export default function LessonsPage() {
                 setNewLesson(
                   (prev) => ({
                     ...prev,
-                    name:
-                      e.target
-                        .value,
+                    name: e
+                      .target
+                      .value,
                   })
                 );
               }
@@ -1138,7 +1191,8 @@ export default function LessonsPage() {
                       ? {
                           ...prev,
                           description:
-                            e.target
+                            e
+                              .target
                               .value,
                         }
                       : prev
@@ -1148,8 +1202,7 @@ export default function LessonsPage() {
                   (prev) => ({
                     ...prev,
                     description:
-                      e.target
-                        .value,
+                      e.target.value,
                   })
                 );
               }
@@ -1211,6 +1264,7 @@ export default function LessonsPage() {
               </div>
             ) : (
               <div className="border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+
                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                   <FileVideo
                     size={20}
@@ -1218,6 +1272,7 @@ export default function LessonsPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
+
                   <p className="text-[14px] font-medium text-gray-900 truncate">
                     {
                       newLesson
@@ -1229,6 +1284,7 @@ export default function LessonsPage() {
                   <p className="text-[12px] text-gray-500">
                     Video tanlangan
                   </p>
+
                 </div>
 
                 <button
@@ -1238,23 +1294,28 @@ export default function LessonsPage() {
                   }
                   className="p-2 text-gray-400 hover:text-red-500"
                 >
-                  <X size={17} />
+                  <X
+                    size={17}
+                  />
                 </button>
+
               </div>
             )}
           </div>
         )}
 
-        {/* EDIT OLD VIDEO */}
+        {/* CURRENT VIDEO */}
 
         {isEdit &&
           editingLesson?.file && (
             <div>
+
               <label className="block text-[13px] font-semibold text-gray-700 mb-2">
                 Hozirgi video
               </label>
 
               <div className="border border-gray-200 rounded-xl p-4 flex items-center gap-4">
+
                 <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
                   <FileVideo
                     size={20}
@@ -1262,6 +1323,7 @@ export default function LessonsPage() {
                 </div>
 
                 <div className="flex-1 min-w-0">
+
                   <p className="text-[13px] text-gray-700 truncate">
                     {
                       editingLesson.file
@@ -1271,8 +1333,11 @@ export default function LessonsPage() {
                   <p className="text-[12px] text-gray-400">
                     Saqlangan video
                   </p>
+
                 </div>
+
               </div>
+
             </div>
           )}
 
@@ -1284,7 +1349,7 @@ export default function LessonsPage() {
           </div>
         )}
 
-        {/* BUTTON */}
+        {/* BUTTONS */}
 
         <div className="flex justify-end gap-3 pt-2">
 
@@ -1309,23 +1374,30 @@ export default function LessonsPage() {
             }
             className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-xl font-medium flex items-center gap-2"
           >
+
             {saving ? (
               <>
                 <Loader2
                   size={17}
                   className="animate-spin"
                 />
+
                 Saqlanmoqda...
               </>
             ) : (
               <>
-                <Check size={17} />
+                <Check
+                  size={17}
+                />
+
                 Saqlash
               </>
             )}
+
           </button>
 
         </div>
+
       </div>
     );
   };
@@ -1350,54 +1422,64 @@ export default function LessonsPage() {
               Darslar
             </h1>
 
-            {/* BREADCRUMB */}
+            {/* =================================================
+                BREADCRUMB
+
+                Kurslar
+                  ↓
+                Kurs nomi
+                  ↓
+                Bo'limlar
+                  ↓
+                Bo'lim nomi
+            ================================================= */}
 
             <div className="flex items-center flex-wrap text-[13px] font-medium gap-2">
 
-              {/* 1. KURSLAR */}
+              {/* KURSLAR */}
 
               <Link
                 href="/dashboard/courses/allCourses"
-                className="text-gray-500 hover:text-blue-600"
+                className="text-gray-500 hover:text-blue-600 transition-colors"
               >
                 Kurslar
               </Link>
 
               <span className="w-1 h-1 rounded-full bg-gray-300" />
 
-              {/* 2. TANLANGAN KURS */}
+              {/* KURS NOMI */}
 
               <Link
                 href={`/dashboard/courses/allCourses/${courseId}/sections`}
-                className="text-gray-500 hover:text-blue-600"
+                className="text-gray-500 hover:text-blue-600 transition-colors"
               >
                 {courseTitle}
               </Link>
 
               <span className="w-1 h-1 rounded-full bg-gray-300" />
 
-              {/* 3. BO'LIMLAR */}
+              {/* BO'LIMLAR */}
 
               <Link
                 href={`/dashboard/courses/allCourses/${courseId}/sections`}
-                className="text-gray-500 hover:text-blue-600"
+                className="text-gray-500 hover:text-blue-600 transition-colors"
               >
                 Bo&apos;limlar
               </Link>
 
               <span className="w-1 h-1 rounded-full bg-gray-300" />
 
-              {/* 4. DARS */}
+              {/* BO'LIM NOMI */}
 
               <span className="text-gray-900">
-                {section?.name ||
-                  "Darslar"}
+                {"Darslar"}
               </span>
 
             </div>
+
           </div>
 
-          {/* ADD */}
+          {/* ADD LESSON */}
 
           <button
             onClick={
@@ -1411,9 +1493,7 @@ export default function LessonsPage() {
 
         </div>
 
-        {/* ===================================================
-            ERROR
-        =================================================== */}
+        {/* ERROR */}
 
         {apiError &&
           !isAddModalOpen &&
@@ -1438,43 +1518,70 @@ export default function LessonsPage() {
 
                 <tr className="text-[13px] text-gray-900 font-bold">
 
+                  {/* BO'LIM */}
+
                   <th className="px-6 py-4 border border-gray-200">
+
                     <div className="flex items-center justify-between">
-                      Biriktirilgan kurs
+
+                      Bo&apos;lim
+
                       <Filter
                         size={14}
                         className="text-gray-400"
                       />
+
                     </div>
+
                   </th>
 
+                  {/* DARS MAVZUSI */}
+
                   <th className="px-6 py-4 border border-gray-200">
+
                     <div className="flex items-center justify-between">
+
                       Dars mavzusi
+
                       <Filter
                         size={14}
                         className="text-gray-400"
                       />
+
                     </div>
+
                   </th>
 
+                  {/* DARS HAQIDA */}
+
                   <th className="px-6 py-4 border border-gray-200">
+
                     <div className="flex items-center justify-between">
+
                       Dars haqida
+
                       <Filter
                         size={14}
                         className="text-gray-400"
                       />
+
                     </div>
+
                   </th>
+
+                  {/* VIDEO */}
 
                   <th className="px-6 py-4 border border-gray-200">
                     Dars video fayli
                   </th>
 
+                  {/* MATERIAL */}
+
                   <th className="px-6 py-4 border border-gray-200">
                     Materiallar
                   </th>
+
+                  {/* ACTION */}
 
                   <th className="px-6 py-4 text-center border border-gray-200">
                     Amallar
@@ -1489,27 +1596,36 @@ export default function LessonsPage() {
                 {/* LOADING */}
 
                 {loading ? (
+
                   <tr>
+
                     <td
                       colSpan={6}
                       className="px-6 py-12 text-center text-gray-500"
                     >
+
                       <div className="flex items-center justify-center gap-2">
+
                         <Loader2
                           size={18}
                           className="animate-spin"
                         />
+
                         Darslar yuklanmoqda...
+
                       </div>
+
                     </td>
+
                   </tr>
-                ) : paginatedLessons.length >
-                  0 ? (
+
+                ) : paginatedLessons.length > 0 ? (
 
                   /* LESSONS */
 
                   paginatedLessons.map(
                     (lesson) => (
+
                       <tr
                         key={
                           lesson.id
@@ -1517,28 +1633,29 @@ export default function LessonsPage() {
                         className="hover:bg-blue-50/30 transition-colors"
                       >
 
-                        {/* COURSE */}
+                        {/* =================================================
+                            BO'LIM NOMI
+                        ================================================= */}
 
                         <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
 
                           <Link
-                            href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lesson.id}/materials`}
-                            className="hover:text-blue-600"
+                            href={`/dashboard/courses/allCourses/${courseId}/sections`}
+                            className="hover:text-blue-600 transition-colors"
                           >
-                            {
-                              courseTitle
-                            }
+                            {section?.name ||
+                              "Bo'lim topilmadi"}
                           </Link>
 
                         </td>
 
-                        {/* NAME */}
+                        {/* DARS NOMI */}
 
                         <td className="px-6 py-4 border border-gray-200">
 
                           <Link
                             href={`/dashboard/courses/allCourses/${courseId}/sections/${sectionId}/lessons/${lesson.id}/materials`}
-                            className="hover:text-blue-600"
+                            className="hover:text-blue-600 transition-colors"
                           >
                             {
                               lesson.name
@@ -1550,10 +1667,12 @@ export default function LessonsPage() {
                         {/* DESCRIPTION */}
 
                         <td className="px-6 py-4 border border-gray-200 text-gray-600 text-[13px]">
+
                           {
                             lesson.description ||
                             "-"
                           }
+
                         </td>
 
                         {/* VIDEO */}
@@ -1561,8 +1680,10 @@ export default function LessonsPage() {
                         <td className="px-6 py-4 border border-gray-200">
 
                           {lesson.file ? (
+
                             <button
                               onClick={() => {
+
                                 const url =
                                   getVideoUrl(
                                     lesson.file
@@ -1575,26 +1696,31 @@ export default function LessonsPage() {
                                 setIsPlayingVideo(
                                   true
                                 );
+
                               }}
                               className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 text-[13px] font-medium"
                             >
+
                               <Play
-                                size={
-                                  14
-                                }
+                                size={14}
                                 className="fill-blue-600"
                               />
+
                               Video
+
                             </button>
+
                           ) : (
+
                             <span className="text-gray-400 text-[13px] italic">
                               Yuklanmagan
                             </span>
+
                           )}
 
                         </td>
 
-                        {/* MATERIAL */}
+                        {/* MATERIALS */}
 
                         <td className="px-6 py-4 border border-gray-200">
 
@@ -1625,11 +1751,11 @@ export default function LessonsPage() {
                               className="p-1 text-gray-400 hover:text-blue-600"
                               title="Tahrirlash"
                             >
+
                               <Pen
-                                size={
-                                  16
-                                }
+                                size={16}
                               />
+
                             </button>
 
                             {/* DELETE */}
@@ -1644,11 +1770,11 @@ export default function LessonsPage() {
                               className="p-1 text-gray-400 hover:text-red-500"
                               title="O'chirish"
                             >
+
                               <Trash2
-                                size={
-                                  16
-                                }
+                                size={16}
                               />
+
                             </button>
 
                           </div>
@@ -1656,21 +1782,23 @@ export default function LessonsPage() {
                         </td>
 
                       </tr>
+
                     )
                   )
+
                 ) : (
 
                   /* EMPTY */
 
                   <tr>
+
                     <td
                       colSpan={6}
                       className="px-6 py-12 text-center text-gray-500"
                     >
-                      Bu bo&apos;limda
-                      darslar mavjud
-                      emas
+                      Bu bo&apos;limda darslar mavjud emas
                     </td>
+
                   </tr>
 
                 )}
@@ -1718,6 +1846,7 @@ export default function LessonsPage() {
                 setItemsPerPage(
                   limit
                 );
+
                 setCurrentPage(
                   1
                 );
@@ -1730,6 +1859,7 @@ export default function LessonsPage() {
           </div>
 
         </div>
+
       </div>
 
       {/* =====================================================
@@ -1738,12 +1868,14 @@ export default function LessonsPage() {
 
       {(isAddModalOpen ||
         isEditModalOpen) && (
+
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           onClick={
             closeAddEditModal
           }
         >
+
           <div
             className="bg-white rounded-2xl shadow-xl w-full max-w-[500px] max-h-[90vh] overflow-y-auto"
             onClick={(e) =>
@@ -1751,15 +1883,16 @@ export default function LessonsPage() {
             }
           >
 
-            {/* HEADER */}
-
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
 
               <h2 className="text-xl font-bold text-gray-900">
+
                 Dars{" "}
+
                 {isEditModalOpen
                   ? "tahrirlash"
                   : "qo'shish"}
+
               </h2>
 
               <button
@@ -1779,7 +1912,9 @@ export default function LessonsPage() {
             )}
 
           </div>
+
         </div>
+
       )}
 
       {/* =====================================================
@@ -1787,6 +1922,7 @@ export default function LessonsPage() {
       ===================================================== */}
 
       {isDeleteModalOpen && (
+
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
           onClick={
@@ -1824,9 +1960,7 @@ export default function LessonsPage() {
 
               <button
                 type="button"
-                disabled={
-                  deleting
-                }
+                disabled={deleting}
                 onClick={
                   closeDeleteModal
                 }
@@ -1837,25 +1971,26 @@ export default function LessonsPage() {
 
               <button
                 type="button"
-                disabled={
-                  deleting
-                }
+                disabled={deleting}
                 onClick={
                   handleDeleteLesson
                 }
                 className="px-6 py-2.5 bg-red-600 disabled:bg-red-300 text-white rounded-xl font-medium hover:bg-red-700 flex-1 flex items-center justify-center gap-2"
               >
+
                 {deleting ? (
                   <>
                     <Loader2
                       size={17}
                       className="animate-spin"
                     />
+
                     O&apos;chirilmoqda
                   </>
                 ) : (
                   "O'chirish"
                 )}
+
               </button>
 
             </div>
@@ -1863,6 +1998,7 @@ export default function LessonsPage() {
           </div>
 
         </div>
+
       )}
 
       {/* =====================================================
@@ -1870,6 +2006,7 @@ export default function LessonsPage() {
       ===================================================== */}
 
       {isPlayingVideo && (
+
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
           onClick={() =>
@@ -1899,6 +2036,7 @@ export default function LessonsPage() {
             </button>
 
             {playingVideoUrl && (
+
               <video
                 className="w-full aspect-video object-contain"
                 controls
@@ -1907,12 +2045,15 @@ export default function LessonsPage() {
                   playingVideoUrl
                 }
               />
+
             )}
 
           </div>
 
         </div>
+
       )}
+
     </>
   );
 }

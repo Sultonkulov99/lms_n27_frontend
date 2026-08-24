@@ -613,7 +613,7 @@ export default function CourseSectionsPage() {
                 href="/dashboard/courses/allCourses"
                 className="text-gray-500 hover:text-blue-600 transition-colors"
               >
-                {courseTitle || "Kurs"}
+                {courseTitle}
               </Link>
 
               <span className="w-1 h-1 rounded-full bg-gray-300" />
