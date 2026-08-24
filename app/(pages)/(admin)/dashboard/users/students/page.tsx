@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   Search,
   X,
@@ -9,12 +9,8 @@ import {
   Trash2,
   Eye,
   Check,
-  Globe,
-  Send,
-  Camera,
-  Briefcase,
-  Code,
   ChevronRight,
+  Paperclip,
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 
@@ -51,6 +47,12 @@ export default function StudentsPage() {
   // View modal
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
+  const [activeTab, setActiveTab] = useState<"qa" | "materials" | "tasks" | "exams">("qa");
+
+  // Vazifalar tab state
+  const [taskAnswer, setTaskAnswer] = useState("");
+  const [taskFile, setTaskFile] = useState<File | null>(null);
+  const taskFileRef = useRef<HTMLInputElement>(null);
 
   // Edit modal
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -266,7 +268,7 @@ export default function StudentsPage() {
                     <td className="px-5 py-4 border border-gray-200">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          onClick={() => { setViewingStudent(student); setIsViewModalOpen(true); }}
+                          onClick={() => { setViewingStudent(student); setActiveTab("qa"); setIsViewModalOpen(true); }}
                           className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
                           title="Ko'rish"
                         >
@@ -329,11 +331,22 @@ export default function StudentsPage() {
           onClick={() => setIsViewModalOpen(false)}
         >
           <div
-            className="bg-white rounded-[16px] shadow-xl w-full max-w-[600px] max-h-[90vh] overflow-y-auto relative"
+            className="bg-white rounded-[16px] shadow-xl w-full max-w-[680px] max-h-[90vh] flex flex-col relative"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-[20px] font-bold text-gray-900">O'quvchi haqida</h2>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 shrink-0">
+              <div className="flex items-center gap-4">
+                <img
+                  src={viewingStudent.image}
+                  alt={viewingStudent.name}
+                  className="w-[48px] h-[48px] rounded-full object-cover border border-gray-200"
+                />
+                <div>
+                  <h2 className="text-[17px] font-bold text-gray-900 leading-tight">{viewingStudent.name}</h2>
+                  <p className="text-gray-500 text-[13px]">Student</p>
+                </div>
+              </div>
               <button
                 onClick={() => setIsViewModalOpen(false)}
                 className="text-gray-400 hover:text-gray-700 transition-colors"
@@ -342,66 +355,118 @@ export default function StudentsPage() {
               </button>
             </div>
 
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-8">
-                <img
-                  src={viewingStudent.image}
-                  alt={viewingStudent.name}
-                  className="w-[80px] h-[80px] rounded-full object-cover border border-gray-200"
-                />
-                <div>
-                  <h3 className="text-[20px] font-bold text-gray-900 mb-1">{viewingStudent.name}</h3>
-                  <p className="text-gray-500 text-[14px]">Student</p>
-                </div>
-              </div>
+            {/* Tabs */}
+            <div className="flex border-b border-gray-100 shrink-0 px-6">
+              {(["qa", "materials", "tasks", "exams"] as const).map((tab) => {
+                const labels = { qa: "Q&A", materials: "Materiallar", tasks: "Vazifalar", exams: "Imtihonlar" };
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-3 text-[14px] font-medium border-b-2 transition-colors -mb-px ${
+                      activeTab === tab
+                        ? "border-[#E53935] text-white bg-[#E53935] rounded-t-md"
+                        : "border-transparent text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {labels[tab]}
+                  </button>
+                );
+              })}
+            </div>
 
-              <h4 className="text-[16px] font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">
-                To'liq ma'lumotlar
-              </h4>
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto p-6">
 
-              <div className="flex flex-col gap-5 mb-8">
-                <div>
-                  <p className="text-[12px] text-gray-500 mb-1">Telefon raqami</p>
-                  <p className="text-[15px] font-bold text-gray-900">{viewingStudent.phone}</p>
+              {/* Q&A Tab */}
+              {activeTab === "qa" && (
+                <div className="text-gray-500 text-[14px]">
+                  Hali savollar mavjud emas.
                 </div>
-                <div>
-                  <p className="text-[12px] text-gray-500 mb-1">Rol</p>
-                  <p className="text-[15px] font-bold text-gray-900">{viewingStudent.role}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] text-gray-500 mb-1">Ro'yxatdan o'tgan vaqti</p>
-                  <p className="text-[15px] font-bold text-gray-900">{viewingStudent.date}</p>
-                </div>
-                <div>
-                  <p className="text-[12px] text-gray-500 mb-1">Holati</p>
-                  <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
-                    {viewingStudent.status}
-                  </span>
-                </div>
-              </div>
+              )}
 
-              <h4 className="text-[16px] font-bold text-gray-900 mb-4">
-                Ijtimoiy tarmoq sahifalari:
-              </h4>
-              <div className="flex items-center gap-3">
-                <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Globe size={20} /></div>
-                <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Send size={20} /></div>
-                <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Camera size={20} /></div>
-                <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Briefcase size={20} /></div>
-                <div className="w-[42px] h-[42px] bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors"><Code size={20} /></div>
-                <div className="h-[42px] px-4 bg-gray-100 rounded-lg flex items-center justify-center text-gray-700 font-bold text-[14px] hover:bg-gray-200 cursor-pointer transition-colors">Portfolio</div>
-              </div>
+              {/* Materiallar Tab */}
+              {activeTab === "materials" && (
+                <div className="text-gray-500 text-[14px]">
+                  Hali materiallar mavjud emas.
+                </div>
+              )}
 
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => { setIsViewModalOpen(false); openEditModal(viewingStudent); }}
-                  className="flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white font-medium px-5 h-[44px] rounded-lg text-sm transition-colors"
-                >
-                  <Pencil size={16} />
-                  Tahrirlash
-                  <ChevronRight size={16} />
-                </button>
-              </div>
+              {/* Vazifalar Tab */}
+              {activeTab === "tasks" && (
+                <div className="flex flex-col gap-4">
+                  {/* Topshiriq card */}
+                  <div className="bg-[#F5F5F5] rounded-xl p-4 border border-gray-200">
+                    <p className="font-bold text-gray-900 text-[14px] mb-1">Topshiriq</p>
+                    <p className="text-gray-600 text-[14px]">figmani bajarish</p>
+                  </div>
+
+                  {/* Status */}
+                  <p className="text-gray-400 text-[14px]">Hali vazifa topshirilmagan.</p>
+
+                  {/* Vazifa faylini yuklang */}
+                  <div>
+                    <p className="font-bold text-gray-900 text-[14px] mb-2">Vazifa faylini yuklang</p>
+                    <textarea
+                      rows={4}
+                      value={taskAnswer}
+                      onChange={(e) => setTaskAnswer(e.target.value)}
+                      placeholder=""
+                      className="w-full px-4 py-3 rounded-lg border border-gray-200 text-[14px] outline-none focus:border-gray-400 transition-colors resize-y bg-white"
+                    />
+                  </div>
+
+                  {/* File upload area */}
+                  <div className="flex items-center gap-3 border border-gray-200 rounded-lg px-4 py-3 bg-white">
+                    <button
+                      type="button"
+                      onClick={() => taskFileRef.current?.click()}
+                      className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-2 text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm"
+                    >
+                      <Paperclip size={15} />
+                      Yuklash
+                    </button>
+                    <span className="text-gray-400 text-[13px]">
+                      {taskFile ? taskFile.name : "Fayl yuklanmagan"}
+                    </span>
+                    <input
+                      ref={taskFileRef}
+                      type="file"
+                      className="hidden"
+                      onChange={(e) => setTaskFile(e.target.files?.[0] || null)}
+                    />
+                  </div>
+
+                  {/* Yuborish button */}
+                  <div>
+                    <button
+                      type="button"
+                      className="bg-gray-400 hover:bg-gray-500 text-white font-medium px-6 py-2.5 rounded-lg text-[14px] transition-colors"
+                    >
+                      Yuborish
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Imtihonlar Tab */}
+              {activeTab === "exams" && (
+                <div className="text-gray-500 text-[14px]">
+                  Hali imtihonlar mavjud emas.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end px-6 pb-5 shrink-0 border-t border-gray-100 pt-4">
+              <button
+                onClick={() => { setIsViewModalOpen(false); openEditModal(viewingStudent); }}
+                className="flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white font-medium px-5 h-[44px] rounded-lg text-sm transition-colors"
+              >
+                <Pencil size={16} />
+                Tahrirlash
+                <ChevronRight size={16} />
+              </button>
             </div>
           </div>
         </div>

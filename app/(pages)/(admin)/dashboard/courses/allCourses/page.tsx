@@ -68,6 +68,14 @@ export default function AllCoursesPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "warning" | "success" | "error" } | null>(null);
+
+  React.useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
   
   // Current items
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
@@ -210,9 +218,11 @@ export default function AllCoursesPage() {
         setSuccessMessage("Muvaffaqiyatli o'chirildi");
         setIsSuccessModalOpen(true);
         setSelectedRows(selectedRows.filter(id => id !== currentCourse.id));
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
-        alert("O'chirishda xatolik yuz berdi");
+        const errorMsg = error.response?.data?.message || "O'chirishda xatolik yuz berdi";
+        setToast({ message: errorMsg, type: "warning" });
+        setIsDeleteModalOpen(false);
       }
     }
   };
@@ -355,7 +365,7 @@ export default function AllCoursesPage() {
                     disabled={currentPage === totalPages || totalPages === 0}
                     className="px-2.5 h-7 flex items-center justify-center rounded bg-white border border-gray-200 shadow-sm text-[13px] font-medium text-gray-600 hover:bg-gray-50 transition-colors ml-1 disabled:opacity-50"
                   >
-                    Keyingi
+                    Keyingi     
                   </button>
                 </div>
               </div>
@@ -906,6 +916,34 @@ export default function AllCoursesPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-[100] flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white font-medium animate-in slide-in-from-top-2 duration-300 ${
+          toast.type === 'warning' ? 'bg-amber-500' : toast.type === 'error' ? 'bg-red-500' : 'bg-[#4F7FFF]'
+        }`}>
+          {toast.type === 'warning' && (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          )}
+          {toast.type === 'error' && (
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+          )}
+          {toast.type === 'success' && (
+             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          )}
+          <span>{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-2 hover:opacity-80 transition-opacity" aria-label="Yopish">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
       )}
     </>

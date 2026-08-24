@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
- 
-import avatar from "@/app/assets/bekzodsafarov.jpg"
+import { User } from "lucide-react";
 interface CourseCardProps {
   id: number;
   title: string;
@@ -33,6 +32,7 @@ export default function CourseCard({
           src={thumbnail}
           alt={title}
           fill
+          unoptimized
           className="object-cover hover:scale-105 transition-transform duration-300"
           style={{ objectPosition: 'center 20%' }}
         />
@@ -49,11 +49,20 @@ export default function CourseCard({
         {/* Instructor */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Image
-              src={avatar}
-              alt={instructor}
-              className="rounded-full object-cover h-[25px] w-[25px]"
-            />
+            {instructorAvatar ? (
+              <Image
+                src={instructorAvatar}
+                alt={instructor}
+                width={25}
+                height={25}
+                unoptimized
+                className="rounded-full object-cover h-[25px] w-[25px]"
+              />
+            ) : (
+              <div className="flex h-[25px] w-[25px] items-center justify-center rounded-full bg-gray-100 border border-gray-200 text-gray-400">
+                <User size={14} />
+              </div>
+            )}
             <span className="text-xs font-medium text-[#64748B]">{instructor}</span>
           </div>
           <button
@@ -83,19 +92,7 @@ export default function CourseCard({
           </h3>
         </Link>
 
-        {/* Progress */}
-        <div className="space-y-2 mb-3">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-[#94A3B8]">Ko&apos;rildi:</span>
-            <span className="text-[#1a1a1a] font-semibold">{progress}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#4F7FFF] rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
+
 
         {/* Continue button */}
         <Link
