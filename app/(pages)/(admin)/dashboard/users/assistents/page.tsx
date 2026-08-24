@@ -219,7 +219,7 @@ export default function AssistentsPage() {
     setEditingLink(null);
     setName("");
     setPhone("+998");
-    setCourse("");
+    setCourseId("");
     setPassword("");
     setImageFile(null);
     setImagePreview(null);
@@ -236,7 +236,7 @@ export default function AssistentsPage() {
     setEditingLink(link);
     setName(assistent.fullName);
     setPhone(assistent.phone);
-    setCourse(link ? String(link.courseId) : "");
+    setCourseId(link ? String(link.courseId) : "");
     setPassword("");
     setImageFile(null);
     setImagePreview(getAvatarUrl(assistent.file));
@@ -256,7 +256,9 @@ export default function AssistentsPage() {
     if (!deletingId) return;
     try {
       await archiveAssistant(deletingId);
-      await loadAll();
+      setAssistents((prevAssistent) =>
+        prevAssistent.filter((a) => a.id !== deletingId),
+      );
       if (currentAssistents.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -271,7 +273,9 @@ export default function AssistentsPage() {
   const handleRestoreAssistent = async (assistent: Assistant) => {
     try {
       await restoreAssistant(assistent.id);
-      await loadAll();
+      setAssistents((prevAssistent) =>
+        prevAssistent.filter((a) => a.id !== assistent.id),
+      );
     } catch (error: any) {
       console.error(error);
       alert(error.message || "Tiklab bo'lmadi");
@@ -333,14 +337,16 @@ export default function AssistentsPage() {
         userId = created.data.id;
       }
 
-      if (course) {
-        const courseId = Number(course);
+      if (courseId) {
+        const selectedCourseId = Number(courseId);
         if (editingLink) {
-          if (editingLink.courseId !== courseId) {
-            await updateCourseAssistant(editingLink.id, { courseId });
+          if (editingLink.courseId !== selectedCourseId) {
+            await updateCourseAssistant(editingLink.id, {
+              courseId: selectedCourseId,
+            });
           }
         } else {
-          await createCourseAssistant(courseId, userId);
+          await createCourseAssistant(selectedCourseId, userId);
         }
       }
 
@@ -353,7 +359,7 @@ export default function AssistentsPage() {
       setEditingLink(null);
       setName("");
       setPhone("+998");
-      setCourse("");
+      setCourseId("");
       setPassword("");
       setImageFile(null);
       setImagePreview(null);
@@ -497,82 +503,86 @@ export default function AssistentsPage() {
                     </tr>
                   </thead>
                   <tbody className="text-[14px] text-gray-800">
-                    {currentAssistents.map((assistent) => {
-                      const link = linkForUser(assistent.id);
-                      return (
-                        <tr
-                          key={assistent.id}
-                          className="hover:bg-gray-50 transition-colors group"
-                        >
-                          <td className="px-5 py-4 font-medium border border-gray-200">
-                            {assistent.id}
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <div
-                              className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
-                              onClick={() => {
-                                setViewingAssistent(assistent);
-                                setIsViewModalOpen(true);
-                              }}
-                            >
-                              <img
-                                src={getAvatarUrl(assistent.file)}
-                                alt={assistent.fullName}
-                                className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
-                              />
-                              <span className="font-semibold text-[13px]">
-                                {assistent.fullName}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                            {link ? (
-                              courseNameById(link.courseId)
-                            ) : (
-                              <span className="text-gray-400 italic">
-                                Biriktirilmagan
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                            {assistent.phone}
-                          </td>
-                          <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                            {formatDate(assistent.created_at)}
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200 relative">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
-                              {viewMode === "active" ? (
-                                <>
-                                  <button
-                                    onClick={() => openEditModal(assistent)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                  >
-                                    <Pencil size={14} />
-                                  </button>
-                                  <button
-                                    onClick={() => confirmDelete(assistent.id)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </>
+                    {[...currentAssistents]
+                      .sort((a, b) => Number(b.id) - Number(a.id))
+                      .map((assistent) => {
+                        const link = linkForUser(assistent.id);
+                        return (
+                          <tr
+                            key={assistent.id}
+                            className="hover:bg-gray-50 transition-colors group"
+                          >
+                            <td className="px-5 py-4 font-medium border border-gray-200">
+                              {assistent.id}
+                            </td>
+                            <td className="px-5 py-4 border border-gray-200">
+                              <div
+                                className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
+                                onClick={() => {
+                                  setViewingAssistent(assistent);
+                                  setIsViewModalOpen(true);
+                                }}
+                              >
+                                <img
+                                  src={getAvatarUrl(assistent.file)}
+                                  alt={assistent.fullName}
+                                  className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
+                                />
+                                <span className="font-semibold text-[13px]">
+                                  {assistent.fullName}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                              {link ? (
+                                courseNameById(link.courseId)
                               ) : (
-                                <button
-                                  onClick={() =>
-                                    handleRestoreAssistent(assistent)
-                                  }
-                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
-                                >
-                                  <Undo2 size={14} />
-                                  Tiklash
-                                </button>
+                                <span className="text-gray-400 italic">
+                                  Biriktirilmagan
+                                </span>
                               )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                            <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                              {assistent.phone}
+                            </td>
+                            <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                              {formatDate(assistent.created_at)}
+                            </td>
+                            <td className="px-5 py-4 border border-gray-200 relative">
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
+                                {viewMode === "active" ? (
+                                  <>
+                                    <button
+                                      onClick={() => openEditModal(assistent)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                    >
+                                      <Pencil size={14} />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        confirmDelete(assistent.id)
+                                      }
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() =>
+                                      handleRestoreAssistent(assistent)
+                                    }
+                                    className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                  >
+                                    <Undo2 size={14} />
+                                    Tiklash
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     {currentAssistents.length === 0 && (
                       <tr>
                         <td
@@ -911,7 +921,7 @@ export default function AssistentsPage() {
                 onClick={handleArchiveAssistent}
                 className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
-                O'Arxivlash
+                Arxivlash
               </button>
             </div>
           </div>

@@ -72,9 +72,11 @@ export default function AdministratorsPage() {
       setLoading(true);
       setError("");
 
-      const data = await getAdmins();
+      const admins = await getAdmins(
+        viewMode === "active" ? "ACTIVE" : "INACTIVE",
+      );
 
-      setAdmins(data);
+      setAdmins(admins);
     } catch (error: any) {
       console.error(error);
       setError(error.message || "Yuklanmadi");
@@ -187,7 +189,7 @@ export default function AdministratorsPage() {
     setPhone(admin.phone);
     setPassword("");
     setImageFile(null);
-    setImagePreview(getAvatarUrl(admin.file));
+    setImagePreview(getAvatarUrl(admin?.file ?? undefined));
     setNameError(false);
     setPasswordError(false);
     setPhoneError(false);
@@ -204,7 +206,9 @@ export default function AdministratorsPage() {
     if (!deletingId) return;
     try {
       await archiveAdmin(deletingId);
-      await loadAdmins();
+      setAdmins((prevAdmin) =>
+        prevAdmin.filter((a) => a.id !== deletingId),
+      );
       if (currentAdmins.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -219,7 +223,9 @@ export default function AdministratorsPage() {
   const handleRestoreAdmin = async (admin: Admin) => {
     try {
       await restoreAdmin(admin.id);
-      await loadAdmins();
+      setAdmins((prevAdmin) =>
+        prevAdmin.filter((a) => a.id !== admin.id),
+      );
     } catch (error: any) {
       console.error(error);
       alert(error.message || "Tiklab bo'lmadi");
@@ -435,71 +441,73 @@ export default function AdministratorsPage() {
                     </tr>
                   </thead>
                   <tbody className="text-[14px] text-gray-800">
-                    {currentAdmins.map((admin) => (
-                      <tr
-                        key={admin.id}
-                        className="hover:bg-gray-50 transition-colors group"
-                      >
-                        <td className="px-5 py-4 font-medium border border-gray-200">
-                          {admin.id}
-                        </td>
-                        <td className="px-5 py-4 border border-gray-200">
-                          <div
-                            className="flex items-center gap-3 cursor-pointer hover:text-blue-500 transition-colors"
-                            onClick={() => {
-                              setViewingAdmin(admin);
-                              setIsViewModalOpen(true);
-                            }}
-                          >
-                            <img
-                              src={getAvatarUrl(admin.file)}
-                              alt={admin.fullName}
-                              className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
-                            />
-                            <span className="font-semibold text-[13px]">
-                              {admin.fullName}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                          {admin.phone}
-                        </td>
-                        <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                          {formatDate(admin.created_at)}
-                        </td>
-                        <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                          {formatRole(admin.role)}
-                        </td>
-                        <td className="px-5 py-4 border border-gray-200 relative">
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
-                            {viewMode === "active" ? (
-                              <>
+                    {[...currentAdmins]
+                      .sort((a, b) => Number(b.id) - Number(a.id))
+                      .map((admin) => (
+                        <tr
+                          key={admin.id}
+                          className="hover:bg-gray-50 transition-colors group"
+                        >
+                          <td className="px-5 py-4 font-medium border border-gray-200">
+                            {admin.id}
+                          </td>
+                          <td className="px-5 py-4 border border-gray-200">
+                            <div
+                              className="flex items-center gap-3 cursor-pointer hover:text-blue-500 transition-colors"
+                              onClick={() => {
+                                setViewingAdmin(admin);
+                                setIsViewModalOpen(true);
+                              }}
+                            >
+                              <img
+                                src={getAvatarUrl(admin?.file ?? undefined)}
+                                alt={admin?.fullName}
+                                className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
+                              />
+                              <span className="font-semibold text-[13px]">
+                                {admin.fullName}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                            {admin.phone}
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                            {formatDate(admin.created_at)}
+                          </td>
+                          <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                            {formatRole(admin.role)}
+                          </td>
+                          <td className="px-5 py-4 border border-gray-200 relative">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
+                              {viewMode === "active" ? (
+                                <>
+                                  <button
+                                    onClick={() => openEditModal(admin)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => confirmDelete(admin.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
+                              ) : (
                                 <button
-                                  onClick={() => openEditModal(admin)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                  onClick={() => handleRestoreAdmin(admin)}
+                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
                                 >
-                                  <Pencil size={14} />
+                                  <Undo2 size={14} />
+                                  Tiklash
                                 </button>
-                                <button
-                                  onClick={() => confirmDelete(admin.id)}
-                                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => handleRestoreAdmin(admin)}
-                                className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
-                              >
-                                <Undo2 size={14} />
-                                Tiklash
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
                     {currentAdmins.length === 0 && (
                       <tr>
                         <td
@@ -794,7 +802,7 @@ export default function AdministratorsPage() {
               {/* Profile Header */}
               <div className="flex items-center gap-4 mb-8">
                 <img
-                  src={getAvatarUrl(viewingAdmin.file)}
+                  src={getAvatarUrl(viewingAdmin?.file ?? undefined)}
                   alt={viewingAdmin.fullName}
                   className="w-20 h-20 rounded-full object-cover border border-gray-200"
                 />

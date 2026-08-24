@@ -16,10 +16,10 @@ export interface CourseAssistantLink {
   id: number;
   courseId: number;
   userId: number;
+  status: Status;
   created_at: string;
   updated_at: string;
   user: CourseAssistantUser;
-  status: Status
 }
 
 function unwrapList<T>(payload: unknown): T[] {
@@ -32,14 +32,21 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function getCourseAssistants(status: Status = "ACTIVE"): Promise<CourseAssistantLink[]> {
-  const { data } = await baseAPI.get("/course-assistant", { params: { status } });
+export async function getCourseAssistants(
+  status: Status = "ACTIVE",
+): Promise<CourseAssistantLink[]> {
+  const { data } = await baseAPI.get("/course-assistant", {
+    params: { status },
+  });
   return unwrapList<CourseAssistantLink>(data);
 }
 
 export async function createCourseAssistant(courseId: number, userId: number) {
   try {
-    const { data } = await baseAPI.post("/course-assistant", { courseId, userId });
+    const { data } = await baseAPI.post("/course-assistant", {
+      courseId,
+      userId,
+    });
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -72,7 +79,7 @@ export async function deleteCourseAssistant(id: number) {
 export async function archiveCourseAssistant(id: number) {
   return updateCourseAssistant(id, { status: "INACTIVE" });
 }
- 
+
 export async function restoreCourseAssistant(id: number) {
   return updateCourseAssistant(id, { status: "ACTIVE" });
 }

@@ -48,7 +48,6 @@ export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
-  // const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -229,7 +228,9 @@ export default function PaymentsPage() {
     if (!deletingId) return;
     try {
       await archivePayment(deletingId);
-      await loadAll();
+      setPayments((prevPayments) =>
+        prevPayments.filter((p) => p.id !== deletingId),
+      );
       if (currentPayments.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -244,7 +245,9 @@ export default function PaymentsPage() {
   const handleRestorePayment = async (payment: Payment) => {
     try {
       await restorePayment(payment.id);
-      await loadAll();
+      setPayments((prevPayments) =>
+        prevPayments.filter((p) => p.id !== payment.id),
+      );
     } catch (err: any) {
       console.error(err);
       alert(err.response?.data?.message || err.message || "Tiklab bo'lmadi");
@@ -254,7 +257,17 @@ export default function PaymentsPage() {
   const handleConfirmPayment = async (payment: Payment) => {
     try {
       await updatePayment(payment.id, { status: true });
-      await loadAll();
+
+      setPayments((prev) =>
+        prev.map((item) =>
+          item.id === payment.id
+            ? {
+                ...item,
+                status: true,
+              }
+            : item,
+        ),
+      );
     } catch (err: any) {
       console.error(err);
       alert(
@@ -438,101 +451,106 @@ export default function PaymentsPage() {
                     </tr>
                   </thead>
                   <tbody className="text-[14px] text-gray-800">
-                    {currentPayments.map((payment) => {
-                      const buyer = payment.user || studentById(payment.userId);
-                      const course =
-                        payment.course || courseById(payment.courseId);
-                      return (
-                        <tr
-                          key={payment.id}
-                          className="hover:bg-gray-50 transition-colors group"
-                        >
-                          <td className="px-5 py-4 font-medium border border-gray-200">
-                            {payment.id}
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <div
-                              className="flex items-center gap-3 cursor-pointer hover:text-blue-500 transition-colors"
-                              onClick={() => {
-                                setViewingStudent(buyer);
-                                setIsViewModalOpen(true);
-                              }}
-                            >
-                              <img
-                                src={getAvatarUrl(buyer?.file ?? undefined)}
-                                alt={buyer?.fullName}
-                                className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
-                              />
-                              <span className="font-semibold text-[13px]">
-                                {buyer?.fullName || "—"}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                            {course?.name || "—"}
-                          </td>
-                          <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                            {formatAmount(payment.amount)}
-                          </td>
-                          <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
-                            {formatDate(payment.created_at)}
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <span
-                              className={`px-3 py-1 rounded-full text-[12px] font-semibold border ${
-                                payment.status
-                                  ? "bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]"
-                                  : "bg-gray-100 text-gray-500 border-gray-200"
-                              }`}
-                            >
-                              {payment.status ? "To'landi" : "Kutilmoqda"}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200 text-center">
-                            {payment.status ? (
-                              <span className="px-3 py-1 rounded-full text-[12px] font-semibold border bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]">
-                                Tasdiqlangan
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => handleConfirmPayment(payment)}
-                                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-medium transition-colors"
+                    {[...currentPayments]
+                      .sort((a, b) => Number(a.status) - Number(b.status))
+                      .map((payment) => {
+                        const buyer =
+                          payment.user || studentById(payment.userId);
+                        const course =
+                          payment.course || courseById(payment.courseId);
+                        return (
+                          <tr
+                            key={payment.id}
+                            className="hover:bg-gray-50 transition-colors group"
+                          >
+                            <td className="px-5 py-4 font-medium border border-gray-200">
+                              {payment.id}
+                            </td>
+                            <td className="px-5 py-4 border border-gray-200">
+                              <div
+                                className="flex items-center gap-3 cursor-pointer hover:text-blue-500 transition-colors"
+                                onClick={() => {
+                                  setViewingStudent(buyer);
+                                  setIsViewModalOpen(true);
+                                }}
                               >
-                                Tasdiqlash
-                              </button>
-                            )}
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200 relative">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
-                              {viewMode === "active" ? (
-                                <>
-                                  <button
-                                    onClick={() => openEditModal(payment)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                                  >
-                                    <Pencil size={14} />
-                                  </button>
-                                  <button
-                                    onClick={() => confirmDelete(payment.id)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </>
+                                <img
+                                  src={getAvatarUrl(buyer?.file ?? undefined)}
+                                  alt={buyer?.fullName}
+                                  className="w-8 h-8 rounded-full object-cover bg-gray-100 border border-gray-200"
+                                />
+                                <span className="font-semibold text-[13px]">
+                                  {buyer?.fullName || "—"}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                              {course?.name || "—"}
+                            </td>
+                            <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
+                              {formatAmount(payment.amount)}
+                            </td>
+                            <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
+                              {formatDate(payment.created_at)}
+                            </td>
+                            <td className="px-5 py-4 border border-gray-200">
+                              <span
+                                className={`px-3 py-1 rounded-full text-[12px] font-semibold border ${
+                                  payment.status
+                                    ? "bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]"
+                                    : "bg-gray-100 text-gray-500 border-gray-200"
+                                }`}
+                              >
+                                {payment.status ? "To'landi" : "Kutilmoqda"}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4 border border-gray-200 text-center">
+                              {payment.status ? (
+                                <span className="px-3 py-1 rounded-full text-[12px] font-semibold border bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]">
+                                  Tasdiqlangan
+                                </span>
                               ) : (
                                 <button
-                                  onClick={() => handleRestorePayment(payment)}
-                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                  onClick={() => handleConfirmPayment(payment)}
+                                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[12px] font-medium transition-colors"
                                 >
-                                  <Undo2 size={14} />
-                                  Tiklash
+                                  Tasdiqlash
                                 </button>
                               )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                            <td className="px-5 py-4 border border-gray-200 relative">
+                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
+                                {viewMode === "active" ? (
+                                  <>
+                                    <button
+                                      onClick={() => openEditModal(payment)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                    >
+                                      <Pencil size={14} />
+                                    </button>
+                                    <button
+                                      onClick={() => confirmDelete(payment.id)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    onClick={() =>
+                                      handleRestorePayment(payment)
+                                    }
+                                    className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                  >
+                                    <Undo2 size={14} />
+                                    Tiklash
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     {currentPayments.length === 0 && (
                       <tr>
                         <td
