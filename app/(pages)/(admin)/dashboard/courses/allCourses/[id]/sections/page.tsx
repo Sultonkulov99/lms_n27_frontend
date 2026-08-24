@@ -46,52 +46,28 @@ export default function CourseSectionsPage() {
 
   const { courses } = useCourseStore();
 
-  // ============================================================
-  // COURSE
-  // ============================================================
-
   const [currentCourse, setCurrentCourse] =
     useState<Course | null>(null);
 
-  // ============================================================
-  // SECTIONS
-  // ============================================================
 
   const [sections, setSections] = useState<Section[]>([]);
 
-  // ============================================================
-  // LOADING
-  // ============================================================
 
   const [loadingSections, setLoadingSections] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  // ============================================================
-  // MESSAGES
-  // ============================================================
 
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // ============================================================
-  // PAGINATION
-  // ============================================================
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // ============================================================
-  // MODALS
-  // ============================================================
-
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  // ============================================================
-  // FORM
-  // ============================================================
 
   const [newSectionName, setNewSectionName] = useState("");
 
@@ -101,27 +77,15 @@ export default function CourseSectionsPage() {
   const [deletingSectionId, setDeletingSectionId] =
     useState<number | null>(null);
 
-  // ============================================================
-  // COURSE TITLE
-  // ============================================================
-
   const courseTitle =
     currentCourse?.name ||
     currentCourse?.title ||
     "";
 
-  // ============================================================
-  // CLEAR MESSAGES
-  // ============================================================
-
-  const clearMessages = useCallback(() => {
+    const clearMessages = useCallback(() => {
     setError("");
     setSuccessMessage("");
   }, []);
-
-  // ============================================================
-  // SUCCESS MESSAGE
-  // ============================================================
 
   const showSuccess = useCallback((message: string) => {
     setError("");
@@ -131,10 +95,6 @@ export default function CourseSectionsPage() {
       setSuccessMessage("");
     }, 3000);
   }, []);
-
-  // ============================================================
-  // FIND COURSE
-  // ============================================================
 
   useEffect(() => {
     let cancelled = false;
@@ -147,7 +107,6 @@ export default function CourseSectionsPage() {
           return;
         }
 
-        // 1. Zustand store
         const storeCourse = courses.find(
           (course: any) =>
             Number(course.id) === numericCourseId
@@ -160,8 +119,6 @@ export default function CourseSectionsPage() {
 
           return;
         }
-
-        // 2. API
         const response = await baseAPI.get("/courses");
 
         if (cancelled) {
@@ -193,10 +150,6 @@ export default function CourseSectionsPage() {
       cancelled = true;
     };
   }, [courseId, courses]);
-
-  // ============================================================
-  // GET SECTIONS
-  // ============================================================
 
   const getSections = useCallback(async () => {
     const numericCourseId = Number(courseId);
@@ -283,18 +236,9 @@ export default function CourseSectionsPage() {
       setLoadingSections(false);
     }
   }, [courseId, itemsPerPage]);
-
-  // ============================================================
-  // LOAD SECTIONS
-  // ============================================================
-
   useEffect(() => {
     getSections();
   }, [getSections]);
-
-  // ============================================================
-  // ADD SECTION
-  // ============================================================
 
   const handleAddSection = async () => {
     const name = newSectionName.trim();
@@ -386,10 +330,6 @@ export default function CourseSectionsPage() {
     }
   };
 
-  // ============================================================
-  // EDIT SECTION
-  // ============================================================
-
   const handleEditSection = async () => {
     if (!editingSection) {
       return;
@@ -476,10 +416,6 @@ export default function CourseSectionsPage() {
     }
   };
 
-  // ============================================================
-  // DELETE SECTION
-  // ============================================================
-
   const handleDeleteSection = async () => {
     if (deletingSectionId === null) {
       return;
@@ -552,10 +488,6 @@ export default function CourseSectionsPage() {
     }
   };
 
-  // ============================================================
-  // CLOSE ADD / EDIT MODAL
-  // ============================================================
-
   const closeModal = () => {
     if (saving) {
       return;
@@ -570,9 +502,6 @@ export default function CourseSectionsPage() {
     setError("");
   };
 
-  // ============================================================
-  // CLOSE DELETE MODAL
-  // ============================================================
 
   const closeDeleteModal = () => {
     if (deleting) {
@@ -582,10 +511,6 @@ export default function CourseSectionsPage() {
     setIsDeleteModalOpen(false);
     setDeletingSectionId(null);
   };
-
-  // ============================================================
-  // DOWNLOAD CSV
-  // ============================================================
 
   const handleDownloadXLS = () => {
     const headers = [
@@ -636,10 +561,6 @@ export default function CourseSectionsPage() {
     URL.revokeObjectURL(url);
   };
 
-  // ============================================================
-  // PAGINATION
-  // ============================================================
-
   const totalPages =
     Math.ceil(
       sections.length /
@@ -664,9 +585,6 @@ export default function CourseSectionsPage() {
       endIndex
     );
 
-  // ============================================================
-  // UI
-  // ============================================================
 
   return (
     <>
