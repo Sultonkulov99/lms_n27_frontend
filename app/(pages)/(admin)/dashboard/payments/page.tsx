@@ -70,13 +70,12 @@ export default function PaymentsPage() {
     try {
       setLoading(true);
       setError("");
-      const [paymentsData, studentsData, coursesData] =
-        await Promise.all([
-          getPayments(viewMode === "active" ? "ACTIVE" : "INACTIVE"),
-          getStudents(),
-          getCourses(),
-          fetchCategoriesCached(),
-        ]);
+      const [paymentsData, studentsData, coursesData] = await Promise.all([
+        getPayments(viewMode === "active" ? "ACTIVE" : "INACTIVE"),
+        getStudents(),
+        getCourses(),
+        fetchCategoriesCached(),
+      ]);
       setPayments(paymentsData);
       setStudents(studentsData);
       setCourses(coursesData);
@@ -170,8 +169,9 @@ export default function PaymentsPage() {
         buyerName,
         courseName,
         p.amount ?? "",
-        p.created_at,
+        formatDate(p.created_at),
         p.status ? "To'landi" : "Kutilmoqda",
+        formatRole(p.isActive),
       ].join(",");
     });
     const csvContent =
@@ -490,7 +490,7 @@ export default function PaymentsPage() {
                           </td>
                           <td className="px-5 py-4 border border-gray-200 text-center">
                             {payment.status ? (
-                              <span className="text-[#137333] text-[13px] font-semibold">
+                              <span className="px-3 py-1 rounded-full text-[12px] font-semibold border bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]">
                                 Tasdiqlangan
                               </span>
                             ) : (

@@ -31,7 +31,9 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function getPayments(isActive: Status = "ACTIVE"): Promise<Payment[]> {
+export async function getPayments(
+  isActive: Status = "ACTIVE",
+): Promise<Payment[]> {
   const { data } = await baseAPI.get("/payments", { params: { isActive } });
   return unwrapList<Payment>(data);
 }
@@ -50,10 +52,15 @@ export async function createPayment(userId: number, courseId: number) {
 
 export async function updatePayment(
   id: number,
-  payload: { userId?: number; courseId?: number; status?: boolean; isActive?: Status },
+  payload: {
+    userId?: number;
+    courseId?: number;
+    status?: boolean;
+    isActive?: Status;
+  },
 ) {
   try {
-    const { data } = await baseAPI.patch(`/payments/${id}`, payload);
+    const { data } = await baseAPI.patch(`/payments/admin/${id}`, payload);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -72,6 +79,6 @@ export async function restorePayment(id: number) {
 }
 
 export async function deletePayment(id: number) {
-  const { data } = await baseAPI.delete(`/payments/${id}`);
+  const { data } = await baseAPI.delete(`/payments/admin/${id}`);
   return data;
 }

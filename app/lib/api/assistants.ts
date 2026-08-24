@@ -23,8 +23,8 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function getAssistants(): Promise<Assistant[]> {
-  const { data } = await baseAPI.get("/user/assistant");
+export async function getAssistants(status: Status = "ACTIVE"): Promise<Assistant[]> {
+  const { data } = await baseAPI.get("/user/assistant", { params: { status } });
   return unwrapList<Assistant>(data);
 }
 
@@ -52,6 +52,16 @@ export async function updateAssistant(id: number, formData: FormData) {
   }
 }
 
+export async function archiveAssistant(id: number) {
+  const { data } = await baseAPI.patch(`/user/assistant/${id}`, { status: "INACTIVE" });
+  return data;
+}
+ 
+export async function restoreAssistant(id: number) {
+  const { data } = await baseAPI.patch(`/user/assistant/${id}`, { status: "ACTIVE" });
+  return data;
+}
+ 
 export async function deleteAssistant(id: number) {
   const { data } = await baseAPI.delete(`/user/assistant/${id}`);
   return data;

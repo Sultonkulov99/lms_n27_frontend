@@ -17,14 +17,17 @@ import {
   Camera,
   Briefcase,
   Code,
+  Undo2,
+  Archive,
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 import {
   getAdmins,
   createAdmin,
   updateAdmin,
-  deleteAdmin,
   Admin,
+  archiveAdmin,
+  restoreAdmin,
 } from "@/app/lib/api/users";
 
 export default function AdministratorsPage() {
@@ -43,6 +46,7 @@ export default function AdministratorsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
 
   // Form states
   const [fullName, setName] = useState("");
@@ -61,7 +65,7 @@ export default function AdministratorsPage() {
 
   useEffect(() => {
     loadAdmins();
-  }, []);
+  }, [viewMode]);
 
   const loadAdmins = async () => {
     try {
@@ -104,7 +108,14 @@ export default function AdministratorsPage() {
       "Holati",
     ];
     const rows = admins.map((a) =>
-      [a.id, a.fullName, a.phone, a.created_at, a.role, a.status].join(","),
+      [
+        a.id,
+        a.fullName,
+        a.phone,
+        formatDate(a.created_at),
+        formatRole(a.role),
+        formatRole(a.status),
+      ].join(","),
     );
     const csvContent =
       "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
@@ -189,24 +200,29 @@ export default function AdministratorsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteAdmin = async () => {
+  const handleArchiveAdmin = async () => {
     if (!deletingId) return;
-
     try {
-      await deleteAdmin(deletingId);
-
-      setAdmins((prev) => prev.filter((admin) => admin.id !== deletingId));
-
+      await archiveAdmin(deletingId);
+      await loadAdmins();
       if (currentAdmins.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
-
       setIsDeleteModalOpen(false);
       setDeletingId(null);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message || "Arxivlab bo'lmadi");
+    }
+  };
+
+  const handleRestoreAdmin = async (admin: Admin) => {
+    try {
+      await restoreAdmin(admin.id);
+      await loadAdmins();
     } catch (error: any) {
       console.error(error);
-
-      alert(error.message || "Administrator o‘chirilmadi");
+      alert(error.message || "Tiklab bo'lmadi");
     }
   };
 
@@ -301,13 +317,15 @@ export default function AdministratorsPage() {
             </div>
           </div>
 
-          <button
-            onClick={openAddModal}
-            className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
-          >
-            <PlusCircle size={18} strokeWidth={2} />
-            Qo’shish
-          </button>
+          {viewMode === "active" && (
+            <button
+              onClick={openAddModal}
+              className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+            >
+              <PlusCircle size={18} strokeWidth={2} />
+              Qo’shish
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -335,6 +353,32 @@ export default function AdministratorsPage() {
               />
             )}
           </div>
+          <button
+            onClick={() => {
+              setViewMode((prev) =>
+                prev === "active" ? "archived" : "active",
+              );
+              setSearchQuery("");
+              setCurrentPage(1);
+            }}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${
+              viewMode === "archived"
+                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {viewMode === "archived" ? (
+              <>
+                <Undo2 size={16} />
+                Faol to'lovlar
+              </>
+            ) : (
+              <>
+                <Archive size={16} />
+                Arxiv
+              </>
+            )}
+          </button>
         </div>
 
         {loading && (
@@ -426,20 +470,32 @@ export default function AdministratorsPage() {
                         <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
                           {formatRole(admin.role)}
                         </td>
-                        <td className="px-5 py-4 border border-gray-200">
-                          <div className="flex items-center justify-center gap-2">
-                            <button
-                              onClick={() => openEditModal(admin)}
-                              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            <button
-                              onClick={() => confirmDelete(admin.id)}
-                              className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                        <td className="px-5 py-4 border border-gray-200 relative">
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
+                            {viewMode === "active" ? (
+                              <>
+                                <button
+                                  onClick={() => openEditModal(admin)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                >
+                                  <Pencil size={14} />
+                                </button>
+                                <button
+                                  onClick={() => confirmDelete(admin.id)}
+                                  className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => handleRestoreAdmin(admin)}
+                                className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                              >
+                                <Undo2 size={14} />
+                                Tiklash
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -652,39 +708,32 @@ export default function AdministratorsPage() {
         </div>
       )}
 
-      {/* Custom Delete Confirmation Modal */}
+      {/* Archive Modal */}
       {isDeleteModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs"
-          onClick={() => setIsDeleteModalOpen(false)}
-        >
-          <div
-            className="bg-white rounded-[20px] shadow-xl p-8 w-100 flex flex-col items-center animate-in fade-in zoom-in duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-21 h-21 rounded-full bg-[#FFF0F0] flex items-center justify-center mb-6">
-              <div className="w-15 h-15 rounded-full bg-[#FF4D4F] flex items-center justify-center text-white text-[32px] font-bold">
-                ?
-              </div>
-            </div>
-            <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">
-              Siz rostdan ham o'chirmoqchimisiz?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Arxivlashni tasdiqlash
             </h3>
-            <div className="flex items-center justify-center gap-4 w-full">
+            <p className="text-gray-600 text-sm mb-6">
+              Haqiqatan ham arxivlamoqchimisiz? To'lov ro'yxatdan yashiriladi,
+              lekin bazada saqlanib qoladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
               <button
                 onClick={() => {
                   setIsDeleteModalOpen(false);
                   setDeletingId(null);
                 }}
-                className="flex-1 py-3 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-sm font-medium"
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
               >
                 Bekor qilish
               </button>
               <button
-                onClick={handleDeleteAdmin}
-                className="flex-1 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
+                onClick={handleArchiveAdmin}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
-                O'chirish
+                Arxivlash
               </button>
             </div>
           </div>

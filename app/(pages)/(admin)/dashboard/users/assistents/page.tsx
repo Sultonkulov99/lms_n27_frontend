@@ -17,6 +17,8 @@ import {
   Camera,
   Briefcase,
   Code,
+  Undo2,
+  Archive,
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 import {
@@ -24,14 +26,14 @@ import {
   getAssistants,
   createAssistant,
   updateAssistant,
-  deleteAssistant,
+  archiveAssistant,
+  restoreAssistant,
 } from "@/app/lib/api/assistants";
 import {
   CourseAssistantLink,
   getCourseAssistants,
   createCourseAssistant,
   updateCourseAssistant,
-  deleteCourseAssistant,
 } from "@/app/lib/api/course-assistant";
 import { Course, getCourses } from "@/app/lib/api/courses";
 
@@ -56,6 +58,7 @@ export default function AssistentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
 
   // Form states
   const [fullName, setName] = useState("");
@@ -83,15 +86,16 @@ export default function AssistentsPage() {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [viewMode]);
 
   const loadAll = async () => {
     try {
       setLoading(true);
       setError("");
 
+      const status = viewMode === "active" ? "ACTIVE" : "INACTIVE";
       const [assistantsData, linksData, coursesData] = await Promise.all([
-        getAssistants(),
+        getAssistants(status),
         getCourseAssistants(),
         getCourses(),
       ]);
@@ -178,7 +182,14 @@ export default function AssistentsPage() {
     const rows = assistents.map((a) => {
       const link = linkForUser(a.id);
       const courseName = link ? courseNameById(link.courseId) : "";
-      return [a.id, a.fullName, courseName, a.phone, a.created_at].join(",");
+      return [
+        a.id,
+        a.fullName,
+        courseName,
+        a.phone,
+        formatDate(a.created_at),
+        formatRole(a.status),
+      ].join(",");
     });
     const csvContent =
       "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
@@ -241,27 +252,29 @@ export default function AssistentsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteAssistent = async () => {
+  const handleArchiveAssistent = async () => {
     if (!deletingId) return;
-
     try {
-      const link = linkForUser(deletingId);
-      if (link) {
-        await deleteCourseAssistant(link.id);
-      }
-      await deleteAssistant(deletingId);
-
+      await archiveAssistant(deletingId);
       await loadAll();
-
       if (currentAssistents.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
-
       setIsDeleteModalOpen(false);
       setDeletingId(null);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Assistent o'chirilmadi");
+      alert(error.message || "Arxivlab bo'lmadi");
+    }
+  };
+
+  const handleRestoreAssistent = async (assistent: Assistant) => {
+    try {
+      await restoreAssistant(assistent.id);
+      await loadAll();
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "Tiklab bo'lmadi");
     }
   };
 
@@ -329,10 +342,6 @@ export default function AssistentsPage() {
         } else {
           await createCourseAssistant(courseId, userId);
         }
-      } else {
-        if (editingId && editingLink) {
-          await deleteCourseAssistant(editingLink.id);
-        }
       }
 
       await loadAll();
@@ -370,13 +379,15 @@ export default function AssistentsPage() {
             </div>
           </div>
 
-          <button
-            onClick={openAddModal}
-            className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
-          >
-            <PlusCircle size={18} strokeWidth={2} />
-            Qo’shish
-          </button>
+          {viewMode === "active" && (
+            <button
+              onClick={openAddModal}
+              className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+            >
+              <PlusCircle size={18} strokeWidth={2} />
+              Qo’shish
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -404,6 +415,32 @@ export default function AssistentsPage() {
               />
             )}
           </div>
+          <button
+            onClick={() => {
+              setViewMode((prev) =>
+                prev === "active" ? "archived" : "active",
+              );
+              setSearchQuery("");
+              setCurrentPage(1);
+            }}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${
+              viewMode === "archived"
+                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {viewMode === "archived" ? (
+              <>
+                <Undo2 size={16} />
+                Faol to'lovlar
+              </>
+            ) : (
+              <>
+                <Archive size={16} />
+                Arxiv
+              </>
+            )}
+          </button>
         </div>
 
         {loading && (
@@ -503,20 +540,34 @@ export default function AssistentsPage() {
                           <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
                             {formatDate(assistent.created_at)}
                           </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => openEditModal(assistent)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                              >
-                                <Pencil size={14} />
-                              </button>
-                              <button
-                                onClick={() => confirmDelete(assistent.id)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                          <td className="px-5 py-4 border border-gray-200 relative">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
+                              {viewMode === "active" ? (
+                                <>
+                                  <button
+                                    onClick={() => openEditModal(assistent)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => confirmDelete(assistent.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    handleRestoreAssistent(assistent)
+                                  }
+                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                >
+                                  <Undo2 size={14} />
+                                  Tiklash
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -835,16 +886,16 @@ export default function AssistentsPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Archive Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
           <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              O'chirishni tasdiqlash
+              Arxivlashni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham o'chirmoqchimisiz? Bu amalni ortga qaytarib
-              bo'lmaydi.
+              Haqiqatan ham arxivlamoqchimisiz? Assistent ro'yxatdan
+              yashiriladi, lekin bazada saqlanib qoladi.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
@@ -857,10 +908,10 @@ export default function AssistentsPage() {
                 Bekor qilish
               </button>
               <button
-                onClick={handleDeleteAssistent}
+                onClick={handleArchiveAssistent}
                 className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
-                O'chirish
+                O'Arxivlash
               </button>
             </div>
           </div>
