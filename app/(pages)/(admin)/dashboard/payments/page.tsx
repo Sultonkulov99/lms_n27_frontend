@@ -187,7 +187,7 @@ export default function PaymentsPage() {
   const getAvatarUrl = (file?: string) => {
     if (!file) return "/default-avatar.png";
     if (file.startsWith("http")) return file;
-    return `${process.env.NEXT_PUBLIC_API_URL}/uploads/avatars/${file}`;
+    return `${process.env.NEXT_PUBLIC_API_URL}${file}`;
   };
 
   const resetForm = () => {
