@@ -107,7 +107,14 @@ export default function Header() {
                     <div key={notif.id} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex flex-col gap-1" onClick={() => {
                       markAsRead(notif.id);
                       setIsNotificationsOpen(false);
-                      if (notif.link) {
+                      if (notif.link && notif.link.includes('/students/')) {
+                        const courseIdMatch = notif.link.match(/\/students\/(\d+)/);
+                        if (courseIdMatch) {
+                          router.push(`/dashboard/qa?courseId=${courseIdMatch[1]}`);
+                        } else {
+                          router.push("/dashboard/qa");
+                        }
+                      } else if (notif.link) {
                         router.push(notif.link);
                       } else {
                         router.push("/dashboard/comments");

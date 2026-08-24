@@ -29,7 +29,7 @@ function parseJwtRole(token: string): string | null {
 const ROLE_CONFIG: Record<string, { home: string; allowedPrefix: string }> = {
   SUPERADMIN: { home: "/dashboard", allowedPrefix: "/dashboard" },
   ADMIN: { home: "/dashboard", allowedPrefix: "/dashboard" },
-  MENTOR: { home: "/mentors", allowedPrefix: "/mentors" },
+  MENTOR: { home: "/mentor", allowedPrefix: "/mentor" },
   ASSISTANT: { home: "/assistents", allowedPrefix: "/assistents" },
   STUDENT: { home: "/students", allowedPrefix: "/students" },
 };
@@ -37,7 +37,7 @@ const ROLE_CONFIG: Record<string, { home: string; allowedPrefix: string }> = {
 // Barcha rollarga tegishli maxsus panellar ro'yxati
 const PROTECTED_PANEL_PREFIXES = [
   "/dashboard",
-  "/mentors",
+  "/mentor",
   "/assistents",
   "/students",
 ];

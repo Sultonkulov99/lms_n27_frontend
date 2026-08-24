@@ -68,7 +68,7 @@ function RegisterFormContent() {
         <div className="flex justify-end w-full">
           <div className="relative h-10 w-32 flex items-center justify-end">
             <div className="flex items-center gap-1 font-extrabold text-2xl tracking-wide">
-              <Image src="/Kebyu_logo_purple.png" alt="Kebyu Logo" width={140} height={40} className="object-contain" />
+              <Image src="/Kebyu_logo_purple.png" alt="Kebyu Logo" width={140} height={40} className="object-contain" style={{ width: "auto", height: "auto" }} />
             </div>
           </div>
         </div>

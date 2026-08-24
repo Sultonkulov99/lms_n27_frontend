@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image, { StaticImageData } from "next/image";
 import { motion } from "framer-motion";
 import { usePresenceStore } from "@/store/usePresenceStore";
@@ -90,6 +91,7 @@ export default function LessonPlayer({
   videoUrl,
   onSubmitQuestion,
   onSubmitReply,
+  onTyping,
   hasNextLesson,
 }: {
   lessonId?: string;
@@ -107,6 +109,7 @@ export default function LessonPlayer({
   videoUrl?: string;
   onSubmitQuestion?: (text: string) => Promise<void>;
   onSubmitReply?: (parentId: string, text: string) => Promise<void>;
+  onTyping?: (isTyping: boolean) => void;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("qa");
   const [rating, setRating] = useState(0);
@@ -129,6 +132,27 @@ export default function LessonPlayer({
   
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    // Scroll to the comment if hash is present
+    if (typeof window !== "undefined" && window.location.hash) {
+      const id = window.location.hash.substring(1); // remove '#'
+      if (id.startsWith('comment-')) {
+        setTimeout(() => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add a temporary highlight effect
+            element.classList.add('bg-blue-50', 'transition-colors', 'duration-500', 'p-4', 'rounded-lg');
+            setTimeout(() => {
+              element.classList.remove('bg-blue-50');
+            }, 3000);
+          }
+        }, 500); // Give it time to render
+      }
+    }
+  }, [questions]);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
@@ -592,7 +616,7 @@ export default function LessonPlayer({
           <div className="flex flex-col gap-6">
             {questions.map((q) => {
               return (
-                <div key={q.id} className="flex flex-col gap-4">
+                <div key={q.id} id={`comment-${q.id}`} className="flex flex-col gap-4">
                   {/* Question */}
                   <div className="flex gap-4">
                     <div className="shrink-0">
@@ -618,7 +642,12 @@ export default function LessonPlayer({
                     <div className="ml-14 flex gap-3 items-start">
                       <textarea 
                         value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
+                        onChange={(e) => {
+                    setReplyText(e.target.value);
+                    if (onTyping) {
+                      onTyping(e.target.value.trim().length > 0);
+                    }
+                  }}
                         placeholder="Javobingizni yozing..."
                         className="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm text-[#1a1a1a] focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none min-h-[60px]"
                       />
@@ -644,20 +673,18 @@ export default function LessonPlayer({
                   {q.replies && q.replies.length > 0 && (
                     <div className="ml-14 flex flex-col gap-4">
                       {q.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-4">
-                          <div className="shrink-0">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${reply.avatarColor}`}>
+                        <div key={reply.id} className="bg-[#F8FAFC] rounded-lg p-4 border border-gray-100 flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-semibold text-xs ${reply.avatarColor}`}>
                               {reply.name.charAt(0).toUpperCase()}
                             </div>
-                          </div>
-                          <div className="min-w-0 flex-1 bg-[#F8FAFC] rounded-lg p-4 border border-gray-100">
-                            <p className="text-sm font-bold mb-1">
+                            <p className="text-sm font-bold">
                               <span className={reply.nameColor}>{reply.name}</span>
                               {reply.role && <span className="text-gray-400 font-normal ml-1">({reply.role})</span>}
                             </p>
-                            <p className="text-sm text-[#1a1a1a] leading-relaxed mb-1">{reply.text}</p>
-                            <p className="text-xs text-gray-400 font-medium">{reply.date}</p>
                           </div>
+                          <p className="text-sm text-[#1a1a1a] leading-relaxed">{reply.text}</p>
+                          <p className="text-xs text-gray-400 font-medium">{reply.date}</p>
                         </div>
                       ))}
                     </div>
@@ -733,7 +760,12 @@ export default function LessonPlayer({
               <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Savol matni</label>
               <textarea 
                 value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
+                onChange={(e) => {
+                  setQuestionText(e.target.value);
+                  if (onTyping) {
+                    onTyping(e.target.value.trim().length > 0);
+                  }
+                }}
                 className="w-full border border-gray-300 rounded-lg p-3 min-h-[120px] text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
                 placeholder="Kiriting"
               />
