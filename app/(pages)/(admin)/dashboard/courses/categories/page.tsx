@@ -1,233 +1,123 @@
 "use client";
 
-import React, { use, useEffect, useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import Pagination from "@/app/components/dashboard/Pagination";
 import {
+  Search,
+  SlidersHorizontal,
   Plus,
-  Filter,
-  Pen,
+  Pencil,
   Trash2,
   X,
   Check,
-  Loader2,
   HelpCircle,
-  AlertTriangle,
 } from "lucide-react";
-import Link from "next/link";
-import Pagination from "@/app/components/dashboard/Pagination";
-import { useCourseStore } from "@/app/store/useCourseStore";
 import { baseAPI } from "@/app/lib/utils";
 
-interface Section {
+interface Category {
   id: number;
   name: string;
-  courseId?: number;
 }
 
-export default function CourseSectionsPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id: courseId } = use(params);
-
-  const { courses } = useCourseStore();
-
-  const currentCourse = courses.find(
-    (course) => course.id.toString() === courseId
-  );
-
-  const courseTitle =
-    currentCourse?.title || "Frontend dasturlash";
-
-  // ============================================================
-  // STATES
-  // ============================================================
-
-  const [sections, setSections] = useState<Section[]>([]);
-
+export default function CategoriesPage() {
+  // ==========================================
+  // CATEGORIES STATE
+  // ==========================================
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
-  const [error, setError] = useState("");
-
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // ============================================================
-  // MODALS
-  // ============================================================
+  // ==========================================
+  // MODALS STATE
+  // ==========================================
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
-  const [isAddModalOpen, setIsAddModalOpen] =
-    useState(false);
+  const [editingCategory, setEditingCategory] =
+    useState<Category | null>(null);
 
-  const [isEditModalOpen, setIsEditModalOpen] =
-    useState(false);
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] =
-    useState(false);
-
-  const [isSuccessModalOpen, setIsSuccessModalOpen] =
-    useState(false);
-
-  // TRUE = warning
-  // FALSE = success
-  const [isWarningModal, setIsWarningModal] =
-    useState(false);
-
-  const [successMessage, setSuccessMessage] =
-    useState("");
-
-  // ============================================================
-  // FORM STATES
-  // ============================================================
-
-  const [newSectionName, setNewSectionName] =
-    useState("");
-
-  const [editingSection, setEditingSection] =
-    useState<Section | null>(null);
-
-  const [deletingSectionId, setDeletingSectionId] =
+  const [deletingCategoryId, setDeletingCategoryId] =
     useState<number | null>(null);
 
-  // ============================================================
-  // GET SECTIONS
-  // GET /api/v1/sections
-  // ============================================================
+  const [newCategoryName, setNewCategoryName] = useState("");
 
-  const getSections = async () => {
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // ==========================================
+  // GET CATEGORIES
+  // GET /api/v1/categories
+  // ==========================================
+  const getCategories = async () => {
     try {
       setLoading(true);
-      setError("");
 
-      const response = await baseAPI.get("/sections");
+      const response = await baseAPI.get("/categories");
 
-      console.log(
-        "GET SECTIONS RESPONSE:",
-        response.data
-      );
+      console.log("GET CATEGORIES RESPONSE:", response.data);
 
-      const data = Array.isArray(response.data)
-        ? response.data
-        : response.data?.data || [];
-
-      console.log("ALL SECTIONS:", data);
-
-      // FAQAT HOZIRGI KURS SECTIONS
-      const filteredSections = data.filter(
-        (section: Section) =>
-          Number(section.courseId) ===
-          Number(courseId)
-      );
-
-      console.log(
-        "CURRENT COURSE ID:",
-        courseId
-      );
-
-      console.log(
-        "FILTERED SECTIONS:",
-        filteredSections
-      );
-
-      setSections(filteredSections);
+      setCategories(response.data?.data || []);
     } catch (error: any) {
-      console.error(
-        "GET SECTIONS ERROR:",
-        error
-      );
+      console.error("GET CATEGORIES ERROR:", error);
 
       console.error(
         "API ERROR:",
         error?.response?.data
       );
 
-      setSections([]);
-
-      setError(
-        error?.response?.data?.message ||
-          "Bo'limlarni yuklashda xatolik yuz berdi."
-      );
+      setCategories([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // ============================================================
-  // LOAD
-  // ============================================================
-
+  // ==========================================
+  // LOAD CATEGORIES
+  // ==========================================
   useEffect(() => {
-    getSections();
-  }, [courseId]);
+    getCategories();
+  }, []);
 
-  // ============================================================
-  // ADD SECTION
-  // POST /api/v1/sections
-  // ============================================================
-
-  const handleAddSection = async () => {
-    if (!newSectionName.trim()) {
-      setSuccessMessage(
-        "Bo'lim nomini kiriting."
-      );
-
-      setIsWarningModal(true);
-      setIsSuccessModalOpen(true);
-
-      return;
-    }
+  // ==========================================
+  // ADD CATEGORY
+  // POST /api/v1/categories
+  // ==========================================
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) return;
 
     try {
-      setSaving(true);
-      setError("");
+      setLoading(true);
 
-      const body = {
-        name: newSectionName.trim(),
-        courseId: Number(courseId),
-      };
+      const response = await baseAPI.post("/categories", {
+        name: newCategoryName.trim(),
+      });
 
       console.log(
-        "POST /sections BODY:",
-        body
-      );
-
-      const response = await baseAPI.post(
-        "/sections",
-        body
-      );
-
-      console.log(
-        "CREATE SECTION RESPONSE:",
+        "CREATE CATEGORY RESPONSE:",
         response.data
       );
 
-      // Serverdan qayta olish
-      await getSections();
+      const newCategory = response.data?.data;
 
-      // Formni tozalash
-      setNewSectionName("");
+      if (newCategory) {
+        setCategories((prev) => [
+          ...prev,
+          newCategory,
+        ]);
+      }
 
-      // Add modalni yopish
       setIsAddModalOpen(false);
+      setNewCategoryName("");
 
-      // Birinchi sahifaga qaytish
-      setCurrentPage(1);
-
-      // ========================================================
-      // SUCCESS MODAL
-      // ========================================================
-
-      setSuccessMessage(
-        "Muvaffaqiyatli qo'shildi"
-      );
-
-      setIsWarningModal(false);
+      setSuccessMessage("Muvaffaqiyatli qo'shildi");
       setIsSuccessModalOpen(true);
     } catch (error: any) {
       console.error(
-        "CREATE SECTION ERROR:",
+        "CREATE CATEGORY ERROR:",
         error
       );
 
@@ -238,81 +128,82 @@ export default function CourseSectionsPage({
 
       setSuccessMessage(
         error?.response?.data?.message ||
-          "Bo'lim qo'shishda xatolik yuz berdi"
+          "Kategoriya qo'shishda xatolik yuz berdi"
       );
 
-      setIsWarningModal(true);
       setIsSuccessModalOpen(true);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  // ============================================================
-  // EDIT SECTION
-  // PATCH /api/v1/sections/:id
-  // ============================================================
-
-  const handleEditSection = async () => {
-    if (!editingSection) return;
-
-    if (!editingSection.name.trim()) {
-      setSuccessMessage(
-        "Bo'lim nomini kiriting."
-      );
-
-      setIsWarningModal(true);
-      setIsSuccessModalOpen(true);
-
+  // ==========================================
+  // UPDATE CATEGORY
+  // PUT /api/v1/categories/:id
+  //
+  // MUHIM:
+  // Backendda @Put(":id") bor.
+  // Shuning uchun patch EMAS, put ishlatamiz.
+  // ==========================================
+  const handleEditCategory = async () => {
+    if (
+      !editingCategory ||
+      !editingCategory.name.trim()
+    ) {
       return;
     }
 
     try {
-      setSaving(true);
-      setError("");
+      setLoading(true);
 
-      const body = {
-        name: editingSection.name.trim(),
-        courseId: Number(courseId),
-      };
-
-      console.log(
-        `PATCH /sections/${editingSection.id} BODY:`,
-        body
-      );
-
-      const response = await baseAPI.patch(
-        `/sections/${editingSection.id}`,
-        body
+      const response = await baseAPI.put(
+        `/categories/${editingCategory.id}`,
+        {
+          name: editingCategory.name.trim(),
+        }
       );
 
       console.log(
-        "UPDATE SECTION RESPONSE:",
+        "UPDATE CATEGORY RESPONSE:",
         response.data
       );
 
-      // Serverdan qayta olish
-      await getSections();
+      const updatedCategory =
+        response.data?.data;
 
-      // Edit modalni yopish
+      if (updatedCategory) {
+        setCategories((prev) =>
+          prev.map((category) =>
+            category.id === editingCategory.id
+              ? updatedCategory
+              : category
+          )
+        );
+      } else {
+        // Agar backend updated objectni qaytarmasa,
+        // local state'ni qo'lda yangilaymiz.
+        setCategories((prev) =>
+          prev.map((category) =>
+            category.id === editingCategory.id
+              ? {
+                  ...category,
+                  name: editingCategory.name.trim(),
+                }
+              : category
+          )
+        );
+      }
+
       setIsEditModalOpen(false);
-
-      // State tozalash
-      setEditingSection(null);
-
-      // ========================================================
-      // SUCCESS MODAL
-      // ========================================================
+      setEditingCategory(null);
 
       setSuccessMessage(
         "Muvaffaqiyatli tahrirlandi"
       );
-
-      setIsWarningModal(false);
       setIsSuccessModalOpen(true);
     } catch (error: any) {
       console.error(
-        "UPDATE SECTION ERROR:",
+        "UPDATE CATEGORY ERROR:",
         error
       );
 
@@ -323,74 +214,54 @@ export default function CourseSectionsPage({
 
       setSuccessMessage(
         error?.response?.data?.message ||
-          "Bo'limni tahrirlashda xatolik yuz berdi"
+          "Kategoriyani tahrirlashda xatolik yuz berdi"
       );
 
-      setIsWarningModal(true);
+      setIsEditModalOpen(false);
+      setEditingCategory(null);
+
       setIsSuccessModalOpen(true);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
-  // ============================================================
-  // DELETE SECTION
-  // DELETE /api/v1/sections/:id
-  // ============================================================
-
-  const handleDeleteSection = async () => {
-    if (deletingSectionId === null) {
-      return;
-    }
+  // ==========================================
+  // DELETE CATEGORY
+  // DELETE /api/v1/categories/:id
+  // ==========================================
+  const handleDeleteCategory = async () => {
+    if (deletingCategoryId === null) return;
 
     try {
-      setDeleting(true);
-      setError("");
-
-      console.log(
-        `DELETE /sections/${deletingSectionId}`
-      );
+      setLoading(true);
 
       const response = await baseAPI.delete(
-        `/sections/${deletingSectionId}`
+        `/categories/${deletingCategoryId}`
       );
 
       console.log(
-        "DELETE SECTION RESPONSE:",
+        "DELETE CATEGORY RESPONSE:",
         response.data
       );
 
-      // ========================================================
-      // LOCAL STATEDAN O'CHIRISH
-      // ========================================================
-
-      setSections((prev) =>
+      setCategories((prev) =>
         prev.filter(
-          (section) =>
-            section.id !== deletingSectionId
+          (category) =>
+            category.id !== deletingCategoryId
         )
       );
 
-      // ========================================================
-      // DELETE MODALNI YOPISH
-      // ========================================================
-
       setIsDeleteModalOpen(false);
-      setDeletingSectionId(null);
-
-      // ========================================================
-      // SUCCESS MODAL
-      // ========================================================
+      setDeletingCategoryId(null);
 
       setSuccessMessage(
         "Muvaffaqiyatli o'chirildi"
       );
-
-      setIsWarningModal(false);
       setIsSuccessModalOpen(true);
     } catch (error: any) {
       console.error(
-        "DELETE SECTION ERROR:",
+        "DELETE CATEGORY ERROR:",
         error
       );
 
@@ -399,384 +270,219 @@ export default function CourseSectionsPage({
         error?.response?.data
       );
 
-      // ========================================================
-      // 409 - SECTIONDA LESSONLAR BO'LSA
-      // ========================================================
-
-      if (
-        error?.response?.status === 409
-      ) {
-        setIsDeleteModalOpen(false);
-        setDeletingSectionId(null);
-
-        setSuccessMessage(
-          error?.response?.data?.message ||
-            "Bu bo'limda ma'lumotlar mavjud. Avval ularni o'chiring."
-        );
-
-        setIsWarningModal(true);
-        setIsSuccessModalOpen(true);
-
-        return;
-      }
-
-      // ========================================================
-      // BOSHQA XATOLAR
-      // ========================================================
+      const message =
+        error?.response?.data?.message ||
+        "Kategoriyani o'chirishda xatolik yuz berdi";
 
       setIsDeleteModalOpen(false);
-      setDeletingSectionId(null);
+      setDeletingCategoryId(null);
 
-      setSuccessMessage(
-        error?.response?.data?.message ||
-          "Bo'limni o'chirishda xatolik yuz berdi"
-      );
-
-      setIsWarningModal(true);
+      setSuccessMessage(message);
       setIsSuccessModalOpen(true);
     } finally {
-      setDeleting(false);
+      setLoading(false);
     }
   };
 
-  // ============================================================
-  // CLOSE ADD / EDIT MODAL
-  // ============================================================
+  // ==========================================
+  // FILTER
+  // ==========================================
+  const filteredCategories = useMemo(() => {
+    return categories.filter((cat) =>
+      cat.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
 
-  const closeFormModal = () => {
-    if (saving) return;
+  // ==========================================
+  // PAGINATION
+  // ==========================================
+  const totalItems = filteredCategories.length;
 
-    setIsAddModalOpen(false);
-    setIsEditModalOpen(false);
-
-    setNewSectionName("");
-    setEditingSection(null);
-  };
-
-  // ============================================================
-  // FILTER / PAGINATION
-  // ============================================================
-
-  const totalItems = sections.length;
-
-  const totalPages =
-    Math.ceil(
-      totalItems / itemsPerPage
-    ) || 1;
-
-  const startIndex = Math.min(
-    (currentPage - 1) * itemsPerPage,
-    totalItems
+  const totalPages = Math.ceil(
+    totalItems / itemsPerPage
   );
+
+  const startIndex =
+    (currentPage - 1) * itemsPerPage;
 
   const endIndex = Math.min(
     startIndex + itemsPerPage,
     totalItems
   );
 
-  const paginatedSections =
-    sections.slice(
+  const currentCategories =
+    filteredCategories.slice(
       startIndex,
       endIndex
     );
 
-  // ============================================================
-  // DOWNLOAD CSV
-  // ============================================================
-
-  const handleDownloadXLS = () => {
-    const headers = [
-      "ID",
-      "Bo'lim nomi",
-    ];
-
-    const rows = sections.map(
-      (section) =>
-        [
-          section.id,
-          `"${section.name.replace(
-            /"/g,
-            '""'
-          )}"`,
-        ].join(",")
-    );
-
-    const csvContent =
-      "\uFEFF" +
-      [
-        headers.join(","),
-        ...rows,
-      ].join("\n");
-
-    const blob = new Blob(
-      [csvContent],
-      {
-        type: "text/csv;charset=utf-8;",
-      }
-    );
-
-    const url =
-      URL.createObjectURL(blob);
-
-    const link =
-      document.createElement("a");
-
-    link.href = url;
-    link.download =
-      "bolimlar.csv";
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(url);
+  // ==========================================
+  // XLS
+  // ==========================================
+  const downloadXLS = () => {
+    console.log("Downloading XLS...");
   };
-
-  // ============================================================
-  // RENDER
-  // ============================================================
 
   return (
     <>
-      {/* ========================================================
-          MAIN CONTENT
-      ======================================================== */}
+      {/* Dashboard Content */}
+      <div className="flex-1 overflow-y-auto p-6">
+        {/* Breadcrumb & Title */}
+        <div className="mb-6">
+          <div className="text-sm text-gray-500 mb-1 font-medium">
+            Kurslar{" "}
+            <span className="mx-1">\</span>{" "}
+            Kurs kategoriyalari
+          </div>
 
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col h-full bg-transparent">
-
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
-        <div className="flex items-center justify-between mb-8">
-
-          <div>
-
-            <h1 className="text-[22px] font-bold text-gray-900 mb-1.5">
-              Bo&apos;limlar
+          <div className="flex justify-between items-center mt-3">
+            <h1 className="text-2xl font-bold text-gray-900">
+              Kurs kategoriyalari
             </h1>
 
-            <div className="flex items-center text-[13px] font-medium gap-2">
-
-              <Link
-                href="/dashboard/courses/allCourses"
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                Kurslar
-              </Link>
-
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-
-              <Link
-                href={`/dashboard/courses/allCourses/${courseId}/sections`}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                {courseTitle}
-              </Link>
-
-              <span className="w-1 h-1 rounded-full bg-gray-300" />
-
-              <span className="text-gray-900">
-                Bo&apos;limlar
-              </span>
-
-            </div>
-
+            <button
+              onClick={() =>
+                setIsAddModalOpen(true)
+              }
+              className="bg-[#3366FF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors shadow-sm"
+            >
+              <Plus size={18} />
+              Qo&apos;shish
+            </button>
           </div>
-
-          {/* ADD */}
-
-          <button
-            onClick={() => {
-              setNewSectionName("");
-              setIsAddModalOpen(true);
-            }}
-            className="flex items-center gap-2 bg-[#3366FF] hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-sm text-sm"
-          >
-            <Plus size={18} />
-
-            Bo&apos;lim qo&apos;shish
-          </button>
-
         </div>
 
-        {/* ======================================================
-            ERROR
-        ====================================================== */}
+        {/* Table Container */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+          {/* Table Controls */}
+          <div className="p-4 border-b border-gray-100 flex flex-col sm:flex-row justify-between gap-4 items-center">
+            <div className="relative w-full sm:w-[320px]">
+              <Search
+                size={18}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
 
-        {error && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
+              <input
+                type="text"
+                placeholder="Izlash"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full pl-10 pr-10 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all font-medium"
+              />
+
+              <button className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                <SlidersHorizontal size={16} />
+              </button>
+            </div>
           </div>
-        )}
 
-        {/* ======================================================
-            TABLE
-        ====================================================== */}
-
-        <div className="flex-1 flex flex-col">
-
-          <div className="overflow-x-auto rounded-t-xl overflow-hidden border border-gray-200">
-
-            <table className="w-full text-left border-collapse min-w-[800px] bg-white">
-
-              <thead className="bg-gray-50">
-
-                <tr className="text-[13px] text-gray-900 font-bold tracking-wide">
-
-                  <th className="px-6 py-4 font-semibold whitespace-nowrap border border-gray-200">
-
-                    <div className="flex items-center gap-2 cursor-pointer group">
-
-                      Bo&apos;lim nomi
-
-                      <Filter
-                        size={14}
-                        className="text-gray-400 group-hover:text-gray-600"
-                      />
-
-                    </div>
-
+          {/* Table */}
+          <div className="overflow-x-auto min-h-[400px]">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-gray-50 border-b border-gray-100 text-gray-600 font-semibold text-[13px]">
+                <tr>
+                  <th className="py-4 px-6 w-24">
+                    ID
                   </th>
 
-                  <th className="px-6 py-4 font-semibold whitespace-nowrap text-right w-32 border border-gray-200">
+                  <th className="py-4 px-6">
+                    Kategoriya nomi
+                  </th>
+
+                  <th className="py-4 px-6 w-32 text-center">
                     Amallar
                   </th>
-
                 </tr>
-
               </thead>
 
-              <tbody className="text-[14px] text-gray-800">
-
-                {/* LOADING */}
-
-                {loading ? (
+              <tbody className="divide-y divide-gray-100">
+                {loading &&
+                categories.length === 0 ? (
                   <tr>
-
                     <td
-                      colSpan={2}
-                      className="px-6 py-12 text-center border border-gray-200"
+                      colSpan={3}
+                      className="py-12 text-center text-gray-500 font-medium"
                     >
-
-                      <div className="flex items-center justify-center gap-2 text-gray-500">
-
-                        <Loader2
-                          size={20}
-                          className="animate-spin"
-                        />
-
-                        Bo&apos;limlar yuklanmoqda...
-
-                      </div>
-
+                      Yuklanmoqda...
                     </td>
-
                   </tr>
-                ) : paginatedSections.length > 0 ? (
-
-                  paginatedSections.map(
-                    (section) => (
-
+                ) : currentCategories.length >
+                  0 ? (
+                  currentCategories.map(
+                    (category) => (
                       <tr
-                        key={section.id}
-                        className="hover:bg-blue-50/30 transition-colors group"
+                        key={category.id}
+                        className="hover:bg-gray-50/50 transition-colors group"
                       >
-
-                        {/* SECTION NAME */}
-
-                        <td className="px-6 py-4 font-medium text-gray-900 border border-gray-200">
-
-                          <Link
-                            href={`/dashboard/courses/allCourses/${courseId}/sections/${section.id}/lessons`}
-                            className="hover:text-blue-600 transition-colors cursor-pointer block w-full"
-                          >
-                            {section.name}
-                          </Link>
-
+                        <td className="py-4 px-6 text-gray-600 font-medium">
+                          {category.id}
                         </td>
 
-                        {/* ACTIONS */}
+                        <td className="py-4 px-6 font-semibold text-gray-800">
+                          {category.name}
+                        </td>
 
-                        <td className="px-6 py-4 text-right border border-gray-200">
-
-                          <div className="flex items-center justify-end gap-3 text-gray-400">
-
+                        <td className="py-4 px-6">
+                          <div className="flex items-center justify-center gap-2">
                             {/* EDIT */}
-
                             <button
                               onClick={() => {
-                                setEditingSection({
-                                  ...section,
+                                setEditingCategory({
+                                  ...category,
                                 });
-
                                 setIsEditModalOpen(
                                   true
                                 );
                               }}
-                              className="p-1 hover:text-blue-600 transition-colors"
-                              title="Tahrirlash"
-                              disabled={saving || deleting}
+                              className="p-2 text-gray-400 hover:text-blue-500 rounded-lg hover:bg-blue-50 transition-colors"
                             >
-                              <Pen size={16} />
+                              <Pencil
+                                size={18}
+                              />
                             </button>
 
                             {/* DELETE */}
-
                             <button
                               onClick={() => {
-                                setDeletingSectionId(
-                                  section.id
+                                setDeletingCategoryId(
+                                  category.id
                                 );
-
                                 setIsDeleteModalOpen(
                                   true
                                 );
                               }}
-                              className="p-1 hover:text-red-500 transition-colors"
-                              title="O'chirish"
-                              disabled={saving || deleting}
+                              className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"
                             >
-                              <Trash2 size={16} />
+                              <Trash2
+                                size={18}
+                              />
                             </button>
-
                           </div>
-
                         </td>
-
                       </tr>
                     )
                   )
-
                 ) : (
-
                   <tr>
-
                     <td
-                      colSpan={2}
-                      className="px-6 py-8 text-center text-gray-500 border border-gray-200 bg-white"
+                      colSpan={3}
+                      className="py-12 text-center text-gray-500 font-medium"
                     >
-                      Bo&apos;limlar mavjud emas
+                      Ma&apos;lumot topilmadi
                     </td>
-
                   </tr>
-
                 )}
-
               </tbody>
-
             </table>
-
           </div>
 
-          {/* ====================================================
-              PAGINATION
-          ==================================================== */}
-
-          <div className="bg-white border border-t-0 border-gray-200 rounded-b-xl px-2 py-1 shadow-sm">
-
+          {/* Pagination */}
+          <div className="border-t border-gray-100">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
@@ -789,444 +495,234 @@ export default function CourseSectionsPage({
                 setItemsPerPage(limit);
                 setCurrentPage(1);
               }}
-              onDownloadXLS={
-                handleDownloadXLS
-              }
+              onDownloadXLS={downloadXLS}
             />
-
           </div>
-
         </div>
-
       </div>
 
-      {/* ========================================================
+      {/* ================================
           ADD MODAL
-      ======================================================== */}
-
+      ================================= */}
       {isAddModalOpen && (
-
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-          onClick={closeFormModal}
+          onClick={() =>
+            setIsAddModalOpen(false)
+          }
         >
-
           <div
             className="bg-white rounded-2xl shadow-xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) =>
               e.stopPropagation()
             }
           >
-
-            {/* HEADER */}
-
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-
               <h2 className="text-[17px] font-bold text-gray-900">
                 Qo&apos;shish
               </h2>
 
               <button
-                onClick={closeFormModal}
-                disabled={saving}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+                onClick={() =>
+                  setIsAddModalOpen(false)
+                }
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
               >
                 <X size={20} />
               </button>
-
             </div>
 
-            {/* BODY */}
-
             <div className="p-6">
-
-              {/* COURSE */}
-
-              <div className="mb-5">
-
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                  Biriktirilgan kurs
-                </label>
-
-                <input
-                  type="text"
-                  disabled
-                  value={courseTitle}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed"
-                />
-
-              </div>
-
-              {/* NAME */}
-
               <div className="mb-6">
-
                 <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                  Bo&apos;lim nomi
+                  Kategoriya nomi
                 </label>
 
                 <input
                   type="text"
                   placeholder="Kiriting"
-                  value={newSectionName}
+                  value={newCategoryName}
                   onChange={(e) =>
-                    setNewSectionName(
+                    setNewCategoryName(
                       e.target.value
                     )
                   }
-                  onKeyDown={(e) => {
-                    if (
-                      e.key === "Enter" &&
-                      !saving
-                    ) {
-                      handleAddSection();
-                    }
-                  }}
                   className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
                 />
-
               </div>
 
-              {/* SAVE */}
-
               <button
-                onClick={handleAddSection}
-                disabled={saving}
-                className="bg-[#3366FF] hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
+                onClick={handleAddCategory}
+                disabled={loading}
+                className="bg-[#3366FF] hover:bg-blue-600 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
               >
-
-                {saving ? (
-                  <Loader2
-                    size={18}
-                    className="animate-spin"
-                  />
-                ) : (
-                  <Check
-                    size={18}
-                    strokeWidth={2.5}
-                  />
-                )}
-
-                {saving
-                  ? "Saqlanmoqda..."
-                  : "Saqlash"}
-
+                <Check
+                  size={18}
+                  strokeWidth={2.5}
+                />
+                Saqlash
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
 
-      {/* ========================================================
+      {/* ================================
           EDIT MODAL
-      ======================================================== */}
-
+      ================================= */}
       {isEditModalOpen &&
-        editingSection && (
-
+        editingCategory && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-            onClick={closeFormModal}
+            onClick={() =>
+              setIsEditModalOpen(false)
+            }
           >
-
             <div
               className="bg-white rounded-2xl shadow-xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) =>
                 e.stopPropagation()
               }
             >
-
-              {/* HEADER */}
-
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-
                 <h2 className="text-[17px] font-bold text-gray-900">
                   Tahrirlash
                 </h2>
 
                 <button
-                  onClick={closeFormModal}
-                  disabled={saving}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100 disabled:opacity-50"
+                  onClick={() =>
+                    setIsEditModalOpen(false)
+                  }
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100"
                 >
                   <X size={20} />
                 </button>
-
               </div>
 
-              {/* BODY */}
-
               <div className="p-6">
-
-                {/* COURSE */}
-
-                <div className="mb-5">
-
-                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                    Biriktirilgan kurs
-                  </label>
-
-                  <input
-                    type="text"
-                    disabled
-                    value={courseTitle}
-                    className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-sm text-gray-500 cursor-not-allowed"
-                  />
-
-                </div>
-
-                {/* NAME */}
-
                 <div className="mb-6">
-
                   <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                    Bo&apos;lim nomi
+                    Kategoriya nomi
                   </label>
 
                   <input
                     type="text"
                     placeholder="Kiriting"
-                    value={
-                      editingSection.name
-                    }
+                    value={editingCategory.name}
                     onChange={(e) =>
-                      setEditingSection({
-                        ...editingSection,
+                      setEditingCategory({
+                        ...editingCategory,
                         name: e.target.value,
                       })
                     }
-                    onKeyDown={(e) => {
-                      if (
-                        e.key === "Enter" &&
-                        !saving
-                      ) {
-                        handleEditSection();
-                      }
-                    }}
                     className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all font-medium"
                   />
-
                 </div>
 
-                {/* SAVE */}
-
                 <button
-                  onClick={
-                    handleEditSection
-                  }
-                  disabled={saving}
-                  className="bg-[#3366FF] hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
+                  onClick={handleEditCategory}
+                  disabled={loading}
+                  className="bg-[#3366FF] hover:bg-blue-600 disabled:opacity-50 text-white px-6 py-2.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors shadow-sm"
                 >
-
-                  {saving ? (
-                    <Loader2
-                      size={18}
-                      className="animate-spin"
-                    />
-                  ) : (
-                    <Check
-                      size={18}
-                      strokeWidth={2.5}
-                    />
-                  )}
-
-                  {saving
-                    ? "Saqlanmoqda..."
-                    : "Saqlash"}
-
+                  <Check
+                    size={18}
+                    strokeWidth={2.5}
+                  />
+                  Saqlash
                 </button>
-
               </div>
-
             </div>
-
           </div>
         )}
 
-      {/* ========================================================
-          DELETE CONFIRMATION MODAL
-      ======================================================== */}
-
+      {/* ================================
+          DELETE MODAL
+      ================================= */}
       {isDeleteModalOpen && (
-
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-          onClick={() => {
-            if (!deleting) {
-              setIsDeleteModalOpen(false);
-              setDeletingSectionId(null);
-            }
-          }}
+          onClick={() =>
+            setIsDeleteModalOpen(false)
+          }
         >
-
           <div
             className="bg-white rounded-[24px] shadow-xl w-full max-w-[360px] p-8 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) =>
               e.stopPropagation()
             }
           >
-
-            {/* ICON */}
-
             <div className="w-16 h-16 bg-[#EF4444] text-white rounded-full flex items-center justify-center mb-5 shadow-[0_8px_16px_rgba(239,68,68,0.25)]">
-
               <HelpCircle
                 size={32}
                 strokeWidth={2.5}
               />
-
             </div>
-
-            {/* TITLE */}
 
             <h2 className="text-[17px] font-bold text-gray-900 mb-8">
               Ma&apos;lumotni
-              <br />
               o&apos;chirmoqchimisiz?
             </h2>
 
-            {/* BUTTONS */}
-
             <div className="flex items-center gap-3 w-full justify-center">
-
-              {/* CANCEL */}
-
               <button
-                onClick={() => {
-                  if (deleting) return;
-
-                  setIsDeleteModalOpen(
-                    false
-                  );
-
-                  setDeletingSectionId(
-                    null
-                  );
-                }}
-                disabled={deleting}
-                className="px-5 py-3 text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl text-sm font-bold transition-colors flex-1 disabled:opacity-50"
+                onClick={() =>
+                  setIsDeleteModalOpen(false)
+                }
+                className="px-5 py-3 text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl text-sm font-bold transition-colors flex-1"
               >
                 Bekor qilish
               </button>
 
-              {/* DELETE */}
-
               <button
-                onClick={
-                  handleDeleteSection
-                }
-                disabled={deleting}
-                className="px-5 py-3 text-white bg-[#3366FF] hover:bg-blue-600 disabled:bg-blue-300 rounded-xl text-sm font-bold transition-colors shadow-sm flex-1 flex items-center justify-center gap-2"
+                onClick={handleDeleteCategory}
+                disabled={loading}
+                className="px-5 py-3 text-white bg-[#3366FF] hover:bg-blue-600 disabled:opacity-50 rounded-xl text-sm font-bold transition-colors shadow-sm flex-1"
               >
-
-                {deleting ? (
-                  <>
-                    <Loader2
-                      size={18}
-                      className="animate-spin"
-                    />
-
-                    O&apos;chirilmoqda...
-                  </>
-                ) : (
-                  "O'chirish"
-                )}
-
+                O&apos;chirish
               </button>
-
             </div>
-
           </div>
-
         </div>
-
       )}
 
-      {/* ========================================================
-          SUCCESS / WARNING MODAL
-      ======================================================== */}
-
+      {/* ================================
+          SUCCESS MODAL
+      ================================= */}
       {isSuccessModalOpen && (
-
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-[2px] p-4"
-          onClick={() => {
-            setIsSuccessModalOpen(
-              false
-            );
-
-            setIsWarningModal(false);
-          }}
+          onClick={() =>
+            setIsSuccessModalOpen(false)
+          }
         >
-
           <div
             className="bg-white rounded-[24px] shadow-xl w-full max-w-[360px] p-8 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) =>
               e.stopPropagation()
             }
           >
-
-            {/* ==================================================
-                ICON
-            ================================================== */}
-
-            <div
-              className={`w-16 h-16 text-white rounded-full flex items-center justify-center mb-5 ${
-                isWarningModal
-                  ? "bg-[#F59E0B] shadow-[0_8px_16px_rgba(245,158,11,0.25)]"
-                  : "bg-[#22C55E] shadow-[0_8px_16px_rgba(34,197,68,0.25)]"
-              }`}
-            >
-
-              {isWarningModal ? (
-                <AlertTriangle
-                  size={36}
-                  strokeWidth={3}
-                />
-              ) : (
-                <Check
-                  size={36}
-                  strokeWidth={3}
-                />
-              )}
-
+            <div className="w-16 h-16 bg-[#22C55E] text-white rounded-full flex items-center justify-center mb-5 shadow-[0_8px_16px_rgba(34,197,68,0.25)]">
+              <Check
+                size={36}
+                strokeWidth={3}
+              />
             </div>
-
-            {/* ==================================================
-                MESSAGE
-            ================================================== */}
 
             <h2 className="text-[17px] font-bold text-gray-900 mb-8">
               {successMessage}
             </h2>
 
-            {/* ==================================================
-                CLOSE
-            ================================================== */}
-
             <button
-              onClick={() => {
-                setIsSuccessModalOpen(
-                  false
-                );
-
-                setIsWarningModal(false);
-              }}
+              onClick={() =>
+                setIsSuccessModalOpen(false)
+              }
               className="bg-[#3366FF] hover:bg-blue-600 text-white px-8 py-3 rounded-xl text-sm font-bold transition-colors shadow-sm min-w-[140px]"
             >
               Yopish
             </button>
-
           </div>
-
         </div>
-
       )}
-
     </>
   );
 }

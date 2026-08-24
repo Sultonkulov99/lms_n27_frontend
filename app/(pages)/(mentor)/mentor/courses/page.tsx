@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { Search, X, ChevronDown, PlusCircle, Eye, Upload, Check } from "lucide-react";
+import Link from "next/link";
 import Pagination from "@/app/components/dashboard/Pagination";
 import { useMentorStore } from "@/store/useMentorStore";
 
@@ -133,7 +134,9 @@ export default function MentorCoursesPage() {
                     />
                   </td>
                   <td className="px-5 py-4 font-medium text-blue-600 border border-gray-200 border-r-0 cursor-pointer hover:underline">
-                    {course.name}
+                    <Link href={`/mentor/courses/${course.id}/sections`} className="hover:underline">
+                      {course.name}
+                    </Link>
                   </td>
                   <td className="px-5 py-4 font-medium text-gray-900 text-[13px] border border-gray-200 border-r-0">
                     {course.level}
