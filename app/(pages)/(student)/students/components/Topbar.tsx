@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import messagesUz from "../../../../messages/uz.json";
 import messagesRu from "../../../../messages/ru.json";
 import messagesEn from "../../../../messages/en.json";
+import { removeToken } from "@/app/lib/utils";
 
 type LanguageType = "uz" | "ru" | "en";
 
@@ -61,8 +62,8 @@ export default function Topbar() {
 
   // Handle logout
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    removeToken("accessToken");
+    removeToken("refreshToken");
     localStorage.removeItem("user");
     router.push("/");
   };
