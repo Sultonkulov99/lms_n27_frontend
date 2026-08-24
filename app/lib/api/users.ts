@@ -57,16 +57,12 @@ export async function updateAdmin(id: number, formData: FormData) {
 }
 
 export async function archiveAdmin(id: number) {
-  const { data } = await baseAPI.patch(`/user/admin/${id}`, {
-    status: "INACTIVE",
-  });
+  const { data } = await baseAPI.patch(`/user/admin/${id}/archive`);
   return data;
 }
 
 export async function restoreAdmin(id: number) {
-  const { data } = await baseAPI.patch(`/user/admin/${id}`, {
-    status: "ACTIVE",
-  });
+  const { data } = await baseAPI.patch(`/user/admin/${id}/restore`);
   return data;
 }
 

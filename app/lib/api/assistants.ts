@@ -53,12 +53,12 @@ export async function updateAssistant(id: number, formData: FormData) {
 }
 
 export async function archiveAssistant(id: number) {
-  const { data } = await baseAPI.patch(`/user/assistant/${id}`, { status: "INACTIVE" });
+  const { data } = await baseAPI.patch(`/user/assistant/${id}/archive`);
   return data;
 }
  
 export async function restoreAssistant(id: number) {
-  const { data } = await baseAPI.patch(`/user/assistant/${id}`, { status: "ACTIVE" });
+  const { data } = await baseAPI.patch(`/user/assistant/${id}/restore`);
   return data;
 }
  
