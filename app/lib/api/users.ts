@@ -1,5 +1,6 @@
 import axios from "axios";
 import { baseAPI } from "@/app/lib/utils";
+import { Status } from "./status";
 
 export interface Admin {
   id: number;
@@ -8,7 +9,7 @@ export interface Admin {
   phone: string;
   created_at: string;
   role: string;
-  status: "Faol" | "Nofaol";
+  status: Status;
 }
 
 function unwrapList<T>(payload: unknown): T[] {
@@ -21,8 +22,8 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function getAdmins(): Promise<Admin[]> {
-  const { data } = await baseAPI.get("/user/admin");
+export async function getAdmins(status: Status = "ACTIVE"): Promise<Admin[]> {
+  const { data } = await baseAPI.get("/user/admin", { params: { status } });
   return unwrapList<Admin>(data);
 }
 
@@ -44,11 +45,6 @@ export async function createAdmin(formData: FormData) {
 }
 
 export async function updateAdmin(id: number, formData: FormData) {
-  console.log("updateAdmin FormData:");
-  for (const [key, value] of formData.entries()) {
-    console.log(" ", key, "=", value);
-  }
-
   try {
     const { data } = await baseAPI.patch(`/user/admin/${id}`, formData);
     return data;
@@ -60,6 +56,20 @@ export async function updateAdmin(id: number, formData: FormData) {
   }
 }
 
+export async function archiveAdmin(id: number) {
+  const { data } = await baseAPI.patch(`/user/admin/${id}`, {
+    status: "INACTIVE",
+  });
+  return data;
+}
+
+export async function restoreAdmin(id: number) {
+  const { data } = await baseAPI.patch(`/user/admin/${id}`, {
+    status: "ACTIVE",
+  });
+  return data;
+}
+
 export async function deleteAdmin(id: number) {
   const { data } = await baseAPI.delete(`/user/admin/${id}`);
   return data;
@@ -69,8 +79,8 @@ export interface DashboardStats {
   dashboard: {
     ADMIN: number;
     MENTOR: number;
-    ASSISTANT: number;   
-    STUDENT: number;     
+    ASSISTANT: number;
+    STUDENT: number;
     totalCourses: number;
     [key: string]: number;
   };

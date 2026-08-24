@@ -17,6 +17,8 @@ import {
   Camera,
   Briefcase,
   Code,
+  Undo2,
+  Archive,
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 import {
@@ -24,14 +26,14 @@ import {
   getAssistants,
   createAssistant,
   updateAssistant,
-  deleteAssistant,
+  archiveAssistant,
+  restoreAssistant,
 } from "@/app/lib/api/assistants";
 import {
   CourseAssistantLink,
   getCourseAssistants,
   createCourseAssistant,
   updateCourseAssistant,
-  deleteCourseAssistant,
 } from "@/app/lib/api/course-assistant";
 import { Course, getCourses } from "@/app/lib/api/courses";
 
@@ -56,6 +58,7 @@ export default function AssistentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
 
   // Form states
   const [fullName, setName] = useState("");
@@ -75,17 +78,24 @@ export default function AssistentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [courseId, setCourseId] = useState("");
+  const [courseIdError, setCourseIdError] = useState(false);
+
+  const [courseSearch, setCourseSearch] = useState("");
+  const [isCourseOpen, setIsCourseOpen] = useState(false);
+
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [viewMode]);
 
   const loadAll = async () => {
     try {
       setLoading(true);
       setError("");
 
+      const status = viewMode === "active" ? "ACTIVE" : "INACTIVE";
       const [assistantsData, linksData, coursesData] = await Promise.all([
-        getAssistants(),
+        getAssistants(status),
         getCourseAssistants(),
         getCourses(),
       ]);
@@ -145,6 +155,14 @@ export default function AssistentsPage() {
     });
   }, [assistents, courseLinks, courses, searchQuery]);
 
+  const filteredCourses = courses.filter((course) => {
+    const search = courseSearch.toLowerCase().trim();
+
+    if (!search) return true;
+
+    return course.name.toLowerCase().includes(search);
+  });
+
   const totalPages = Math.ceil(filteredAssistents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(
@@ -164,7 +182,14 @@ export default function AssistentsPage() {
     const rows = assistents.map((a) => {
       const link = linkForUser(a.id);
       const courseName = link ? courseNameById(link.courseId) : "";
-      return [a.id, a.fullName, courseName, a.phone, a.created_at].join(",");
+      return [
+        a.id,
+        a.fullName,
+        courseName,
+        a.phone,
+        formatDate(a.created_at),
+        formatRole(a.status),
+      ].join(",");
     });
     const csvContent =
       "data:text/csv;charset=utf-8," + [headers.join(","), ...rows].join("\n");
@@ -227,27 +252,29 @@ export default function AssistentsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeleteAssistent = async () => {
+  const handleArchiveAssistent = async () => {
     if (!deletingId) return;
-
     try {
-      const link = linkForUser(deletingId);
-      if (link) {
-        await deleteCourseAssistant(link.id);
-      }
-      await deleteAssistant(deletingId);
-
+      await archiveAssistant(deletingId);
       await loadAll();
-
       if (currentAssistents.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
-
       setIsDeleteModalOpen(false);
       setDeletingId(null);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Assistent o'chirilmadi");
+      alert(error.message || "Arxivlab bo'lmadi");
+    }
+  };
+
+  const handleRestoreAssistent = async (assistent: Assistant) => {
+    try {
+      await restoreAssistant(assistent.id);
+      await loadAll();
+    } catch (error: any) {
+      console.error(error);
+      alert(error.message || "Tiklab bo'lmadi");
     }
   };
 
@@ -315,10 +342,6 @@ export default function AssistentsPage() {
         } else {
           await createCourseAssistant(courseId, userId);
         }
-      } else {
-        if (editingId && editingLink) {
-          await deleteCourseAssistant(editingLink.id);
-        }
       }
 
       await loadAll();
@@ -356,13 +379,15 @@ export default function AssistentsPage() {
             </div>
           </div>
 
-          <button
-            onClick={openAddModal}
-            className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
-          >
-            <PlusCircle size={18} strokeWidth={2} />
-            Qo’shish
-          </button>
+          {viewMode === "active" && (
+            <button
+              onClick={openAddModal}
+              className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+            >
+              <PlusCircle size={18} strokeWidth={2} />
+              Qo’shish
+            </button>
+          )}
         </div>
 
         {/* Search Bar */}
@@ -390,18 +415,41 @@ export default function AssistentsPage() {
               />
             )}
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
-            Izlash
+          <button
+            onClick={() => {
+              setViewMode((prev) =>
+                prev === "active" ? "archived" : "active",
+              );
+              setSearchQuery("");
+              setCurrentPage(1);
+            }}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${
+              viewMode === "archived"
+                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {viewMode === "archived" ? (
+              <>
+                <Undo2 size={16} />
+                Faol to'lovlar
+              </>
+            ) : (
+              <>
+                <Archive size={16} />
+                Arxiv
+              </>
+            )}
           </button>
         </div>
 
         {loading && (
-          <div className="py-4 text-center text-gray-500 text-sm">
+          <div className="text-center text-gray-500 text-sm">
             Yuklanmoqda...
           </div>
         )}
         {!loading && error && (
-          <div className="py-4 text-center text-red-500 text-sm">{error}</div>
+          <div className="text-center text-red-500 text-sm">{error}</div>
         )}
 
         {!loading && !error && (
@@ -438,13 +486,6 @@ export default function AssistentsPage() {
                       </th>
                       <th className="px-5 py-4 border border-gray-200">
                         Yaratilgan vaqt{" "}
-                        <ChevronDown
-                          size={14}
-                          className="inline-block text-gray-400 ml-1"
-                        />
-                      </th>
-                      <th className="px-5 py-4 border border-gray-200">
-                        Holati{" "}
                         <ChevronDown
                           size={14}
                           className="inline-block text-gray-400 ml-1"
@@ -499,25 +540,34 @@ export default function AssistentsPage() {
                           <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200">
                             {formatDate(assistent.created_at)}
                           </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <span className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[12px] font-semibold border border-[#CEEAD6]">
-                              Faol
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => openEditModal(assistent)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                              >
-                                <Pencil size={14} />
-                              </button>
-                              <button
-                                onClick={() => confirmDelete(assistent.id)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                          <td className="px-5 py-4 border border-gray-200 relative">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
+                              {viewMode === "active" ? (
+                                <>
+                                  <button
+                                    onClick={() => openEditModal(assistent)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => confirmDelete(assistent.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() =>
+                                    handleRestoreAssistent(assistent)
+                                  }
+                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                >
+                                  <Undo2 size={14} />
+                                  Tiklash
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -668,25 +718,114 @@ export default function AssistentsPage() {
                   </span>
                 </label>
                 <div className="relative w-full">
-                  <select
-                    value={course}
-                    onChange={(e) => setCourse(e.target.value)}
-                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer border-gray-200 focus:border-[#407BFF] ${
-                      course ? "text-gray-900" : "text-gray-400"
-                    }`}
-                  >
-                    <option value="">Kurssiz</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
+                  <div className="relative w-full">
+                    {/* SELECT BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => setIsCourseOpen((prev) => !prev)}
+                      className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors bg-white cursor-pointer flex items-center justify-between text-left ${
+                        courseId ? "text-gray-900" : "text-gray-400"
+                      } ${
+                        courseIdError
+                          ? "border-[#ff4d4f]"
+                          : isCourseOpen
+                            ? "border-blue-500"
+                            : "border-gray-200"
+                      }`}
+                    >
+                      <span>
+                        {courseId
+                          ? courses.find(
+                              (course) =>
+                                String(course.id) === String(courseId),
+                            )?.name
+                          : "Tanlang"}
+                      </span>
+
+                      <ChevronDown
+                        size={18}
+                        className={`text-gray-400 transition-transform ${
+                          isCourseOpen ? "rotate-180" : ""
+                        }`}
+                      />
+                    </button>
+
+                    {/* DROPDOWN */}
+                    {isCourseOpen && (
+                      <div className="absolute z-50 top-[calc(100%+4px)] left-0 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+                        {/* SEARCH */}
+                        <div className="p-2 border-b border-gray-100">
+                          <div className="relative">
+                            <Search
+                              size={17}
+                              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            />
+
+                            <input
+                              type="text"
+                              autoFocus
+                              value={courseSearch}
+                              onChange={(e) => setCourseSearch(e.target.value)}
+                              placeholder="Kurs nomi bo'yicha qidiring..."
+                              className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-200 text-[13px] outline-none focus:border-blue-500"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                        </div>
+
+                        {/* COURSES */}
+                        <div className="max-h-60 overflow-y-auto">
+                          {filteredCourses.length > 0 ? (
+                            filteredCourses.map((course) => (
+                              <button
+                                key={course.id}
+                                type="button"
+                                onClick={() => {
+                                  setCourseId(String(course.id));
+                                  setCourseIdError(false);
+                                  setCourseSearch("");
+                                  setIsCourseOpen(false);
+                                }}
+                                className={`w-full px-4 py-3 text-left hover:bg-[#F5F8FF] transition-colors ${
+                                  String(course.id) === String(courseId)
+                                    ? "bg-[#F5F8FF]"
+                                    : ""
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-3">
+                                  <p className="text-[14px] font-medium text-gray-900 truncate">
+                                    {course.name}
+                                  </p>
+
+                                  {String(course.id) === String(courseId) && (
+                                    <Check
+                                      size={18}
+                                      className="text-blue-500 shrink-0"
+                                    />
+                                  )}
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-4 py-6 text-center text-[13px] text-gray-400">
+                              Kurs topilmadi
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {courseIdError && (
+                    <p className="text-[#ff4d4f] text-[12px] mt-1.5">
+                      Kurs tanlanmadi
+                    </p>
+                  )}
                 </div>
+                <ChevronDown
+                  size={18}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
               </div>
 
               {/* Parol */}
@@ -747,16 +886,16 @@ export default function AssistentsPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Archive Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
           <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              O'chirishni tasdiqlash
+              Arxivlashni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham o'chirmoqchimisiz? Bu amalni ortga qaytarib
-              bo'lmaydi.
+              Haqiqatan ham arxivlamoqchimisiz? Assistent ro'yxatdan
+              yashiriladi, lekin bazada saqlanib qoladi.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
@@ -769,10 +908,10 @@ export default function AssistentsPage() {
                 Bekor qilish
               </button>
               <button
-                onClick={handleDeleteAssistent}
+                onClick={handleArchiveAssistent}
                 className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
-                O'chirish
+                O'Arxivlash
               </button>
             </div>
           </div>

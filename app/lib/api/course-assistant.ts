@@ -1,5 +1,6 @@
 import axios from "axios";
 import { baseAPI } from "@/app/lib/utils";
+import { Status } from "./status";
 
 export interface CourseAssistantUser {
   id: number;
@@ -18,6 +19,7 @@ export interface CourseAssistantLink {
   created_at: string;
   updated_at: string;
   user: CourseAssistantUser;
+  status: Status
 }
 
 function unwrapList<T>(payload: unknown): T[] {
@@ -30,8 +32,8 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function getCourseAssistants(): Promise<CourseAssistantLink[]> {
-  const { data } = await baseAPI.get("/course-assistant");
+export async function getCourseAssistants(status: Status = "ACTIVE"): Promise<CourseAssistantLink[]> {
+  const { data } = await baseAPI.get("/course-assistant", { params: { status } });
   return unwrapList<CourseAssistantLink>(data);
 }
 
@@ -49,7 +51,7 @@ export async function createCourseAssistant(courseId: number, userId: number) {
 
 export async function updateCourseAssistant(
   id: number,
-  payload: { courseId?: number; userId?: number },
+  payload: { courseId?: number; userId?: number; status?: Status },
 ) {
   try {
     const { data } = await baseAPI.patch(`/course-assistant/${id}`, payload);
@@ -65,4 +67,12 @@ export async function updateCourseAssistant(
 export async function deleteCourseAssistant(id: number) {
   const { data } = await baseAPI.delete(`/course-assistant/${id}`);
   return data;
+}
+
+export async function archiveCourseAssistant(id: number) {
+  return updateCourseAssistant(id, { status: "INACTIVE" });
+}
+ 
+export async function restoreCourseAssistant(id: number) {
+  return updateCourseAssistant(id, { status: "ACTIVE" });
 }

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { baseAPI } from "@/app/lib/utils";
+import { Status } from "./status";
 
 export interface Payment {
   id: number;
@@ -7,6 +8,7 @@ export interface Payment {
   courseId: number;
   amount: number | null;
   status: boolean;
+  isActive: Status;
   created_at: string;
   updated_at: string;
   user?: { id: number; fullName: string; phone: string; file?: string | null };
@@ -29,8 +31,10 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-export async function getPayments(): Promise<Payment[]> {
-  const { data } = await baseAPI.get("/payments");
+export async function getPayments(
+  isActive: Status = "ACTIVE",
+): Promise<Payment[]> {
+  const { data } = await baseAPI.get("/payments", { params: { isActive } });
   return unwrapList<Payment>(data);
 }
 
@@ -48,10 +52,15 @@ export async function createPayment(userId: number, courseId: number) {
 
 export async function updatePayment(
   id: number,
-  payload: { userId?: number; courseId?: number; status?: boolean },
+  payload: {
+    userId?: number;
+    courseId?: number;
+    status?: boolean;
+    isActive?: Status;
+  },
 ) {
   try {
-    const { data } = await baseAPI.patch(`/payments/${id}`, payload);
+    const { data } = await baseAPI.patch(`/payments/admin/${id}`, payload);
     return data;
   } catch (err) {
     if (axios.isAxiosError(err)) {
@@ -61,7 +70,15 @@ export async function updatePayment(
   }
 }
 
+export async function archivePayment(id: number) {
+  return updatePayment(id, { isActive: "INACTIVE" });
+}
+
+export async function restorePayment(id: number) {
+  return updatePayment(id, { isActive: "ACTIVE" });
+}
+
 export async function deletePayment(id: number) {
-  const { data } = await baseAPI.delete(`/payments/${id}`);
+  const { data } = await baseAPI.delete(`/payments/admin/${id}`);
   return data;
 }

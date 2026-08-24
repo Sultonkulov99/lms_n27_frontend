@@ -14,6 +14,8 @@ import {
   Camera,
   Briefcase,
   Code,
+  Undo2,
+  Archive,
 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 import {
@@ -21,13 +23,12 @@ import {
   getPayments,
   createPayment,
   updatePayment,
-  deletePayment,
+  archivePayment,
+  restorePayment,
 } from "@/app/lib/api/payments";
 import { Student, getStudents } from "@/app/lib/api/students";
 import { Course, getCourses } from "@/app/lib/api/courses";
 import { fetchCategoriesCached } from "@/app/lib/utils";
-// import { Category } from "@/app/lib/api/categories";
-
 
 export default function PaymentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +43,7 @@ export default function PaymentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"active" | "archived">("active");
 
   const [payments, setPayments] = useState<Payment[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -62,26 +64,21 @@ export default function PaymentsPage() {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [viewMode]);
 
   const loadAll = async () => {
     try {
       setLoading(true);
       setError("");
-      const [paymentsData, studentsData, coursesData, categoriesRaw] =
-        await Promise.all([
-          getPayments(),
-          getStudents(),
-          getCourses(),
-          fetchCategoriesCached(),
-        ]);
+      const [paymentsData, studentsData, coursesData] = await Promise.all([
+        getPayments(viewMode === "active" ? "ACTIVE" : "INACTIVE"),
+        getStudents(),
+        getCourses(),
+        fetchCategoriesCached(),
+      ]);
       setPayments(paymentsData);
       setStudents(studentsData);
       setCourses(coursesData);
-      // const catList = Array.isArray(categoriesRaw)
-      //   ? categoriesRaw
-      //   : (categoriesRaw?.data ?? categoriesRaw?.result ?? []);
-      // setCategories(catList);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Yuklanmadi");
@@ -107,8 +104,8 @@ export default function PaymentsPage() {
     if (!search) return true;
 
     return (
-      (student.fullName?.toLowerCase() || "").includes(search) ||
-      String(student.id).includes(search)
+      student.fullName.toLowerCase().includes(search) ||
+      student.phone?.toLowerCase().includes(search)
     );
   });
 
@@ -172,8 +169,9 @@ export default function PaymentsPage() {
         buyerName,
         courseName,
         p.amount ?? "",
-        p.created_at,
+        formatDate(p.created_at),
         p.status ? "To'landi" : "Kutilmoqda",
+        formatRole(p.isActive),
       ].join(",");
     });
     const csvContent =
@@ -227,10 +225,10 @@ export default function PaymentsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeletePayment = async () => {
+  const handleArchivePayment = async () => {
     if (!deletingId) return;
     try {
-      await deletePayment(deletingId);
+      await archivePayment(deletingId);
       await loadAll();
       if (currentPayments.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
@@ -239,7 +237,17 @@ export default function PaymentsPage() {
       setDeletingId(null);
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "To'lov o'chirilmadi");
+      alert(err.response?.data?.message || err.message || "Arxivlab bo'lmadi");
+    }
+  };
+
+  const handleRestorePayment = async (payment: Payment) => {
+    try {
+      await restorePayment(payment.id);
+      await loadAll();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message || "Tiklab bo'lmadi");
     }
   };
 
@@ -307,13 +315,15 @@ export default function PaymentsPage() {
               To'lovlar
             </div>
           </div>
-          <button
-            onClick={openAddModal}
-            className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
-          >
-            <PlusCircle size={18} strokeWidth={2} />
-            Qo'shish
-          </button>
+          {viewMode === "active" && (
+            <button
+              onClick={openAddModal}
+              className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
+            >
+              <PlusCircle size={18} strokeWidth={2} />
+              Qo'shish
+            </button>
+          )}
         </div>
 
         {/* Search */}
@@ -341,18 +351,41 @@ export default function PaymentsPage() {
               />
             )}
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm">
-            Izlash
+          <button
+            onClick={() => {
+              setViewMode((prev) =>
+                prev === "active" ? "archived" : "active",
+              );
+              setSearchQuery("");
+              setCurrentPage(1);
+            }}
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm ${
+              viewMode === "archived"
+                ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                : "bg-blue-600 hover:bg-blue-700 text-white"
+            }`}
+          >
+            {viewMode === "archived" ? (
+              <>
+                <Undo2 size={16} />
+                Faol to'lovlar
+              </>
+            ) : (
+              <>
+                <Archive size={16} />
+                Arxiv
+              </>
+            )}
           </button>
         </div>
 
         {loading && (
-          <div className="py-10 text-center text-gray-400 text-sm">
+          <div className="text-center text-gray-400 text-sm">
             Yuklanmoqda...
           </div>
         )}
         {!loading && error && (
-          <div className="py-4 text-center text-red-500 text-sm">{error}</div>
+          <div className="text-center text-red-500 text-sm">{error}</div>
         )}
 
         {!loading && !error && (
@@ -379,13 +412,6 @@ export default function PaymentsPage() {
                           className="inline-block text-gray-400 ml-1"
                         />
                       </th>
-                      {/* <th className="px-5 py-4 border border-gray-200">
-                        Yo'nalish{" "}
-                        <ChevronDown
-                          size={14}
-                          className="inline-block text-gray-400 ml-1"
-                        />
-                      </th> */}
                       <th className="px-5 py-4 border border-gray-200">
                         Summa{" "}
                         <ChevronDown
@@ -445,13 +471,6 @@ export default function PaymentsPage() {
                           <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
                             {course?.name || "—"}
                           </td>
-                          {/* <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
-                            {course?.categories?.name ||
-                              categories.find(
-                                (c) => c.id === course?.categoryId,
-                              )?.name ||
-                              "—"}
-                          </td> */}
                           <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200">
                             {formatAmount(payment.amount)}
                           </td>
@@ -471,7 +490,7 @@ export default function PaymentsPage() {
                           </td>
                           <td className="px-5 py-4 border border-gray-200 text-center">
                             {payment.status ? (
-                              <span className="text-[#137333] text-[13px] font-semibold">
+                              <span className="px-3 py-1 rounded-full text-[12px] font-semibold border bg-[#E6F4EA] text-[#137333] border-[#CEEAD6]">
                                 Tasdiqlangan
                               </span>
                             ) : (
@@ -483,20 +502,32 @@ export default function PaymentsPage() {
                               </button>
                             )}
                           </td>
-                          <td className="px-5 py-4 border border-gray-200">
-                            <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => openEditModal(payment)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
-                              >
-                                <Pencil size={14} />
-                              </button>
-                              <button
-                                onClick={() => confirmDelete(payment.id)}
-                                className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                              </button>
+                          <td className="px-5 py-4 border border-gray-200 relative">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2 whitespace-nowrap">
+                              {viewMode === "active" ? (
+                                <>
+                                  <button
+                                    onClick={() => openEditModal(payment)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors"
+                                  >
+                                    <Pencil size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => confirmDelete(payment.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => handleRestorePayment(payment)}
+                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                >
+                                  <Undo2 size={14} />
+                                  Tiklash
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -505,7 +536,7 @@ export default function PaymentsPage() {
                     {currentPayments.length === 0 && (
                       <tr>
                         <td
-                          colSpan={9}
+                          colSpan={8}
                           className="px-6 py-10 text-center text-gray-500 border border-gray-200"
                         >
                           Ma'lumot topilmadi
@@ -603,7 +634,7 @@ export default function PaymentsPage() {
                             autoFocus
                             value={buyerSearch}
                             onChange={(e) => setBuyerSearch(e.target.value)}
-                            placeholder="Ism yoki ID bo'yicha qidiring..."
+                            placeholder="Ism yoki telefon raqam bo'yicha qidiring..."
                             className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-200 text-[13px] outline-none focus:border-blue-500"
                             onClick={(e) => e.stopPropagation()}
                           />
@@ -636,7 +667,7 @@ export default function PaymentsPage() {
                                   </p>
 
                                   <p className="text-[12px] text-gray-400 mt-0.5">
-                                    ID: {student.id}
+                                    {student.phone}
                                   </p>
                                 </div>
 
@@ -665,39 +696,6 @@ export default function PaymentsPage() {
                   </p>
                 )}
               </div>
-
-              {/* Yo'nalish — faqat filtr, backendga yubormaymiz */}
-              {/* <div className="flex flex-col shrink-0">
-                <label className="block text-[13px] font-bold text-gray-900 mb-1.5">
-                  Yo'nalish{" "}
-                  <span className="text-gray-400 font-normal ml-1">
-                    (kurslarni filtrlash uchun)
-                  </span>
-                </label>
-                <div className="relative w-full">
-                  <select
-                    value={categoryId}
-                    onChange={(e) => {
-                      setCategoryId(e.target.value);
-                      setCourseId("");
-                    }}
-                    className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors appearance-none bg-white cursor-pointer border-gray-200 focus:border-blue-500 ${
-                      categoryId ? "text-gray-900" : "text-gray-400"
-                    }`}
-                  >
-                    <option value="">Barchasi</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown
-                    size={18}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-                  />
-                </div>
-              </div> */}
 
               {/* Kurs */}
               <div className="flex flex-col shrink-0">
@@ -836,16 +834,16 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {/* Delete Modal */}
+      {/* Archive Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
           <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              O'chirishni tasdiqlash
+              Arxivlashni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham o'chirmoqchimisiz? Bu amalni ortga qaytarib
-              bo'lmaydi.
+              Haqiqatan ham arxivlamoqchimisiz? To'lov ro'yxatdan yashiriladi,
+              lekin bazada saqlanib qoladi.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
@@ -858,10 +856,10 @@ export default function PaymentsPage() {
                 Bekor qilish
               </button>
               <button
-                onClick={handleDeletePayment}
+                onClick={handleArchivePayment}
                 className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
-                O'chirish
+                Arxivlash
               </button>
             </div>
           </div>
@@ -908,7 +906,7 @@ export default function PaymentsPage() {
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-[20px] font-bold text-gray-900">
-                Studentlasrni haqida
+                Student haqida
               </h2>
               <button
                 onClick={() => setIsViewModalOpen(false)}
@@ -930,7 +928,7 @@ export default function PaymentsPage() {
                   <h3 className="text-[20px] font-bold text-gray-900 mb-1">
                     {viewingStudent.fullName}
                   </h3>
-                  <p className="text-gray-500 text-[14px]">Studentistrator</p>
+                  <p className="text-gray-500 text-[14px]">Student</p>
                 </div>
               </div>
 
