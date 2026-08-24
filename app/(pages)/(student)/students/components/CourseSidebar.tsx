@@ -24,24 +24,9 @@ const modules: ModuleItem[] = [
     title: "Kirish",
     duration: "30 daqiqa",
     lessons: [
-      {
-        id: "l1",
-        title: "IT Live akademiyasi haqida",
-        duration: "10 daqiqa",
-        status: "completed",
-      },
-      {
-        id: "l2",
-        title: "Frontend dasturlash nima?",
-        duration: "10 daqiqa",
-        status: "completed",
-      },
-      {
-        id: "l3",
-        title: "Nimadan boshlash kerak?",
-        duration: "10 daqiqa",
-        status: "current",
-      },
+      { id: "1", title: "IT Live akademiyasi haqida", duration: "10 daqiqa", status: "completed" },
+      { id: "2", title: "Frontend dasturlash nima?", duration: "10 daqiqa", status: "completed" },
+      { id: "3", title: "Nimadan boshlash kerak?", duration: "10 daqiqa", status: "current" },
     ],
   },
   {
@@ -49,18 +34,9 @@ const modules: ModuleItem[] = [
     title: "React framework",
     duration: "2 soat 20 daqiqa",
     lessons: [
-      {
-        id: "r1",
-        title: "React nima?",
-        duration: "15 daqiqa",
-        status: "upcoming",
-      },
-      {
-        id: "r2",
-        title: "Components va Props",
-        duration: "25 daqiqa",
-        status: "upcoming",
-      },
+      { id: "4", title: "React nima?", duration: "15 daqiqa", status: "upcoming" },
+      { id: "12", title: "CSS bilan ishlash", duration: "20 daqiqa", status: "upcoming" },
+      { id: "14", title: "Components va Props", duration: "25 daqiqa", status: "upcoming" },
     ],
   },
   ...Array.from({ length: 6 }).map((_, i) => ({
@@ -70,42 +46,22 @@ const modules: ModuleItem[] = [
   })),
 ];
 
-function StatusIcon({ status }: { status: LessonStatus }) {
-  if (status === "completed") {
-    return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5" className="shrink-0">
-        <path d="M20 6L9 17l-5-5" />
-      </svg>
-    );
-  }
-
-  if (status === "current") {
-    return (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" className="shrink-0">
-        <path d="M23 4v6h-6" />
-        <path d="M1 20v-6h6" />
-        <path d="M3.51 9a9 9 0 0114.36-3.36L23 10M1 14l5.14 4.36A9 9 0 0020.49 15" />
-      </svg>
-    );
-  }
-
-  return null;
-}
-
 export default function CourseSidebar({
   courseTitle = "Frontend dasturlash",
-  activeLessonId = "l3",
+  courseId,
+  activeLessonId = "3",
   onLessonChange,
 }: {
   courseTitle?: string;
+  courseId?: string;
   activeLessonId?: string;
-  onLessonChange?: (lessonId: string) => void;
+  onLessonChange?: (lessonId: string, title?: string) => void;
 }) {
   const [openModuleId, setOpenModuleId] = useState<string>("kirish");
 
-  const handleLessonClick = (lessonId: string) => {
+  const handleLessonClick = (lessonId: string, title: string) => {
     if (onLessonChange) {
-      onLessonChange(lessonId);
+      onLessonChange(lessonId, title);
     }
   };
 
@@ -120,7 +76,6 @@ export default function CourseSidebar({
         <div className="flex flex-col">
           {modules.map((mod) => {
             const isOpen = openModuleId === mod.id;
-
             return (
               <div key={mod.id} className="border-b border-gray-100">
                 <button
@@ -134,12 +89,8 @@ export default function CourseSidebar({
                     </div>
                   </div>
                   <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#94A3B8"
-                    strokeWidth="2"
+                    width="20" height="20" viewBox="0 0 24 24"
+                    fill="none" stroke="#94A3B8" strokeWidth="2"
                     className={`transition-transform duration-200 shrink-0 ${isOpen ? "rotate-90" : ""}`}
                   >
                     <path d="M9 18l6-6-6-6" />
@@ -151,42 +102,36 @@ export default function CourseSidebar({
                     <div className="flex flex-col">
                       {mod.lessons.map((lesson) => {
                         const isActive = lesson.id === activeLessonId;
-
                         return (
                           <button
                             key={lesson.id}
                             aria-current={isActive ? "true" : undefined}
-                            onClick={() => handleLessonClick(lesson.id)}
+                            onClick={() => handleLessonClick(lesson.id, lesson.title)}
                             className={`w-full flex items-center gap-2 px-4 py-3 text-left transition-all border-b border-gray-100 last:border-b-0 ${
-                              isActive 
-                                ? "bg-blue-50" 
-                                : "hover:bg-gray-50"
+                              isActive ? "bg-blue-50" : "hover:bg-gray-50"
                             }`}
                           >
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                               <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                                lesson.status === "completed" 
-                                  ? "bg-green-100" 
-                                  : lesson.status === "current"
-                                  ? "bg-red-500"
-                                  : "bg-gray-100"
+                                lesson.status === "completed" ? "bg-green-100"
+                                : lesson.status === "current" ? "bg-red-500"
+                                : "bg-gray-100"
                               }`}>
                                 {lesson.status === "completed" ? (
                                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" strokeWidth="2.5">
                                     <path d="M20 6L9 17l-5-5" />
                                   </svg>
                                 ) : (
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill={lesson.status === "current" ? "white" : "#94A3B8"}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24"
+                                    fill={lesson.status === "current" ? "white" : "#94A3B8"}>
                                     <path d="M8 5v14l11-7z" />
                                   </svg>
                                 )}
                               </div>
                               <div className="min-w-0 flex-1">
-                                <p
-                                  className={`text-sm font-medium truncate ${
-                                    isActive ? "text-[#4F7FFF]" : "text-[#1a1a1a]"
-                                  }`}
-                                >
+                                <p className={`text-sm font-medium truncate ${
+                                  isActive ? "text-[#4F7FFF]" : "text-[#1a1a1a]"
+                                }`}>
                                   {lesson.title}
                                 </p>
                                 <p className="text-xs text-[#94A3B8]">{lesson.duration}</p>
