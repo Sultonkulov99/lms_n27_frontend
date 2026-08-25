@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image, { StaticImageData } from "next/image";
-import { motion } from "framer-motion";
 import { usePresenceStore } from "@/store/usePresenceStore";
 import { useExamStore } from "@/store/useExamStore";
 
@@ -85,10 +85,12 @@ export default function LessonPlayer({
   materials = [],
   tasks = [],
   exams = [],
+  examsLoading = false,
   onNextLesson,
   videoUrl,
   onSubmitQuestion,
   onSubmitReply,
+  onTyping,
   hasNextLesson,
 }: {
   lessonId?: string;
@@ -100,11 +102,13 @@ export default function LessonPlayer({
   materials?: Material[];
   tasks?: Task[];
   exams?: Exam[];
+  examsLoading?: boolean;
   hasNextLesson?: boolean;
   onNextLesson?: () => void;
   videoUrl?: string;
   onSubmitQuestion?: (text: string) => Promise<void>;
   onSubmitReply?: (parentId: string, text: string) => Promise<void>;
+  onTyping?: (isTyping: boolean) => void;
 }) {
   const [activeTab, setActiveTab] = useState<TabId>("qa");
   const [rating, setRating] = useState(0);
@@ -116,8 +120,6 @@ export default function LessonPlayer({
   const [showControls, setShowControls] = useState(true);
   const [likedQuestions, setLikedQuestions] = useState<Set<string>>(new Set<string>());
   const [dislikedQuestions, setDislikedQuestions] = useState<Set<string>>(new Set<string>());
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showExamResult, setShowExamResult] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showQuality, setShowQuality] = useState(false);
   const [quality, setQuality] = useState("auto");
@@ -129,6 +131,27 @@ export default function LessonPlayer({
   
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const router = useRouter();
+
+  useEffect(() => {
+    // Scroll to the comment if hash is present
+    if (typeof window !== "undefined" && window.location.hash) {
+      const id = window.location.hash.substring(1); // remove '#'
+      if (id.startsWith('comment-')) {
+        setTimeout(() => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add a temporary highlight effect
+            element.classList.add('bg-blue-50', 'transition-colors', 'duration-500', 'p-4', 'rounded-lg');
+            setTimeout(() => {
+              element.classList.remove('bg-blue-50');
+            }, 3000);
+          }
+        }, 500); // Give it time to render
+      }
+    }
+  }, [questions]);
   
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const videoContainerRef = useRef<HTMLDivElement | null>(null);
@@ -199,7 +222,13 @@ export default function LessonPlayer({
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play();
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error("Video play failed:", error);
+            setIsPlaying(false);
+          });
+        }
       }
       setIsPlaying(!isPlaying);
     }
@@ -592,7 +621,7 @@ export default function LessonPlayer({
           <div className="flex flex-col gap-6">
             {questions.map((q) => {
               return (
-                <div key={q.id} className="flex flex-col gap-4">
+                <div key={q.id} id={`comment-${q.id}`} className="flex flex-col gap-4">
                   {/* Question */}
                   <div className="flex gap-4">
                     <div className="shrink-0">
@@ -618,7 +647,12 @@ export default function LessonPlayer({
                     <div className="ml-14 flex gap-3 items-start">
                       <textarea 
                         value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
+                        onChange={(e) => {
+                    setReplyText(e.target.value);
+                    if (onTyping) {
+                      onTyping(e.target.value.trim().length > 0);
+                    }
+                  }}
                         placeholder="Javobingizni yozing..."
                         className="flex-1 border border-gray-300 rounded-lg p-2.5 text-sm text-[#1a1a1a] focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none min-h-[60px]"
                       />
@@ -644,20 +678,18 @@ export default function LessonPlayer({
                   {q.replies && q.replies.length > 0 && (
                     <div className="ml-14 flex flex-col gap-4">
                       {q.replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-4">
-                          <div className="shrink-0">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm ${reply.avatarColor}`}>
+                        <div key={reply.id} className="bg-[#F8FAFC] rounded-lg p-4 border border-gray-100 flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white font-semibold text-xs ${reply.avatarColor}`}>
                               {reply.name.charAt(0).toUpperCase()}
                             </div>
-                          </div>
-                          <div className="min-w-0 flex-1 bg-[#F8FAFC] rounded-lg p-4 border border-gray-100">
-                            <p className="text-sm font-bold mb-1">
+                            <p className="text-sm font-bold">
                               <span className={reply.nameColor}>{reply.name}</span>
                               {reply.role && <span className="text-gray-400 font-normal ml-1">({reply.role})</span>}
                             </p>
-                            <p className="text-sm text-[#1a1a1a] leading-relaxed mb-1">{reply.text}</p>
-                            <p className="text-xs text-gray-400 font-medium">{reply.date}</p>
                           </div>
+                          <p className="text-sm text-[#1a1a1a] leading-relaxed">{reply.text}</p>
+                          <p className="text-xs text-gray-400 font-medium">{reply.date}</p>
                         </div>
                       ))}
                     </div>
@@ -709,98 +741,7 @@ export default function LessonPlayer({
 
       {/* Exams Tab */}
       {activeTab === "exams" && (
-        <div>
-          {exams.length > 0 && !showExamResult ? (
-            <div>
-              <div className="mb-4">
-                <p className="text-sm font-medium text-[#64748B] mb-1">Foylil yuboring</p>
-                <div className="flex items-center gap-3">
-                  <button className="px-4 py-2 text-sm text-[#64748B] border border-gray-300 rounded-lg hover:border-gray-400 transition-colors flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-                    </svg>
-                    Yuklash
-                  </button>
-                  <span className="text-sm text-[#94A3B8]">Fayl yuklanmagan</span>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <h4 className="text-sm font-semibold text-[#1a1a1a] mb-4">
-                  Savol: {exams[0].currentQuestion}/{exams[0].totalQuestions}
-                </h4>
-                
-                {/* Progress bar */}
-                <div className="mb-6">
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-600 transition-all duration-300"
-                      style={{ width: `${(exams[0].currentQuestion / exams[0].totalQuestions) * 100}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-6">
-                  <h3 className="text-base font-bold text-[#1a1a1a] mb-4">
-                    {exams[0].currentQuestion}. {exams[0].questions[0]?.question}
-                  </h3>
-                  
-                  <div className="space-y-3">
-                    {exams[0].questions[0]?.options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedAnswer(index)}
-                        className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                          selectedAnswer === index
-                            ? "border-blue-600 bg-blue-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
-                            selectedAnswer === index
-                              ? "border-blue-600 bg-blue-600"
-                              : "border-gray-300"
-                          }`}>
-                            {selectedAnswer === index && (
-                              <div className="w-2 h-2 rounded-full bg-white" />
-                            )}
-                          </div>
-                          <span className="text-sm text-[#1a1a1a]">{String.fromCharCode(65 + index)}) {option}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <button className="px-5 py-2.5 text-sm font-medium text-[#64748B] bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                    Bekor qilish
-                  </button>
-                  <button 
-                    onClick={() => setShowExamResult(true)}
-                    className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Keyingi
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : showExamResult ? (
-            <div className="py-8 text-center">
-              <div className="inline-block p-4 bg-green-50 rounded-full mb-4">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">Test yakunlandi!</h3>
-              <p className="text-sm text-[#64748B]">Natijalaringiz tez orada e'lon qilinadi</p>
-            </div>
-          ) : (
-            <div className="py-10 text-center text-sm text-[#64748B]">Imtihonlar mavjud emas</div>
-          )}
-        </div>
+        <ExamsTab exams={exams} loading={examsLoading} />
       )}
 
       {/* Modal */}
@@ -824,7 +765,12 @@ export default function LessonPlayer({
               <label className="block text-sm font-medium text-[#1a1a1a] mb-2">Savol matni</label>
               <textarea 
                 value={questionText}
-                onChange={(e) => setQuestionText(e.target.value)}
+                onChange={(e) => {
+                  setQuestionText(e.target.value);
+                  if (onTyping) {
+                    onTyping(e.target.value.trim().length > 0);
+                  }
+                }}
                 className="w-full border border-gray-300 rounded-lg p-3 min-h-[120px] text-[#1a1a1a] placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none"
                 placeholder="Kiriting"
               />
@@ -937,6 +883,258 @@ function TasksTab({ tasks }: { tasks: Task[] }) {
       {tasks.length === 0 && (
         <p className="text-[14px] text-[#94A3B8]">Hali vazifalar mavjud emas.</p>
       )}
+    </div>
+  );
+}
+
+// ─── Imtihonlar Tab komponenti ──────────────────────────────────────────────
+function ExamsTab({ exams, loading }: { exams: Exam[]; loading?: boolean }) {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswers, setSelectedAnswers] = useState<(number | null)[]>([]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
+
+  // Yangi exam kelganda reset
+  const examId = exams[0]?.id;
+  useEffect(() => {
+    setCurrentQuestionIndex(0);
+    setSelectedAnswers([]);
+    setIsSubmitted(false);
+    setScore(0);
+  }, [examId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <span className="ml-3 text-sm text-[#64748B]">Yuklanmoqda...</span>
+      </div>
+    );
+  }
+
+  if (!exams.length || !exams[0].questions.length) {
+    return (
+      <div className="py-10 text-center text-sm text-[#64748B]">
+        Bu dars uchun hali imtihon savollari qo&apos;shilmagan.
+      </div>
+    );
+  }
+
+  const exam = exams[0];
+  const questions = exam.questions;
+  const total = questions.length;
+  const current = questions[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / total) * 100;
+
+  const handleSelectAnswer = (answerIndex: number) => {
+    if (isSubmitted) return;
+    const updated = [...selectedAnswers];
+    updated[currentQuestionIndex] = answerIndex;
+    setSelectedAnswers(updated);
+  };
+
+  const handleNext = () => {
+    if (currentQuestionIndex < total - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
+
+  const handleSubmit = () => {
+    let correct = 0;
+    questions.forEach((q, i) => {
+      if (q.correctAnswer !== undefined && selectedAnswers[i] === q.correctAnswer) {
+        correct++;
+      }
+    });
+    setScore(correct);
+    setIsSubmitted(true);
+  };
+
+  const handleRetry = () => {
+    setCurrentQuestionIndex(0);
+    setSelectedAnswers([]);
+    setIsSubmitted(false);
+    setScore(0);
+  };
+
+  // Natija ekrani
+  if (isSubmitted) {
+    const percent = Math.round((score / total) * 100);
+    const passed = percent >= 60;
+    return (
+      <div className="py-8 flex flex-col items-center text-center gap-4">
+        <div className={`w-20 h-20 rounded-full flex items-center justify-center ${passed ? "bg-green-50" : "bg-red-50"}`}>
+          {passed ? (
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          ) : (
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+          )}
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-[#1a1a1a] mb-1">
+            {passed ? "Tabriklaymiz!" : "Afsuski, o'tmadingiz"}
+          </h3>
+          <p className="text-sm text-[#64748B]">
+            {score} / {total} ta to&apos;g&apos;ri javob ({percent}%)
+          </p>
+        </div>
+
+        {/* Har bir savol natijasi */}
+        <div className="w-full mt-4 flex flex-col gap-3 text-left">
+          {questions.map((q, i) => {
+            const userAnswer = selectedAnswers[i];
+            const isCorrect = userAnswer === q.correctAnswer;
+            return (
+              <div key={q.id} className={`rounded-xl border p-4 ${isCorrect ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}`}>
+                <p className="text-sm font-semibold text-[#1a1a1a] mb-2">
+                  {i + 1}. {q.question}
+                </p>
+                <p className={`text-sm ${isCorrect ? "text-green-700" : "text-red-600"}`}>
+                  Sizning javobingiz:{" "}
+                  <strong>
+                    {userAnswer !== null && userAnswer !== undefined
+                      ? `${String.fromCharCode(65 + userAnswer)}) ${q.options[userAnswer]}`
+                      : "Javob berilmagan"}
+                  </strong>
+                </p>
+                {!isCorrect && q.correctAnswer !== undefined && (
+                  <p className="text-sm text-green-700 mt-1">
+                    To&apos;g&apos;ri javob:{" "}
+                    <strong>{String.fromCharCode(65 + q.correctAnswer)}) {q.options[q.correctAnswer]}</strong>
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={handleRetry}
+          className="mt-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          Qayta urinish
+        </button>
+      </div>
+    );
+  }
+
+  // Test yechish ekrani
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Sarlavha va progress */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-sm font-semibold text-[#1a1a1a]">{exam.title}</p>
+          <p className="text-sm text-[#64748B]">
+            {currentQuestionIndex + 1} / {total}
+          </p>
+        </div>
+        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-blue-600 transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Savol */}
+      <div>
+        <p className="text-base font-bold text-[#1a1a1a] mb-4">
+          {currentQuestionIndex + 1}. {current.question}
+        </p>
+
+        <div className="flex flex-col gap-3">
+          {current.options.map((option, index) => {
+            const isSelected = selectedAnswers[currentQuestionIndex] === index;
+            return (
+              <button
+                key={index}
+                onClick={() => handleSelectAnswer(index)}
+                className={`w-full text-left p-4 rounded-xl border-2 transition-all ${
+                  isSelected
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300 bg-white"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      isSelected ? "border-blue-600 bg-blue-600" : "border-gray-300"
+                    }`}
+                  >
+                    {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
+                  </div>
+                  <span className="text-sm text-[#1a1a1a]">
+                    {String.fromCharCode(65 + index)}) {option}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Navigatsiya tugmalari */}
+      <div className="flex items-center justify-between pt-2">
+        <button
+          onClick={handlePrev}
+          disabled={currentQuestionIndex === 0}
+          className="px-5 py-2.5 text-sm font-medium text-[#64748B] bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40"
+        >
+          Oldingi
+        </button>
+
+        {currentQuestionIndex < total - 1 ? (
+          <button
+            onClick={handleNext}
+            disabled={selectedAnswers[currentQuestionIndex] === undefined || selectedAnswers[currentQuestionIndex] === null}
+            className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-40"
+          >
+            Keyingi
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={selectedAnswers[currentQuestionIndex] === undefined || selectedAnswers[currentQuestionIndex] === null}
+            className="px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-40"
+          >
+            Yakunlash
+          </button>
+        )}
+      </div>
+
+      {/* Savol navigatsiyasi (tugmachalar) */}
+      <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+        {questions.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentQuestionIndex(i)}
+            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+              i === currentQuestionIndex
+                ? "bg-blue-600 text-white"
+                : selectedAnswers[i] !== undefined && selectedAnswers[i] !== null
+                ? "bg-blue-100 text-blue-700"
+                : "bg-gray-100 text-[#64748B] hover:bg-gray-200"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

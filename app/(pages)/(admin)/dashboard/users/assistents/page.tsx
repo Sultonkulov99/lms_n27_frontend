@@ -28,12 +28,14 @@ import {
   updateAssistant,
   archiveAssistant,
   restoreAssistant,
+  deleteAssistant,
 } from "@/app/lib/api/assistants";
 import {
   CourseAssistantLink,
   getCourseAssistants,
   createCourseAssistant,
   updateCourseAssistant,
+  deleteCourseAssistant,
 } from "@/app/lib/api/course-assistant";
 import { Course, getCourses } from "@/app/lib/api/courses";
 
@@ -52,7 +54,12 @@ export default function AssistentsPage() {
   const [editingLink, setEditingLink] = useState<CourseAssistantLink | null>(
     null,
   );
+  const [courseLinkToRemove, setCourseLinkToRemove] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] =
+    useState(false);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [restoringId, setRestoringId] = useState<number | null>(null);
 
   // Pagination & Search
   const [currentPage, setCurrentPage] = useState(1);
@@ -217,6 +224,7 @@ export default function AssistentsPage() {
   const openAddModal = () => {
     setEditingId(null);
     setEditingLink(null);
+    setCourseLinkToRemove(false);
     setName("");
     setPhone("+998");
     setCourseId("");
@@ -234,6 +242,7 @@ export default function AssistentsPage() {
     const link = linkForUser(assistent.id);
     setEditingId(assistent.id);
     setEditingLink(link);
+    setCourseLinkToRemove(false);
     setName(assistent.fullName);
     setPhone(assistent.phone);
     setCourseId(link ? String(link.courseId) : "");
@@ -252,6 +261,16 @@ export default function AssistentsPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const confirmPermanentDelete = (id: number) => {
+    setDeletingId(id);
+    setIsPermanentDeleteModalOpen(true);
+  };
+
+  const confirmRestore = (id: number) => {
+    setRestoringId(id);
+    setIsRestoreModalOpen(true);
+  };
+
   const handleArchiveAssistent = async () => {
     if (!deletingId) return;
     try {
@@ -266,20 +285,48 @@ export default function AssistentsPage() {
       setDeletingId(null);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Arxivlab bo'lmadi");
+      alert(error.message || "Arxivlab bo’lmadi");
     }
   };
 
-  const handleRestoreAssistent = async (assistent: Assistant) => {
+  const handleRestoreAssistent = async () => {
+    if (!restoringId) return;
     try {
-      await restoreAssistant(assistent.id);
-      setAssistents((prevAssistent) =>
-        prevAssistent.filter((a) => a.id !== assistent.id),
-      );
+      await restoreAssistant(restoringId);
+      setAssistents((prev) => prev.filter((a) => a.id !== restoringId));
+      setIsRestoreModalOpen(false);
+      setRestoringId(null);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Tiklab bo'lmadi");
+      alert(error.message || "Tiklab bo’lmadi");
     }
+  };
+
+  const handleDeleteAssistentPermanently = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteAssistant(deletingId);
+      setAssistents((prev) => prev.filter((a) => a.id !== deletingId));
+      if (currentAssistents.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+      setIsPermanentDeleteModalOpen(false);
+      setDeletingId(null);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message || "O’chirib bo’lmadi");
+    }
+  };
+
+  const handleRemoveCourseLink = () => {
+    if (!editingLink) return;
+    setCourseId("");
+    setCourseLinkToRemove(true);
+  };
+
+  const handleUndoRemoveCourseLink = () => {
+    setCourseLinkToRemove(false);
+    setCourseId(editingLink ? String(editingLink.courseId) : "");
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -337,7 +384,9 @@ export default function AssistentsPage() {
         userId = created.data.id;
       }
 
-      if (courseId) {
+      if (courseLinkToRemove && editingLink) {
+        await deleteCourseAssistant(editingLink.id);
+      } else if (courseId) {
         const selectedCourseId = Number(courseId);
         if (editingLink) {
           if (editingLink.courseId !== selectedCourseId) {
@@ -357,6 +406,7 @@ export default function AssistentsPage() {
 
       setEditingId(null);
       setEditingLink(null);
+      setCourseLinkToRemove(false);
       setName("");
       setPhone("+998");
       setCourseId("");
@@ -438,7 +488,7 @@ export default function AssistentsPage() {
             {viewMode === "archived" ? (
               <>
                 <Undo2 size={16} />
-                Faol to'lovlar
+                Faol to’lovlar
               </>
             ) : (
               <>
@@ -564,19 +614,28 @@ export default function AssistentsPage() {
                                       }
                                       className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
                                     >
-                                      <Trash2 size={14} />
+                                      <Archive size={14} />
                                     </button>
                                   </>
                                 ) : (
-                                  <button
-                                    onClick={() =>
-                                      handleRestoreAssistent(assistent)
-                                    }
-                                    className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
-                                  >
-                                    <Undo2 size={14} />
-                                    Tiklash
-                                  </button>
+                                  <>
+                                    <button
+                                      onClick={() =>
+                                        confirmRestore(assistent.id)
+                                      }
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                    >
+                                      <Undo2 size={14} />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        confirmPermanentDelete(assistent.id)
+                                      }
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </>
                                 )}
                               </div>
                             </td>
@@ -589,7 +648,7 @@ export default function AssistentsPage() {
                           colSpan={8}
                           className="px-6 py-10 text-center text-gray-500 border border-gray-200"
                         >
-                          Ma'lumot topilmadi
+                          Ma’lumot topilmadi
                         </td>
                       </tr>
                     )}
@@ -622,7 +681,7 @@ export default function AssistentsPage() {
           <div className="bg-white relative flex flex-col w-full max-w-168.25 max-h-[95vh] rounded-[10px] p-[16px_24px] overflow-hidden">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <h2 className="text-[20px] font-bold text-gray-900">
-                {editingId ? "Tahrirlash" : "Qo'shish"}
+                {editingId ? "Tahrirlash" : "Qo’shish"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -696,7 +755,7 @@ export default function AssistentsPage() {
                 />
                 {fullNameError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    To'liq kiritilmadi
+                    To’liq kiritilmadi
                   </p>
                 )}
               </div>
@@ -714,19 +773,41 @@ export default function AssistentsPage() {
                 />
                 {phoneError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    Telefon raqam to'liq kiritilmadi
+                    Telefon raqam to’liq kiritilmadi
                   </p>
                 )}
               </div>
 
               {/* Kurs biriktirish — ixtiyoriy */}
               <div className="flex flex-col shrink-0">
-                <label className="block text-[13px] font-bold text-gray-900 mb-1.5">
-                  Kurs biriktirish{" "}
-                  <span className="text-gray-400 font-normal ml-1">
-                    (ixtiyoriy)
-                  </span>
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-[13px] font-bold text-gray-900">
+                    Kurs biriktirish{" "}
+                    <span className="text-gray-400 font-normal ml-1">
+                      (ixtiyoriy)
+                    </span>
+                  </label>
+                  {editingId && editingLink && !courseLinkToRemove && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveCourseLink}
+                      className="flex items-center gap-1 text-[12px] font-medium text-red-600 hover:underline transition-colors"
+                    >
+                      <Trash2 size={13} />
+                      O’chirish
+                    </button>
+                  )}
+                  {editingId && courseLinkToRemove && (
+                    <button
+                      type="button"
+                      onClick={handleUndoRemoveCourseLink}
+                      className="flex items-center gap-1 text-[12px] font-medium text-blue-600 hover:underline transition-colors"
+                    >
+                      <Undo2 size={13} />
+                      Bekor qilish
+                    </button>
+                  )}
+                </div>
                 <div className="relative w-full">
                   <div className="relative w-full">
                     {/* SELECT BUTTON */}
@@ -776,7 +857,7 @@ export default function AssistentsPage() {
                               autoFocus
                               value={courseSearch}
                               onChange={(e) => setCourseSearch(e.target.value)}
-                              placeholder="Kurs nomi bo'yicha qidiring..."
+                              placeholder="Kurs nomi bo’yicha qidiring..."
                               className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-200 text-[13px] outline-none focus:border-blue-500"
                               onClick={(e) => e.stopPropagation()}
                             />
@@ -831,6 +912,12 @@ export default function AssistentsPage() {
                       Kurs tanlanmadi
                     </p>
                   )}
+                  {courseLinkToRemove && (
+                    <p className="text-[12px] text-gray-400 mt-1.5">
+                      Saqlash tugmasini bosganingizda kursdan biriktirish olib
+                      tashlanadi
+                    </p>
+                  )}
                 </div>
                 <ChevronDown
                   size={18}
@@ -844,7 +931,7 @@ export default function AssistentsPage() {
                   Parol{" "}
                   {editingId && (
                     <span className="text-gray-400 font-normal ml-1">
-                      (O'zgartirmaslik uchun bo'sh qoldiring)
+                      (O’zgartirmaslik uchun bo’sh qoldiring)
                     </span>
                   )}
                 </label>
@@ -904,7 +991,7 @@ export default function AssistentsPage() {
               Arxivlashni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham arxivlamoqchimisiz? Assistent ro'yxatdan
+              Haqiqatan ham arxivlamoqchimisiz? Assistent ro’yxatdan
               yashiriladi, lekin bazada saqlanib qoladi.
             </p>
             <div className="flex items-center justify-end gap-3">
@@ -919,9 +1006,73 @@ export default function AssistentsPage() {
               </button>
               <button
                 onClick={handleArchiveAssistent}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
+                className="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition-colors text-sm font-medium"
               >
                 Arxivlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Modal */}
+      {isRestoreModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Tiklashni tasdiqlash
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Haqiqatan ham tiklamoqchimisiz? Assistent qaytadan faol ro’yxatga
+              qaytariladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsRestoreModalOpen(false);
+                  setRestoringId(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleRestoreAssistent}
+                className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors text-sm font-medium"
+              >
+                Tiklash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {isPermanentDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Butunlay o’chirishni tasdiqlash
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Diqqat! Bu amalni ortga qaytarib bo’lmaydi — assistent bazadan
+              butunlay o’chiriladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsPermanentDeleteModalOpen(false);
+                  setDeletingId(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleDeleteAssistentPermanently}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium"
+              >
+                Butunlay o’chirish
               </button>
             </div>
           </div>
@@ -994,7 +1145,7 @@ export default function AssistentsPage() {
               </div>
 
               <h4 className="text-[16px] font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">
-                To'liq ma'lumotlar
+                To’liq ma’lumotlar
               </h4>
 
               <div className="flex flex-col gap-5 mb-8">
@@ -1027,7 +1178,7 @@ export default function AssistentsPage() {
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-500 mb-1">
-                    Ro'yxatdan o'tgan vaqti
+                    Ro’yxatdan o’tgan vaqti
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
                     {formatDate(viewingAssistent.created_at)}

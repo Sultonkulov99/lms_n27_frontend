@@ -276,6 +276,25 @@ export default function Sidebar() {
                 Izohlar
               </span>
             </Link>
+
+            <Link
+              href="/dashboard/qa"
+              className={`flex items-center py-2.5 rounded-lg transition-all overflow-hidden ${
+                pathname === "/dashboard/qa" || pathname.startsWith("/dashboard/qa/")
+                  ? "bg-white/10 text-white"
+                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+              } ${isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"}`}
+              title="Savol-javoblar"
+            >
+              <MessageSquare size={20} className="shrink-0" />
+              <span
+                className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${
+                  isOpen ? "opacity-100" : "opacity-0 w-0"
+                }`}
+              >
+                Savol-javoblar
+              </span>
+            </Link>
           </nav>
         </div>
       </div>

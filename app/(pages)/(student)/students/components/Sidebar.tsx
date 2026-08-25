@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, BookOpen } from "lucide-react";
+import { PanelLeftClose, BookOpen, Layers } from "lucide-react";
 
 type NavItem = {
   label: string;
@@ -13,6 +13,11 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
+  {
+    label: "Barcha kurslar",
+    href: "/students/all-courses",
+    icon: <Layers size={20} className="shrink-0" />,
+  },
   {
     label: "Mening kurslarim",
     href: "/students",
