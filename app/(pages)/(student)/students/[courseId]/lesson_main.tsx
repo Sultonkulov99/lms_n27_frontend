@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { io, Socket } from "socket.io-client";
+import { useProfileStore } from "@/store/useProfileStore";
+import { getToken } from "@/app/lib/utils";
 import CourseSidebar from "../components/CourseSidebar";
 import LessonPlayer, { Question, Material, Task, Exam } from "../components/LessonPlayer";
 
@@ -60,28 +64,90 @@ const exams: Exam[] = [
 ];
 
 export default function LessonMain({ courseId }: { courseId?: string }) {
-  const [activeLessonId, setActiveLessonId] = useState("l3");
-  const [questions, setQuestions] = useState<Question[]>([
-    {
-      id: "q1",
-      name: "Alisher",
-      text: "Assalomu alaykum yaxshimisiz? css bu nima",
-      date: "12.08.2026 15:39",
-      avatarColor: "bg-blue-600",
-      nameColor: "text-[#1a1a1a]",
-      replies: [
-        {
-          id: "r1",
-          name: "Oydin",
-          role: "mentor",
-          text: "cascading style shits",
-          date: "12.08.2026 15:45",
-          avatarColor: "bg-[#1E293B]",
-          nameColor: "text-blue-600",
-        }
-      ]
+  const searchParams = useSearchParams();
+  const initialLessonId = searchParams.get("lessonId") || "l3";
+  
+  const [activeLessonId, setActiveLessonId] = useState(initialLessonId);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const { profile } = useProfileStore();
+
+  useEffect(() => {
+    // Check if lessonId is provided in URL
+    const queryLessonId = searchParams.get("lessonId");
+    if (queryLessonId) {
+      setActiveLessonId(queryLessonId);
     }
-  ]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    // Setup Socket
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+    const token = getToken("accessToken");
+
+    const newSocket = io(`${socketUrl}/qa`, {
+      transports: ["websocket"],
+      auth: { token },
+    });
+
+    newSocket.on("connect", () => {
+      console.log("QA Socket connected");
+      if (courseId && activeLessonId) {
+        newSocket.emit("join_lesson", {
+          courseId: Number(courseId),
+          lessonId: Number(activeLessonId.replace(/\D/g, "") || 0) // Mocking lessonId conversion for now
+        });
+      }
+    });
+
+    newSocket.on("new_question", (newComment: any) => {
+      const q: Question = {
+        id: newComment.id.toString(),
+        name: newComment.user?.fullName || "Student",
+        text: newComment.text,
+        date: new Date(newComment.created_at).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+        avatarColor: "bg-blue-600",
+        nameColor: "text-[#1a1a1a]",
+        replies: []
+      };
+      setQuestions(prev => [q, ...prev]);
+    });
+
+    newSocket.on("new_reply", (newReply: any) => {
+      setQuestions(prev => prev.map(q => {
+        if (q.id === newReply.parentId?.toString()) {
+          return {
+            ...q,
+            replies: [
+              ...(q.replies || []),
+              {
+                id: newReply.id.toString(),
+                name: newReply.user?.fullName || "Foydalanuvchi",
+                role: newReply.user?.role === "MENTOR" || newReply.user?.role === "ADMIN" ? "mentor" : undefined,
+                text: newReply.text,
+                date: new Date(newReply.created_at).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+                avatarColor: newReply.user?.role === "MENTOR" ? "bg-[#1E293B]" : "bg-gray-500",
+                nameColor: newReply.user?.role === "MENTOR" ? "text-blue-600" : "text-[#1a1a1a]",
+              }
+            ]
+          };
+        }
+        return q;
+      }));
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      if (courseId && activeLessonId) {
+        newSocket.emit("leave_lesson", {
+          courseId: Number(courseId),
+          lessonId: Number(activeLessonId.replace(/\D/g, "") || 0)
+        });
+      }
+      newSocket.disconnect();
+    };
+  }, [courseId, activeLessonId]);
 
   const handleNextLesson = () => {
     const currentIndex = lessons.findIndex((l) => l.id === activeLessonId);
@@ -91,38 +157,26 @@ export default function LessonMain({ courseId }: { courseId?: string }) {
   };
 
   const handleQuestionSubmit = async (text: string) => {
-    const newQuestion: Question = {
-      id: `q${Date.now()}`,
-      name: "Siz (Mock)",
-      text,
-      date: new Date().toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-      avatarColor: "bg-blue-600",
-      nameColor: "text-[#1a1a1a]",
-      replies: []
-    };
-    setQuestions(prev => [...prev, newQuestion]);
+    if (socket && courseId) {
+      socket.emit("send_question", {
+        courseId: Number(courseId),
+        lessonId: Number(activeLessonId.replace(/\D/g, "") || 0),
+        text,
+        userId: profile?.id || 1, // Fallback to 1 if no profile
+      });
+    }
   };
 
   const handleReplySubmit = async (parentId: string, text: string) => {
-    setQuestions(prev => prev.map(q => {
-      if (q.id === parentId) {
-        return {
-          ...q,
-          replies: [
-            ...(q.replies || []),
-            {
-              id: `r${Date.now()}`,
-              name: "Siz (Mock)",
-              text,
-              date: new Date().toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }),
-              avatarColor: "bg-blue-600",
-              nameColor: "text-[#1a1a1a]",
-            }
-          ]
-        };
-      }
-      return q;
-    }));
+    if (socket && courseId) {
+      socket.emit("send_reply", {
+        courseId: Number(courseId),
+        lessonId: Number(activeLessonId.replace(/\D/g, "") || 0),
+        parentId: Number(parentId),
+        text,
+        userId: profile?.id || 1, // Fallback to 1 if no profile
+      });
+    }
   };
 
   const currentLesson = lessons.find((l) => l.id === activeLessonId);
@@ -137,6 +191,7 @@ export default function LessonMain({ courseId }: { courseId?: string }) {
       />
       <div className="flex-1 overflow-y-auto h-full relative">
         <LessonPlayer
+          lessonId={activeLessonId.replace(/\D/g, "") || "0"}
           title={currentLesson?.title || "Nimadan boshlash kerak?"}
           totalQuestions={questions.length}
           totalAnswers={questions.reduce((acc, q) => acc + (q.replies?.length || 0), 0)}
