@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown, Send } from "lucide-react";
 import { io, Socket } from "socket.io-client";
 import { baseAPI, getToken } from "@/app/lib/utils";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
 
 interface ChatMessage {
   id: number;
@@ -23,12 +25,18 @@ interface ChatThread {
   date: string;
   status: string;
   color: string;
+  isOnline?: boolean;
+  isTyping?: boolean;
   messages: ChatMessage[];
 }
 
-export default function QAPage() {
+function QAContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const initialCourseId = searchParams.get('courseId');
+  
   const [courses, setCourses] = useState<any[]>([]);
-  const [selectedCourse, setSelectedCourse] = useState<number | "">("");
+  const [selectedCourse, setSelectedCourse] = useState<number | "">(initialCourseId ? Number(initialCourseId) : "");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
@@ -43,10 +51,12 @@ export default function QAPage() {
       const data = res.data?.data || res.data;
       setCourses(Array.isArray(data) ? data : []);
       if (Array.isArray(data) && data.length > 0) {
-        setSelectedCourse(data[0].id);
+        if (!initialCourseId) {
+          setSelectedCourse(data[0].id);
+        }
       }
     }).catch(console.error);
-  }, []);
+  }, [initialCourseId]);
 
   // Fetch comments when course changes
   useEffect(() => {
@@ -161,6 +171,24 @@ export default function QAPage() {
       }
     });
 
+    newSocket.on("user_joined", ({ userId }) => {
+      setChats(prev => prev.map(chat => chat.studentId === userId ? { ...chat, isOnline: true } : chat));
+    });
+
+    newSocket.on("user_left", ({ userId }) => {
+      setChats(prev => prev.map(chat => chat.studentId === userId ? { ...chat, isOnline: false } : chat));
+    });
+
+    newSocket.on("user_typing", ({ userId, isMentor }) => {
+      if (!isMentor) {
+        setChats(prev => prev.map(chat => chat.studentId === userId ? { ...chat, isTyping: true } : chat));
+      }
+    });
+
+    newSocket.on("user_stop_typing", ({ userId }) => {
+      setChats(prev => prev.map(chat => chat.studentId === userId ? { ...chat, isTyping: false } : chat));
+    });
+
     return () => {
       newSocket.disconnect();
     };
@@ -184,7 +212,30 @@ export default function QAPage() {
       text: replyText
     });
     
+    socketRef.current.emit("stop_typing", {
+      courseId: selectedCourse,
+      lessonId: activeChatData.lessonId
+    });
+    
     setReplyText("");
+  };
+
+  const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setReplyText(e.target.value);
+    if (!activeChatData || !socketRef.current) return;
+    
+    if (e.target.value.trim().length > 0) {
+      socketRef.current.emit("typing", {
+        courseId: selectedCourse,
+        lessonId: activeChatData.lessonId,
+        isMentor: true
+      });
+    } else {
+      socketRef.current.emit("stop_typing", {
+        courseId: selectedCourse,
+        lessonId: activeChatData.lessonId
+      });
+    }
   };
 
   return (
@@ -254,8 +305,11 @@ export default function QAPage() {
                     selectedChat === chat.id ? "bg-gray-50" : "hover:bg-gray-50"
                   }`}
                 >
-                  <div className={`w-10 h-10 shrink-0 rounded-full text-white flex items-center justify-center font-bold text-[14px] ${chat.color}`}>
+                  <div className={`w-10 h-10 shrink-0 rounded-full text-white flex items-center justify-center font-bold text-[14px] relative ${chat.color}`}>
                     {chat.studentName.charAt(0).toUpperCase()}
+                    {chat.isOnline && (
+                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h4 className="text-[14px] font-bold text-gray-900 mb-0.5 truncate">
@@ -266,7 +320,9 @@ export default function QAPage() {
                     </p>
                     <div className="flex items-center gap-2 text-[11px] font-medium">
                       <span className="text-gray-400">{chat.date}</span>
-                      <span className={`font-semibold ${chat.status === "Javob berilgan" ? "text-[#137333]" : "text-orange-500"}`}>{chat.status}</span>
+                      {chat.status === "Javob berilgan" && (
+                        <span className="text-[#137333] font-bold">Javob berilgan</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -334,6 +390,19 @@ export default function QAPage() {
                     </div>
                   );
                 })}
+                
+                {activeChatData.isTyping && (
+                  <div className="flex gap-3 justify-start">
+                    <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-[12px] ${activeChatData.color}`}>
+                      {activeChatData.studentName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="bg-[#F3F4F6] text-gray-500 px-4 py-3 rounded-2xl rounded-tl-sm text-[13px] font-medium flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Reply Input */}
@@ -341,7 +410,7 @@ export default function QAPage() {
                 <div className="flex gap-3 items-end">
                   <textarea
                     value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
+                    onChange={handleTyping}
                     placeholder="Javobingizni yozing..."
                     className="flex-1 bg-[#F9FAFB] border border-gray-200 rounded-xl p-3 text-[14px] text-gray-900 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 resize-none min-h-[50px] max-h-[150px]"
                     rows={1}
@@ -366,5 +435,13 @@ export default function QAPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function QAPage() {
+  return (
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center">Yuklanmoqda...</div>}>
+      <QAContent />
+    </Suspense>
   );
 }

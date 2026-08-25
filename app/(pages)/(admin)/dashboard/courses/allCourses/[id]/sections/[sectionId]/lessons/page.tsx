@@ -83,7 +83,7 @@ export default function LessonsPage() {
 
   const courseTitle =
     currentCourse?.title ||
-    currentCourse?.name ||
+    (currentCourse as any)?.name ||
     "Kurs";
 
   /* =======================================================

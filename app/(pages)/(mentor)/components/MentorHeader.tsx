@@ -12,13 +12,23 @@ import {
   User,
 } from "lucide-react";
 import { useMentorStore } from "@/store/useMentorStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { useRouter } from "next/navigation";
 import { removeToken } from "@/app/lib/utils";
 
 export default function MentorHeader() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isLangOpen, setIsLangOpen] = useState(false);
-  
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const router = useRouter();
   const { fullName, profileImage } = useMentorStore();
+  const { notifications, unreadCount, fetchNotifications, markAsRead, connectSocket, disconnectSocket } = useNotificationStore();
+
+  React.useEffect(() => {
+    fetchNotifications();
+    connectSocket();
+    return () => disconnectSocket();
+  }, [fetchNotifications, connectSocket, disconnectSocket]);
 
   const handleLogout = () => {
     removeToken("accessToken");
@@ -44,10 +54,67 @@ export default function MentorHeader() {
       <div className="flex items-center gap-4">
         {/* Icons Box */}
         <div className="flex items-center gap-4 bg-white px-4 py-2.5 rounded-full border border-gray-100 shadow-sm text-gray-500">
-          <button className="relative hover:text-gray-700 transition-colors cursor-pointer">
-            <Bell size={20} />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          <div className="relative">
+            <button 
+              className="relative hover:text-gray-700 transition-colors cursor-pointer"
+              onClick={() => {
+                setIsNotificationsOpen(!isNotificationsOpen);
+                setIsProfileOpen(false);
+                setIsLangOpen(false);
+              }}
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 text-[9px] flex items-center justify-center text-white bg-red-500 rounded-full border border-white">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            
+            {/* Notification Dropdown Menu */}
+            <div
+              className={`absolute right-[-10px] top-12 w-80 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-2 z-50 origin-top-right transition-all duration-200 ease-out ${
+                isNotificationsOpen
+                  ? "opacity-100 scale-100 translate-y-0 visible"
+                  : "opacity-0 scale-95 -translate-y-2 invisible"
+              }`}
+            >
+              <div className="px-4 py-2 border-b border-gray-50">
+                <span className="font-semibold text-gray-800">Bildirishnomalar</span>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                {unreadCount === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm text-gray-500">
+                    Yangi bildirishnomalar yo&apos;q
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div key={notif.id} className="px-4 py-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer flex flex-col gap-1" onClick={() => {
+                      markAsRead(notif.id);
+                      setIsNotificationsOpen(false);
+                      // Mentor gets redirected to mentor/qa if it's a student question link
+                      if (notif.link && notif.link.includes('/students/')) {
+                        const courseIdMatch = notif.link.match(/\/students\/(\d+)/);
+                        if (courseIdMatch) {
+                          router.push(`/mentor/qa?courseId=${courseIdMatch[1]}`);
+                        } else {
+                          router.push("/mentor/qa");
+                        }
+                      } else {
+                        router.push("/mentor/qa");
+                      }
+                    }}>
+                      <div className="flex justify-between items-start">
+                        <span className="font-medium text-sm text-gray-800">{notif.title}</span>
+                        <span className="text-[10px] text-gray-400">{new Date(notif.created_at).toLocaleTimeString()}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 line-clamp-2">{notif.message}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
           <div className="w-[1px] h-5 bg-gray-200"></div>
           <button className="hover:text-gray-700 transition-colors cursor-pointer">
             <Settings size={20} />

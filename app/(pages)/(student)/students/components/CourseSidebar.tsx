@@ -11,57 +11,28 @@ type Lesson = {
   status: LessonStatus;
 };
 
-type ModuleItem = {
-  id: string;
+export type ModuleItem = {
+  id: string | number;
   title: string;
-  duration: string;
+  duration?: string;
   lessons?: Lesson[];
 };
-
-const modules: ModuleItem[] = [
-  {
-    id: "kirish",
-    title: "Kirish",
-    duration: "30 daqiqa",
-    lessons: [
-      { id: "1", title: "IT Live akademiyasi haqida", duration: "10 daqiqa", status: "completed" },
-      { id: "2", title: "Frontend dasturlash nima?", duration: "10 daqiqa", status: "completed" },
-      { id: "3", title: "Nimadan boshlash kerak?", duration: "10 daqiqa", status: "current" },
-    ],
-  },
-  {
-    id: "react-framework-1",
-    title: "React framework",
-    duration: "2 soat 20 daqiqa",
-    lessons: [
-      { id: "4", title: "React nima?", duration: "15 daqiqa", status: "upcoming" },
-      { id: "12", title: "CSS bilan ishlash", duration: "20 daqiqa", status: "upcoming" },
-      { id: "14", title: "Components va Props", duration: "25 daqiqa", status: "upcoming" },
-    ],
-  },
-  ...Array.from({ length: 6 }).map((_, i) => ({
-    id: `react-framework-${i + 2}`,
-    title: "React framework",
-    duration: "2 soat 20 daqiqa",
-  })),
-];
-
 export default function CourseSidebar({
-  courseTitle = "Frontend dasturlash",
-  courseId,
-  activeLessonId = "3",
+  courseTitle = "Darslik",
+  modules = [],
+  activeLessonId,
   onLessonChange,
 }: {
   courseTitle?: string;
-  courseId?: string;
-  activeLessonId?: string;
-  onLessonChange?: (lessonId: string, title?: string) => void;
+  modules?: ModuleItem[];
+  activeLessonId?: string | number;
+  onLessonChange?: (lessonId: string | number) => void;
 }) {
-  const [openModuleId, setOpenModuleId] = useState<string>("kirish");
+  const [openModuleId, setOpenModuleId] = useState<string | number>(modules[0]?.id || "");
 
-  const handleLessonClick = (lessonId: string, title: string) => {
+  const handleLessonClick = (lessonId: string | number, title?: string) => {
     if (onLessonChange) {
-      onLessonChange(lessonId, title);
+      onLessonChange(lessonId);
     }
   };
 
