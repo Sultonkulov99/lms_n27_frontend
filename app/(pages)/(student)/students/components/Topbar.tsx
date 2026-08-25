@@ -61,7 +61,8 @@ export default function Topbar() {
     removeToken("accessToken");
     removeToken("refreshToken");
     localStorage.removeItem("user");
-    router.push("/");
+    setIsDropdownOpen(false);
+    window.location.href = "/?clear_auth=true";
   };
 
   // Handle click outside
