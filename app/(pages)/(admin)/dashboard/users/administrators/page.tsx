@@ -28,12 +28,17 @@ import {
   Admin,
   archiveAdmin,
   restoreAdmin,
+  deleteAdmin,
 } from "@/app/lib/api/users";
 
 export default function AdministratorsPage() {
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] =
+    useState(false);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [restoringId, setRestoringId] = useState<number | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingAdmin, setViewingAdmin] = useState<any>(null);
@@ -202,13 +207,21 @@ export default function AdministratorsPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const confirmPermanentDelete = (id: number) => {
+    setDeletingId(id);
+    setIsPermanentDeleteModalOpen(true);
+  };
+
+  const confirmRestore = (id: number) => {
+    setRestoringId(id);
+    setIsRestoreModalOpen(true);
+  };
+
   const handleArchiveAdmin = async () => {
     if (!deletingId) return;
     try {
       await archiveAdmin(deletingId);
-      setAdmins((prevAdmin) =>
-        prevAdmin.filter((a) => a.id !== deletingId),
-      );
+      setAdmins((prevAdmin) => prevAdmin.filter((a) => a.id !== deletingId));
       if (currentAdmins.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -216,19 +229,36 @@ export default function AdministratorsPage() {
       setDeletingId(null);
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || err.message || "Arxivlab bo'lmadi");
+      alert(err.response?.data?.message || err.message || "Arxivlab bo’lmadi");
     }
   };
 
-  const handleRestoreAdmin = async (admin: Admin) => {
+  const handleRestoreAdmin = async () => {
+    if (!restoringId) return;
     try {
-      await restoreAdmin(admin.id);
-      setAdmins((prevAdmin) =>
-        prevAdmin.filter((a) => a.id !== admin.id),
-      );
+      await restoreAdmin(restoringId);
+      setAdmins((prev) => prev.filter((a) => a.id !== restoringId));
+      setIsRestoreModalOpen(false);
+      setRestoringId(null);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Tiklab bo'lmadi");
+      alert(error.message || "Tiklab bo’lmadi");
+    }
+  };
+
+  const handleDeleteAdminPermanently = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteAdmin(deletingId);
+      setAdmins((prev) => prev.filter((a) => a.id !== deletingId));
+      if (currentAdmins.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+      setIsPermanentDeleteModalOpen(false);
+      setDeletingId(null);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message || "O’chirib bo’lmadi");
     }
   };
 
@@ -376,7 +406,7 @@ export default function AdministratorsPage() {
             {viewMode === "archived" ? (
               <>
                 <Undo2 size={16} />
-                Faol to'lovlar
+                Faol to’lovlar
               </>
             ) : (
               <>
@@ -490,19 +520,28 @@ export default function AdministratorsPage() {
                                   </button>
                                   <button
                                     onClick={() => confirmDelete(admin.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-orange-600 transition-colors"
+                                  >
+                                    <Archive size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => confirmRestore(admin.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                  >
+                                    <Undo2 size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      confirmPermanentDelete(admin.id)
+                                    }
                                     className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
                                   >
                                     <Trash2 size={14} />
                                   </button>
                                 </>
-                              ) : (
-                                <button
-                                  onClick={() => handleRestoreAdmin(admin)}
-                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
-                                >
-                                  <Undo2 size={14} />
-                                  Tiklash
-                                </button>
                               )}
                             </div>
                           </td>
@@ -514,7 +553,7 @@ export default function AdministratorsPage() {
                           colSpan={7}
                           className="px-6 py-10 text-center text-gray-500 border border-gray-200"
                         >
-                          Ma'lumot topilmadi
+                          Ma’lumot topilmadi
                         </td>
                       </tr>
                     )}
@@ -554,7 +593,7 @@ export default function AdministratorsPage() {
             {/* Header */}
             <div className="flex items-center justify-between mb-4 shrink-0">
               <h2 className="text-[20px] font-bold text-gray-900">
-                {editingId ? "Tahrirlash" : "Qo'shish"}
+                {editingId ? "Tahrirlash" : "Qo’shish"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -634,7 +673,7 @@ export default function AdministratorsPage() {
                 />
                 {fullNameError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    To'liq kiritilmadi
+                    To’liq kiritilmadi
                   </p>
                 )}
               </div>
@@ -652,7 +691,7 @@ export default function AdministratorsPage() {
                 />
                 {phoneError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    Telefon raqam to'liq kiritilmadi
+                    Telefon raqam to’liq kiritilmadi
                   </p>
                 )}
               </div>
@@ -663,7 +702,7 @@ export default function AdministratorsPage() {
                   Parol{" "}
                   {editingId && (
                     <span className="text-gray-400 font-normal ml-1">
-                      (O'zgartirmaslik uchun bo'sh qoldiring)
+                      (O’zgartirmaslik uchun bo’sh qoldiring)
                     </span>
                   )}
                 </label>
@@ -724,7 +763,7 @@ export default function AdministratorsPage() {
               Arxivlashni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham arxivlamoqchimisiz? To'lov ro'yxatdan yashiriladi,
+              Haqiqatan ham arxivlamoqchimisiz? To’lov ro’yxatdan yashiriladi,
               lekin bazada saqlanib qoladi.
             </p>
             <div className="flex items-center justify-end gap-3">
@@ -739,9 +778,73 @@ export default function AdministratorsPage() {
               </button>
               <button
                 onClick={handleArchiveAdmin}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
+                className="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition-colors text-sm font-medium"
               >
                 Arxivlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {isPermanentDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Butunlay o’chirishni tasdiqlash
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Diqqat! Bu amalni ortga qaytarib bo’lmaydi — administrator bazadan
+              butunlay o’chiriladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsPermanentDeleteModalOpen(false);
+                  setDeletingId(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleDeleteAdminPermanently}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium"
+              >
+                Butunlay o’chirish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Modal */}
+      {isRestoreModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Tiklashni tasdiqlash
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Haqiqatan ham tiklamoqchimisiz? Administrator qaytadan faol
+              ro’yxatga qaytariladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsRestoreModalOpen(false);
+                  setRestoringId(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleRestoreAdmin}
+                className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors text-sm font-medium"
+              >
+                Tiklash
               </button>
             </div>
           </div>
@@ -764,7 +867,7 @@ export default function AdministratorsPage() {
               </div>
             </div>
             <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">
-              Muvaffaqiyatli qo'shildi
+              Muvaffaqiyatli qo’shildi
             </h3>
             <button
               onClick={() => setIsSuccessModalOpen(false)}
@@ -815,7 +918,7 @@ export default function AdministratorsPage() {
               </div>
 
               <h4 className="text-[16px] font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">
-                To'liq ma'lumotlar
+                To’liq ma’lumotlar
               </h4>
 
               <div className="flex flex-col gap-5 mb-8">
@@ -835,7 +938,7 @@ export default function AdministratorsPage() {
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-500 mb-1">
-                    Ro'yxatdan o'tgan vaqti
+                    Ro’yxatdan o’tgan vaqti
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
                     {formatDate(viewingAdmin.created_at)}

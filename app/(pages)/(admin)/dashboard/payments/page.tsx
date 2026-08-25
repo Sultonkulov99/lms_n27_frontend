@@ -25,6 +25,7 @@ import {
   updatePayment,
   archivePayment,
   restorePayment,
+  deletePayment,
 } from "@/app/lib/api/payments";
 import { Student, getStudents } from "@/app/lib/api/students";
 import { Course, getCourses } from "@/app/lib/api/courses";
@@ -33,6 +34,10 @@ import { fetchCategoriesCached } from "@/app/lib/utils";
 export default function PaymentsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] =
+    useState(false);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [restoringId, setRestoringId] = useState<number | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingStudent, setViewingStudent] = useState<any>(null);
@@ -169,7 +174,7 @@ export default function PaymentsPage() {
         courseName,
         p.amount ?? "",
         formatDate(p.created_at),
-        p.status ? "To'landi" : "Kutilmoqda",
+        p.status ? "To’landi" : "Kutilmoqda",
         formatRole(p.isActive),
       ].join(",");
     });
@@ -224,6 +229,16 @@ export default function PaymentsPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const confirmPermanentDelete = (id: number) => {
+    setDeletingId(id);
+    setIsPermanentDeleteModalOpen(true);
+  };
+
+  const confirmRestore = (id: number) => {
+    setRestoringId(id);
+    setIsRestoreModalOpen(true);
+  };
+
   const handleArchivePayment = async () => {
     if (!deletingId) return;
     try {
@@ -238,19 +253,36 @@ export default function PaymentsPage() {
       setDeletingId(null);
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || err.message || "Arxivlab bo'lmadi");
+      alert(err.response?.data?.message || err.message || "Arxivlab bo’lmadi");
     }
   };
 
-  const handleRestorePayment = async (payment: Payment) => {
+  const handleRestorePayment = async () => {
+    if (!restoringId) return;
     try {
-      await restorePayment(payment.id);
-      setPayments((prevPayments) =>
-        prevPayments.filter((p) => p.id !== payment.id),
-      );
+      await restorePayment(restoringId);
+      setPayments((prev) => prev.filter((a) => a.id !== restoringId));
+      setIsRestoreModalOpen(false);
+      setRestoringId(null);
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || err.message || "Tiklab bo'lmadi");
+      alert(err.response?.data?.message || err.message || "Tiklab bo’lmadi");
+    }
+  };
+
+  const handleDeletePaymentPermanently = async () => {
+    if (!deletingId) return;
+    try {
+      await deletePayment(deletingId);
+      setStudents((prev) => prev.filter((a) => a.id !== deletingId));
+      if (currentPayments.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+      setIsPermanentDeleteModalOpen(false);
+      setDeletingId(null);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message || "O’chirib bo’lmadi");
     }
   };
 
@@ -272,7 +304,7 @@ export default function PaymentsPage() {
       console.error(err);
       alert(
         err.response?.data?.message ||
-          "Tasdiqlab bo'lmadi — UpdatePaymentDto'da status maydoni yo'q bo'lishi mumkin",
+          "Tasdiqlab bo’lmadi — UpdatePaymentDto’da status maydoni yo’q bo’lishi mumkin",
       );
     }
   };
@@ -320,12 +352,12 @@ export default function PaymentsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
           <div>
             <h1 className="text-[24px] font-bold text-gray-900 mb-1">
-              To'lovlar
+              To’lovlar
             </h1>
             <div className="flex items-center text-[13px] text-gray-500 font-medium">
               Foydalanuvchilar{" "}
               <span className="mx-2 w-1 h-1 bg-gray-400 rounded-full"></span>{" "}
-              To'lovlar
+              To’lovlar
             </div>
           </div>
           {viewMode === "active" && (
@@ -334,7 +366,7 @@ export default function PaymentsPage() {
               className="mt-4 sm:mt-0 flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg text-[14px] font-medium transition-colors shadow-sm"
             >
               <PlusCircle size={18} strokeWidth={2} />
-              Qo'shish
+              Qo’shish
             </button>
           )}
         </div>
@@ -381,7 +413,7 @@ export default function PaymentsPage() {
             {viewMode === "archived" ? (
               <>
                 <Undo2 size={16} />
-                Faol to'lovlar
+                Faol to’lovlar
               </>
             ) : (
               <>
@@ -501,7 +533,7 @@ export default function PaymentsPage() {
                                     : "bg-gray-100 text-gray-500 border-gray-200"
                                 }`}
                               >
-                                {payment.status ? "To'landi" : "Kutilmoqda"}
+                                {payment.status ? "To’landi" : "Kutilmoqda"}
                               </span>
                             </td>
                             <td className="px-5 py-4 border border-gray-200 text-center">
@@ -530,21 +562,28 @@ export default function PaymentsPage() {
                                     </button>
                                     <button
                                       onClick={() => confirmDelete(payment.id)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-orange-600 transition-colors"
+                                    >
+                                      <Archive size={14} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => confirmRestore(payment.id)}
+                                      className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                    >
+                                      <Undo2 size={14} />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        confirmPermanentDelete(payment.id)
+                                      }
                                       className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
                                     >
                                       <Trash2 size={14} />
                                     </button>
                                   </>
-                                ) : (
-                                  <button
-                                    onClick={() =>
-                                      handleRestorePayment(payment)
-                                    }
-                                    className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
-                                  >
-                                    <Undo2 size={14} />
-                                    Tiklash
-                                  </button>
                                 )}
                               </div>
                             </td>
@@ -557,7 +596,7 @@ export default function PaymentsPage() {
                           colSpan={8}
                           className="px-6 py-10 text-center text-gray-500 border border-gray-200"
                         >
-                          Ma'lumot topilmadi
+                          Ma’lumot topilmadi
                         </td>
                       </tr>
                     )}
@@ -589,7 +628,7 @@ export default function PaymentsPage() {
           <div className="bg-white relative flex flex-col w-full max-w-140 max-h-[95vh] rounded-[10px] p-[16px_24px] overflow-hidden">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <h2 className="text-[20px] font-bold text-gray-900">
-                {editingId ? "Tahrirlash" : "Qo'shish"}
+                {editingId ? "Tahrirlash" : "Qo’shish"}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -652,7 +691,7 @@ export default function PaymentsPage() {
                             autoFocus
                             value={buyerSearch}
                             onChange={(e) => setBuyerSearch(e.target.value)}
-                            placeholder="Ism yoki telefon raqam bo'yicha qidiring..."
+                            placeholder="Ism yoki telefon raqam bo’yicha qidiring..."
                             className="w-full h-10 pl-9 pr-3 rounded-md border border-gray-200 text-[13px] outline-none focus:border-blue-500"
                             onClick={(e) => e.stopPropagation()}
                           />
@@ -765,15 +804,15 @@ export default function PaymentsPage() {
                       ? formatAmount(Number(selectedCourse.price))
                       : ""
                   }
-                  placeholder="Kurs tanlanganda avtomatik to'ldiriladi"
+                  placeholder="Kurs tanlanganda avtomatik to’ldiriladi"
                   className="w-full px-4 h-12 rounded-lg border border-gray-200 bg-gray-50 text-gray-500 text-[14px] cursor-not-allowed"
                 />
               </div>
 
-              {/* To'lov turi — decorativ, Payments modelida bunday maydon yo'q */}
+              {/* To’lov turi — decorativ, Payments modelida bunday maydon yo’q */}
               <div className="flex flex-col shrink-0">
                 <label className="block text-[13px] font-bold text-gray-900 mb-1.5">
-                  To'lov turi{" "}
+                  To’lov turi{" "}
                   <span className="text-gray-400 font-normal ml-1">
                     (hozircha faqat vizual)
                   </span>
@@ -806,7 +845,7 @@ export default function PaymentsPage() {
                   Holati{" "}
                   {!editingId && (
                     <span className="text-gray-400 font-normal ml-1">
-                      (yaratishda har doim "To'landi")
+                      (yaratishda har doim "To’landi")
                     </span>
                   )}
                 </label>
@@ -821,7 +860,7 @@ export default function PaymentsPage() {
                         : "cursor-not-allowed bg-gray-50 text-gray-400"
                     }`}
                   >
-                    <option value="true">To'landi</option>
+                    <option value="true">To’landi</option>
                     <option value="false">Kutilmoqda</option>
                   </select>
                   <ChevronDown
@@ -860,7 +899,7 @@ export default function PaymentsPage() {
               Arxivlashni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham arxivlamoqchimisiz? To'lov ro'yxatdan yashiriladi,
+              Haqiqatan ham arxivlamoqchimisiz? To’lov ro’yxatdan yashiriladi,
               lekin bazada saqlanib qoladi.
             </p>
             <div className="flex items-center justify-end gap-3">
@@ -875,9 +914,73 @@ export default function PaymentsPage() {
               </button>
               <button
                 onClick={handleArchivePayment}
-                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
+                className="px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition-colors text-sm font-medium"
               >
                 Arxivlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {isPermanentDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Butunlay o’chirishni tasdiqlash
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Diqqat! Bu amalni ortga qaytarib bo’lmaydi — administrator bazadan
+              butunlay o’chiriladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsPermanentDeleteModalOpen(false);
+                  setDeletingId(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleDeletePaymentPermanently}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium"
+              >
+                Butunlay o’chirish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Modal */}
+      {isRestoreModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Tiklashni tasdiqlash
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Haqiqatan ham tiklamoqchimisiz? To’lovni qaytadan faol ro’yxatga
+              qaytariladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsRestoreModalOpen(false);
+                  setRestoringId(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleRestorePayment}
+                className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors text-sm font-medium"
+              >
+                Tiklash
               </button>
             </div>
           </div>
@@ -900,7 +1003,7 @@ export default function PaymentsPage() {
               </div>
             </div>
             <h3 className="text-[18px] font-bold text-[#1a1a1a] mb-8 text-center">
-              Muvaffaqiyatli qo'shildi
+              Muvaffaqiyatli qo’shildi
             </h3>
             <button
               onClick={() => setIsSuccessModalOpen(false)}
@@ -951,7 +1054,7 @@ export default function PaymentsPage() {
               </div>
 
               <h4 className="text-[16px] font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">
-                To'liq ma'lumotlar
+                To’liq ma’lumotlar
               </h4>
 
               <div className="flex flex-col gap-5 mb-8">
@@ -971,7 +1074,7 @@ export default function PaymentsPage() {
                 </div>
                 <div>
                   <p className="text-[12px] text-gray-500 mb-1">
-                    Ro'yxatdan o'tgan vaqti
+                    Ro’yxatdan o’tgan vaqti
                   </p>
                   <p className="text-[15px] font-bold text-gray-900">
                     {formatDate(viewingStudent.created_at)}

@@ -89,7 +89,7 @@ export default function AllCoursesPage() {
                         {course.user?.fullName?.charAt(0).toUpperCase() || "T"}
                       </div>
                       <span className="text-xs font-medium text-gray-600">
-                        {course.user?.fullName || "O'qituvchi"}
+                        {course.user?.fullName || "O’qituvchi"}
                       </span>
                     </div>
                     <button
@@ -114,7 +114,7 @@ export default function AllCoursesPage() {
                       <PrecisionStars rating={5.0} stars={5} courseId={course.id.toString()} />
                       {course.studentsCount ? (
                         <span className="text-[10px] font-medium text-gray-500 flex items-center gap-1 bg-gray-50 px-2 py-1 rounded-md">
-                          👥 {course.studentsCount} o'quvchi
+                          👥 {course.studentsCount} o’quvchi
                         </span>
                       ) : null}
                     </div>
