@@ -28,12 +28,15 @@ import {
   Admin,
   archiveAdmin,
   restoreAdmin,
+  deleteAdmin,
 } from "@/app/lib/api/users";
 
 export default function AdministratorsPage() {
   // Modals
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPermanentDeleteModalOpen, setIsPermanentDeleteModalOpen] =
+    useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingAdmin, setViewingAdmin] = useState<any>(null);
@@ -202,13 +205,16 @@ export default function AdministratorsPage() {
     setIsDeleteModalOpen(true);
   };
 
+  const confirmPermanentDelete = (id: number) => {
+    setDeletingId(id);
+    setIsPermanentDeleteModalOpen(true);
+  };
+
   const handleArchiveAdmin = async () => {
     if (!deletingId) return;
     try {
       await archiveAdmin(deletingId);
-      setAdmins((prevAdmin) =>
-        prevAdmin.filter((a) => a.id !== deletingId),
-      );
+      setAdmins((prevAdmin) => prevAdmin.filter((a) => a.id !== deletingId));
       if (currentAdmins.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
@@ -223,12 +229,26 @@ export default function AdministratorsPage() {
   const handleRestoreAdmin = async (admin: Admin) => {
     try {
       await restoreAdmin(admin.id);
-      setAdmins((prevAdmin) =>
-        prevAdmin.filter((a) => a.id !== admin.id),
-      );
+      setAdmins((prevAdmin) => prevAdmin.filter((a) => a.id !== admin.id));
     } catch (error: any) {
       console.error(error);
       alert(error.message || "Tiklab bo'lmadi");
+    }
+  };
+
+  const handleDeleteAdminPermanently = async () => {
+    if (!deletingId) return;
+    try {
+      await deleteAdmin(deletingId);
+      setAdmins((prev) => prev.filter((a) => a.id !== deletingId));
+      if (currentAdmins.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
+      setIsPermanentDeleteModalOpen(false);
+      setDeletingId(null);
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || err.message || "O'chirib bo'lmadi");
     }
   };
 
@@ -490,19 +510,28 @@ export default function AdministratorsPage() {
                                   </button>
                                   <button
                                     onClick={() => confirmDelete(admin.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-orange-600 transition-colors"
+                                  >
+                                    <Archive size={14} />
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={() => handleRestoreAdmin(admin)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
+                                  >
+                                    <Undo2 size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      confirmPermanentDelete(admin.id)
+                                    }
                                     className="w-8 h-8 flex items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-red-600 transition-colors"
                                   >
                                     <Trash2 size={14} />
                                   </button>
                                 </>
-                              ) : (
-                                <button
-                                  onClick={() => handleRestoreAdmin(admin)}
-                                  className="flex items-center gap-1.5 px-0.5 py-1 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-green-600 transition-colors"
-                                >
-                                  <Undo2 size={14} />
-                                  Tiklash
-                                </button>
                               )}
                             </div>
                           </td>
@@ -742,6 +771,38 @@ export default function AdministratorsPage() {
                 className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors text-sm font-medium"
               >
                 Arxivlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Modal */}
+      {isPermanentDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000099] backdrop-blur-xs">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-100 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Butunlay o'chirishni tasdiqlash
+            </h3>
+            <p className="text-gray-600 text-sm mb-6">
+              Diqqat! Bu amalni ortga qaytarib bo'lmaydi — administrator bazadan
+              butunlay o'chiriladi.
+            </p>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                onClick={() => {
+                  setIsPermanentDeleteModalOpen(false);
+                  setDeletingId(null);
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+              >
+                Bekor qilish
+              </button>
+              <button
+                onClick={handleDeleteAdminPermanently}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors text-sm font-medium"
+              >
+                Butunlay o'chirish
               </button>
             </div>
           </div>
