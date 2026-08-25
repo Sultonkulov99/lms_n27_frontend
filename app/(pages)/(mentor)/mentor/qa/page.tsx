@@ -23,7 +23,6 @@ interface ChatThread {
   studentName: string;
   lastMessage: string;
   date: string;
-  date: string;
   status: string;
   color: string;
   isOnline?: boolean;

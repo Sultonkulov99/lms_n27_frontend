@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image, { StaticImageData } from "next/image";
-import { motion } from "framer-motion";
 import { usePresenceStore } from "@/store/usePresenceStore";
 import { useExamStore } from "@/store/useExamStore";
 
@@ -223,7 +222,13 @@ export default function LessonPlayer({
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play();
+        const playPromise = videoRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            console.error("Video play failed:", error);
+            setIsPlaying(false);
+          });
+        }
       }
       setIsPlaying(!isPlaying);
     }

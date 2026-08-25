@@ -38,7 +38,7 @@ export function CourseSidebar({
               fill
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 350px"
-              priority
+              priority={true}
             />
           ) : !cover ? (
             <span className="text-xs text-gray-400 dark:text-gray-500">{t("courseDetail.noImage")}</span>

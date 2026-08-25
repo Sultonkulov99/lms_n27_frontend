@@ -60,7 +60,7 @@ export default function AllCoursesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-12">
-            {filteredCourses.map((course) => (
+            {filteredCourses.map((course, index) => (
               <Link
                 key={course.id}
                 href={`/students/all-courses/${course.id}`}
@@ -73,6 +73,7 @@ export default function AllCoursesPage() {
                       alt={course.name}
                       fill
                       unoptimized
+                      priority={index === 0}
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   )}

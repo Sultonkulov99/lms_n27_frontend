@@ -194,47 +194,35 @@ export default function LessonMain({ courseId }: { courseId?: string }) {
     };
   }, [courseId, activeLessonId]);
 
-  // Exam API integratsiyasi - bizning qo'shimcha
-  const loadExams = useCallback(async (lessonSidebarId: string) => {
-    const lesson = lessons.find((l) => l.id === lessonSidebarId);
-    if (!lesson) return;
-
-    setExamsLoading(true);
-    try {
-      const data = await getExams(lesson.backendId);
-      const mapped: Exam[] =
-        data.length > 0
-          ? [
-              {
-                id: `exam-${lesson.backendId}`,
-                title: `${lesson.title} — Imtihon`,
-                level: "O'rta",
-                difficulty: "Cheksiz",
-                totalQuestions: data.length,
-                currentQuestion: 1,
-                questions: data.map((e) => ({
-                  id: String(e.id),
-                  question: e.questoin,
-                  options: [e.variantA, e.variantB, e.variantC, e.variantD],
-                  correctAnswer: [
-                    "variantA", "variantB", "variantC", "variantD",
-                  ].indexOf(e.answer),
-                })),
-              },
-            ]
-          : [];
+  // Imtihonlarni currentLesson dan yuklash
+  useEffect(() => {
+    if (currentLesson && currentLesson.exams && currentLesson.exams.length > 0) {
+      setExamsLoading(true);
+      const mapped: Exam[] = [
+        {
+          id: `exam-${currentLesson.id}`,
+          title: `${currentLesson.name} — Imtihon`,
+          level: "O'rta",
+          difficulty: "Cheksiz",
+          totalQuestions: currentLesson.exams.length,
+          currentQuestion: 1,
+          questions: currentLesson.exams.map((e: any) => ({
+            id: String(e.id),
+            question: e.questoin,
+            options: [e.variantA, e.variantB, e.variantC, e.variantD],
+            correctAnswer: [
+              "variantA", "variantB", "variantC", "variantD",
+            ].indexOf(e.answer),
+          })),
+        },
+      ];
       setExams(mapped);
-    } catch (err) {
-      console.error("Imtihon savollarini yuklashda xatolik:", err);
+      setExamsLoading(false);
+    } else {
       setExams([]);
-    } finally {
       setExamsLoading(false);
     }
-  }, []);
-
-  useEffect(() => {
-    loadExams(activeLessonId);
-  }, [activeLessonId, loadExams]);
+  }, [currentLesson]);
 
   const handleNextLesson = () => {
     let nextId = null;
@@ -338,27 +326,18 @@ export default function LessonMain({ courseId }: { courseId?: string }) {
     uploadInstructions: "Yuklash"
   }));
   
-  const exams = (currentLesson?.exams || []).map((e: any) => ({
-    id: e.id.toString(),
-    title: "Imtihon",
-    level: "O'rta",
-    difficulty: "Cheksiz",
-    totalQuestions: 1, // Requires proper structure from backend
-    currentQuestion: 1,
-    questions: [
-      {
-        id: e.id.toString(),
-        question: e.questoin,
-        options: [e.variantA, e.variantB, e.variantC, e.variantD],
-      }
-    ],
-    result: "-",
-    explanation: "-",
-    nextSteps: "-"
-  }));
-  
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://63.180.181.4:8080";
-  const videoUrl = currentLesson?.file ? (currentLesson.file.startsWith('http') ? currentLesson.file : `${apiUrl}/uploads/${currentLesson.file}`) : "";
+  let videoUrl = "";
+  if (currentLesson?.file) {
+    if (currentLesson.file.startsWith('http')) {
+      videoUrl = currentLesson.file;
+    } else {
+      const cleanPath = currentLesson.file.replace(/^\/+/, '');
+      videoUrl = cleanPath.startsWith('uploads/') 
+        ? `${apiUrl}/${cleanPath}` 
+        : `${apiUrl}/uploads/${cleanPath}`;
+    }
+  }
 
   return (
     <div className="flex gap-5 items-start h-full max-w-[1600px] mx-auto">
