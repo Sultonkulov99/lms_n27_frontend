@@ -1,4 +1,5 @@
 import { baseAPI } from "@/app/lib/utils";
+import { Status } from "./status";
 
 export interface Category {
     id: number;
@@ -27,9 +28,7 @@ export interface Course {
     categories?: Category;
     user?: User | null;
     sections?: unknown[];
-
-    // Fields that might be added by backend based on dashboard requirements
-    status?: string;
+    status?: Status;
     studentsCount?: number;
     assistant?: string;
 }
@@ -37,38 +36,41 @@ export interface Course {
 function unwrapList<T>(payload: unknown): T[] {
     if (Array.isArray(payload)) return payload;
     if (payload && typeof payload === "object") {
-        const obj = payload as Record<string, unknown>;
-        if (Array.isArray(obj.data)) return obj.data as T[];
-        if (Array.isArray(obj.result)) return obj.result as T[];
+        const object = payload as Record<string, unknown>;
+        if (Array.isArray(object.data)) return object.data as T[];
+        if (Array.isArray(object.result)) return object.result as T[];
     }
     return [];
 }
 
-let coursesCache: Course[] | null = null;
-let coursesPromise: Promise<Course[]> | null = null;
+const coursesCache = new Map<Status, Course[]>();
+const coursesPromise = new Map<Status, Promise<Course[]>>();
 
-export async function getCourses(): Promise<Course[]> {
-    if (coursesCache) return coursesCache;
-    if (coursesPromise) return coursesPromise;
+export async function getCourses(
+    isActive: Status = "ACTIVE",
+): Promise<Course[]> {
+    if (coursesCache.has(isActive)) return coursesCache.get(isActive)!;
+    if (coursesPromise.has(isActive)) return coursesPromise.get(isActive)!;
 
-    coursesPromise = baseAPI
-        .get("/courses", { params: { page: 1, limit: 100 } })
-        .then((res) => {
-            const data = unwrapList<Course>(res.data);
-            coursesCache = data;
-            return data;
+    const request = baseAPI
+        .get("/courses", { params: { page: 1, limit: 100, isActive } })
+        .then((response) => {
+            const courses = unwrapList<Course>(response.data);
+            coursesCache.set(isActive, courses);
+            return courses;
         })
-        .catch((err) => {
-            coursesPromise = null;
-            throw err;
+        .catch((error) => {
+            coursesPromise.delete(isActive);
+            throw error;
         });
 
-    return coursesPromise;
+    coursesPromise.set(isActive, request);
+    return request;
 }
 
 export function clearCoursesCache() {
-    coursesCache = null;
-    coursesPromise = null;
+    coursesCache.clear();
+    coursesPromise.clear();
 }
 
 export async function getCourseById(id: number | string): Promise<Course> {
@@ -80,6 +82,7 @@ export async function createCourse(
     courseData: FormData | Record<string, unknown>,
 ): Promise<Course> {
     const { data } = await baseAPI.post("/courses", courseData);
+    clearCoursesCache();
     return data.data || data;
 }
 
@@ -88,9 +91,23 @@ export async function updateCourse(
     courseData: FormData | Record<string, unknown>,
 ): Promise<Course> {
     const { data } = await baseAPI.patch(`/courses/${id}`, courseData);
+    clearCoursesCache();
     return data.data || data;
+}
+
+export async function archiveCourse(id: number) {
+    const { data } = await baseAPI.patch(`/courses/${id}/archive`);
+    clearCoursesCache();
+    return data;
+}
+
+export async function restoreCourse(id: number) {
+    const { data } = await baseAPI.patch(`/courses/${id}/restore`);
+    clearCoursesCache();
+    return data;
 }
 
 export async function deleteCourse(id: number | string): Promise<void> {
     await baseAPI.delete(`/courses/${id}`);
+    clearCoursesCache();
 }
