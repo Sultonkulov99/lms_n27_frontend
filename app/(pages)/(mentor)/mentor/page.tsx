@@ -1,11 +1,20 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BookOpen, CheckCircle2, ShoppingBag, Star } from "lucide-react";
 import { useMentorStore } from "@/store/useMentorStore";
 
 export default function MentorDashboard() {
-  const { courses, fullName } = useMentorStore();
+  const { courses, fullName, fetchCourses } = useMentorStore();
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  const purchasedStudents = courses.reduce(
+    (total, course) => total + (course.payments?.filter((payment) => payment.status).length ?? 0),
+    0,
+  );
 
   const stats = [
     {
@@ -18,14 +27,14 @@ export default function MentorDashboard() {
     {
       id: 2,
       title: "Nashr qilingan",
-      value: courses.filter((c) => c.status === "Faol").length.toString(),
+      value: courses.filter((c) => c.status === "ACTIVE" || c.status === "Faol").length.toString(),
       icon: <CheckCircle2 size={24} className="text-[#137333]" />,
       bg: "bg-[#E6F4EA]",
     },
     {
       id: 3,
       title: "Sotib olganlar",
-      value: "7",
+      value: purchasedStudents.toString(),
       icon: <ShoppingBag size={24} className="text-[#FF4D4F]" />,
       bg: "bg-[#FFF0F0]",
     },
@@ -80,7 +89,7 @@ export default function MentorDashboard() {
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="text-[16px] font-bold text-gray-900">Mening kurslarim</h2>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -100,9 +109,9 @@ export default function MentorDashboard() {
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-white flex items-center justify-center p-1">
-                        <img 
-                          src={course.banner} 
-                          alt={course.name} 
+                        <img
+                          src={course.banner}
+                          alt={course.name}
                           className="w-full h-full object-contain"
                         />
                       </div>
@@ -132,7 +141,7 @@ export default function MentorDashboard() {
                   </td>
                 </tr>
               ))}
-              
+
               {courses.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-6 py-8 text-center text-[13px] text-gray-500 font-medium">

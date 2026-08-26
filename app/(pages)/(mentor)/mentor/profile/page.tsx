@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { User, Check, Eye, EyeOff, Trash2 } from "lucide-react";
 import { useMentorStore } from "@/store/useMentorStore";
+import { baseAPI } from "@/app/lib/utils";
 
 export default function MentorProfilePage() {
   const { fullName: storeFullName, profileImage: storeProfileImage, updateProfile } = useMentorStore();
@@ -12,7 +13,7 @@ export default function MentorProfilePage() {
   // Personal Info State
   const [fullName, setFullName] = useState(storeFullName);
   const [profileImage, setProfileImage] = useState<string | null>(storeProfileImage);
-  const [phone, setPhone] = useState("+998333551116");
+  const [phone, setPhone] = useState("");
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,17 +23,30 @@ export default function MentorProfilePage() {
   }, [storeFullName, storeProfileImage]);
 
   // Mentor Info State
-  const [profession, setProfession] = useState("Full Stack");
-  const [experience, setExperience] = useState("1");
-  const [about, setAbout] = useState("React & Node.js");
+  const [profession, setProfession] = useState("");
+  const [experience, setExperience] = useState("");
+  const [about, setAbout] = useState("");
   const [socials, setSocials] = useState({
-    telegram: "https://elderlearn.netlify.app/",
-    instagram: "https://elderlearn.netlify.app/",
-    facebook: "https://elderlearn.netlify.app/",
-    linkedin: "https://elderlearn.netlify.app/",
-    github: "https://elderlearn.netlify.app/",
-    website: "https://elderlearn.netlify.app/",
+    telegram: "", instagram: "", facebook: "", linkedin: "", github: "", website: "",
   });
+
+  useEffect(() => {
+    baseAPI.get("/profile").then(({ data }) => {
+      const profile = data?.data;
+      const mentor = profile?.mentor;
+      setPhone(profile?.phone ?? "");
+      setFullName(profile?.fullName ?? "");
+      setProfileImage(profile?.file ?? null);
+      setProfession(mentor?.job ?? "");
+      setExperience(mentor?.experience?.toString() ?? "");
+      setAbout(mentor?.description ?? "");
+      setSocials({
+        telegram: mentor?.telegram ?? "", instagram: mentor?.instagram ?? "",
+        facebook: mentor?.facebook ?? "", linkedin: mentor?.linkedin ?? "",
+        github: mentor?.github ?? "", website: mentor?.site ?? "",
+      });
+    }).catch(() => undefined);
+  }, []);
 
   // Security State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -43,11 +57,23 @@ export default function MentorProfilePage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (activeTab === "personal") {
+      await baseAPI.patch("/profile", { fullName });
       updateProfile(fullName, profileImage);
+    } else if (activeTab === "mentor") {
+      await baseAPI.patch("/profile", {
+        job: profession,
+        experience: experience ? Number(experience) : undefined,
+        description: about,
+        site: socials.website,
+        telegram: socials.telegram,
+        instagram: socials.instagram,
+        facebook: socials.facebook,
+        linkedin: socials.linkedin,
+        github: socials.github,
+      });
     }
-    console.log("Saved tab:", activeTab);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

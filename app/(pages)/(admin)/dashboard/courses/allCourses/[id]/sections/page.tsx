@@ -82,7 +82,7 @@ export default function CourseSectionsPage() {
     currentCourse?.title ||
     "";
 
-    const clearMessages = useCallback(() => {
+  const clearMessages = useCallback(() => {
     setError("");
     setSuccessMessage("");
   }, []);
@@ -119,7 +119,7 @@ export default function CourseSectionsPage() {
 
           return;
         }
-        const response = await baseAPI.get("/courses");
+        const response = await baseAPI.get("/courses", { params: { page: 1, limit: 100 } });
 
         if (cancelled) {
           return;
@@ -229,7 +229,7 @@ export default function CourseSectionsPage() {
       } else {
         setError(
           message ||
-            "Bo'limlarni yuklashda xatolik yuz berdi."
+          "Bo'limlarni yuklashda xatolik yuz berdi."
         );
       }
     } finally {
@@ -321,7 +321,7 @@ export default function CourseSectionsPage() {
         } else {
           setError(
             message ||
-              "Bo'lim qo'shishda xatolik yuz berdi."
+            "Bo'lim qo'shishda xatolik yuz berdi."
           );
         }
       }
@@ -407,7 +407,7 @@ export default function CourseSectionsPage() {
         } else {
           setError(
             message ||
-              "Bo'limni tahrirlashda xatolik yuz berdi."
+            "Bo'limni tahrirlashda xatolik yuz berdi."
           );
         }
       }
@@ -479,7 +479,7 @@ export default function CourseSectionsPage() {
         } else {
           setError(
             message ||
-              "Bo'limni o'chirishda xatolik yuz berdi."
+            "Bo'limni o'chirishda xatolik yuz berdi."
           );
         }
       }
@@ -564,18 +564,18 @@ export default function CourseSectionsPage() {
   const totalPages =
     Math.ceil(
       sections.length /
-        itemsPerPage
+      itemsPerPage
     ) || 1;
 
   const startIndex = Math.min(
     (currentPage - 1) *
-      itemsPerPage,
+    itemsPerPage,
     sections.length
   );
 
   const endIndex = Math.min(
     currentPage *
-      itemsPerPage,
+    itemsPerPage,
     sections.length
   );
 
@@ -828,169 +828,169 @@ export default function CourseSectionsPage() {
       {(isAddModalOpen ||
         isEditModalOpen) && (
 
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
-          onClick={closeModal}
-        >
-
           <div
-            className="bg-white rounded-2xl shadow-xl w-full max-w-[480px] flex flex-col animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) =>
-              e.stopPropagation()
-            }
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+            onClick={closeModal}
           >
 
-            {/* HEADER */}
-            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+            <div
+              className="bg-white rounded-2xl shadow-xl w-full max-w-[480px] flex flex-col animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+            >
 
-              <h2 className="text-xl font-bold text-gray-900">
+              {/* HEADER */}
+              <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
 
-                Bo&apos;lim{" "}
+                <h2 className="text-xl font-bold text-gray-900">
 
-                {isEditModalOpen
-                  ? "tahrirlash"
-                  : "qo'shish"}
+                  Bo&apos;lim{" "}
 
-              </h2>
+                  {isEditModalOpen
+                    ? "tahrirlash"
+                    : "qo'shish"}
 
-              <button
-                onClick={closeModal}
-                disabled={saving}
-                className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
-              >
-                <X size={20} />
-              </button>
+                </h2>
 
-            </div>
-
-            {/* BODY */}
-            <div className="p-6 space-y-4">
-
-              {/* COURSE */}
-              <div>
-
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                  Biriktirilgan kurs
-                </label>
-
-                <input
-                  type="text"
-                  disabled
-                  value={courseTitle}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-[14px] cursor-not-allowed"
-                />
+                <button
+                  onClick={closeModal}
+                  disabled={saving}
+                  className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                >
+                  <X size={20} />
+                </button>
 
               </div>
 
-              {/* SECTION NAME */}
-              <div>
+              {/* BODY */}
+              <div className="p-6 space-y-4">
 
-                <label className="block text-[13px] font-semibold text-gray-700 mb-2">
-                  Bo&apos;lim nomi
-                </label>
+                {/* COURSE */}
+                <div>
 
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Bo'lim nomini kiriting"
-                  disabled={saving}
-                  value={
-                    isEditModalOpen
-                      ? editingSection?.name || ""
-                      : newSectionName
-                  }
-                  onChange={(e) => {
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">
+                    Biriktirilgan kurs
+                  </label>
 
-                    if (
-                      isEditModalOpen &&
-                      editingSection
-                    ) {
+                  <input
+                    type="text"
+                    disabled
+                    value={courseTitle}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 text-[14px] cursor-not-allowed"
+                  />
 
-                      setEditingSection({
-                        ...editingSection,
-                        name: e.target.value,
-                      });
+                </div>
 
-                    } else {
+                {/* SECTION NAME */}
+                <div>
 
-                      setNewSectionName(
-                        e.target.value
-                      );
+                  <label className="block text-[13px] font-semibold text-gray-700 mb-2">
+                    Bo&apos;lim nomi
+                  </label>
 
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Bo'lim nomini kiriting"
+                    disabled={saving}
+                    value={
+                      isEditModalOpen
+                        ? editingSection?.name || ""
+                        : newSectionName
                     }
+                    onChange={(e) => {
 
-                  }}
-                  onKeyDown={(e) => {
+                      if (
+                        isEditModalOpen &&
+                        editingSection
+                      ) {
 
-                    if (
-                      e.key === "Enter" &&
-                      !saving
-                    ) {
+                        setEditingSection({
+                          ...editingSection,
+                          name: e.target.value,
+                        });
 
-                      if (isEditModalOpen) {
-                        handleEditSection();
                       } else {
-                        handleAddSection();
+
+                        setNewSectionName(
+                          e.target.value
+                        );
+
                       }
 
-                    }
+                    }}
+                    onKeyDown={(e) => {
 
-                  }}
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] disabled:bg-gray-100"
-                />
+                      if (
+                        e.key === "Enter" &&
+                        !saving
+                      ) {
 
-              </div>
+                        if (isEditModalOpen) {
+                          handleEditSection();
+                        } else {
+                          handleAddSection();
+                        }
 
-              {/* MODAL ERROR */}
-              {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                  {Array.isArray(error)
-                    ? error.join(", ")
-                    : error}
+                      }
+
+                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] disabled:bg-gray-100"
+                  />
+
                 </div>
-              )}
 
-              {/* SAVE */}
-              <button
-                disabled={saving}
-                onClick={
-                  isEditModalOpen
-                    ? handleEditSection
-                    : handleAddSection
-                }
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors mt-2"
-              >
-
-                {saving ? (
-
-                  <>
-                    <Loader2
-                      size={18}
-                      className="animate-spin"
-                    />
-
-                    Saqlanmoqda...
-                  </>
-
-                ) : (
-
-                  <>
-                    <Check size={18} />
-
-                    Saqlash
-                  </>
-
+                {/* MODAL ERROR */}
+                {error && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                    {Array.isArray(error)
+                      ? error.join(", ")
+                      : error}
+                  </div>
                 )}
 
-              </button>
+                {/* SAVE */}
+                <button
+                  disabled={saving}
+                  onClick={
+                    isEditModalOpen
+                      ? handleEditSection
+                      : handleAddSection
+                  }
+                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-colors mt-2"
+                >
+
+                  {saving ? (
+
+                    <>
+                      <Loader2
+                        size={18}
+                        className="animate-spin"
+                      />
+
+                      Saqlanmoqda...
+                    </>
+
+                  ) : (
+
+                    <>
+                      <Check size={18} />
+
+                      Saqlash
+                    </>
+
+                  )}
+
+                </button>
+
+              </div>
 
             </div>
 
           </div>
 
-        </div>
-
-      )}
+        )}
 
       {/* ======================================================
           DELETE MODAL

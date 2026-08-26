@@ -21,14 +21,15 @@ export default function MentorHeader() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const router = useRouter();
-  const { fullName, profileImage } = useMentorStore();
+  const { fullName, profileImage, fetchProfile } = useMentorStore();
   const { notifications, unreadCount, fetchNotifications, markAsRead, connectSocket, disconnectSocket } = useNotificationStore();
 
   React.useEffect(() => {
+    fetchProfile();
     fetchNotifications();
     connectSocket();
     return () => disconnectSocket();
-  }, [fetchNotifications, connectSocket, disconnectSocket]);
+  }, [fetchProfile, fetchNotifications, connectSocket, disconnectSocket]);
 
   const handleLogout = () => {
     removeToken("accessToken");
@@ -36,7 +37,7 @@ export default function MentorHeader() {
     localStorage.removeItem("user");
     window.location.href = "/?clear_auth=true";
   };
-  
+
   const languages = [
     { code: "uz", name: "O'zbek tili", flag: "🇺🇿" },
     { code: "ru", name: "Русский", flag: "🇷🇺" },
@@ -55,7 +56,7 @@ export default function MentorHeader() {
         {/* Icons Box */}
         <div className="flex items-center gap-4 bg-white px-4 py-2.5 rounded-full border border-gray-100 shadow-sm text-gray-500">
           <div className="relative">
-            <button 
+            <button
               className="relative hover:text-gray-700 transition-colors cursor-pointer"
               onClick={() => {
                 setIsNotificationsOpen(!isNotificationsOpen);
@@ -70,14 +71,13 @@ export default function MentorHeader() {
                 </span>
               )}
             </button>
-            
+
             {/* Notification Dropdown Menu */}
             <div
-              className={`absolute right-[-10px] top-12 w-80 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-2 z-50 origin-top-right transition-all duration-200 ease-out ${
-                isNotificationsOpen
+              className={`absolute right-[-10px] top-12 w-80 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-2 z-50 origin-top-right transition-all duration-200 ease-out ${isNotificationsOpen
                   ? "opacity-100 scale-100 translate-y-0 visible"
                   : "opacity-0 scale-95 -translate-y-2 invisible"
-              }`}
+                }`}
             >
               <div className="px-4 py-2 border-b border-gray-50">
                 <span className="font-semibold text-gray-800">Bildirishnomalar</span>
@@ -123,7 +123,7 @@ export default function MentorHeader() {
 
         {/* Language Selector Box */}
         <div className="relative">
-          <div 
+          <div
             className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-white px-4 py-2.5 rounded-full border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setIsLangOpen(!isLangOpen)}
           >
@@ -134,11 +134,10 @@ export default function MentorHeader() {
 
           {/* Language Dropdown */}
           <div
-            className={`absolute right-0 top-14 w-48 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-2 z-50 origin-top-right transition-all duration-200 ease-out ${
-              isLangOpen
+            className={`absolute right-0 top-14 w-48 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-2 z-50 origin-top-right transition-all duration-200 ease-out ${isLangOpen
                 ? "opacity-100 scale-100 translate-y-0 visible"
                 : "opacity-0 scale-95 -translate-y-2 invisible"
-            }`}
+              }`}
           >
             {languages.map((lang) => (
               <div
@@ -147,11 +146,10 @@ export default function MentorHeader() {
                   setSelectedLang(lang);
                   setIsLangOpen(false);
                 }}
-                className={`flex items-center gap-3 px-4 py-3 mx-2 my-1 rounded-lg cursor-pointer transition-colors ${
-                  selectedLang.code === lang.code
+                className={`flex items-center gap-3 px-4 py-3 mx-2 my-1 rounded-lg cursor-pointer transition-colors ${selectedLang.code === lang.code
                     ? "bg-[#F3F4F6] text-gray-900 font-bold"
                     : "hover:bg-gray-50 text-gray-700 font-medium"
-                }`}
+                  }`}
               >
                 <span className="text-[20px] leading-none drop-shadow-sm">{lang.flag}</span>
                 <span className="text-[16px]">{lang.name}</span>
@@ -177,7 +175,7 @@ export default function MentorHeader() {
                 <User size={20} />
               </div>
             )}
-            
+
             <div className="flex flex-col">
               <span className="text-sm font-bold text-gray-900 leading-none mb-0.5">
                 {fullName || "Mentor"}
@@ -192,8 +190,8 @@ export default function MentorHeader() {
           {/* Profile Dropdown Menu */}
           <div
             className={`absolute right-0 top-14 w-56 bg-white border border-gray-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-xl py-1 z-50 origin-top-right transition-all duration-200 ease-out ${isProfileOpen
-                ? "opacity-100 scale-100 translate-y-0 visible"
-                : "opacity-0 scale-95 -translate-y-2 invisible"
+              ? "opacity-100 scale-100 translate-y-0 visible"
+              : "opacity-0 scale-95 -translate-y-2 invisible"
               }`}
           >
             <Link

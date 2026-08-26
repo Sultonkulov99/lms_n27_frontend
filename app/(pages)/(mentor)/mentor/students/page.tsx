@@ -4,14 +4,15 @@ import React, { useState, useMemo, useEffect } from "react";
 import { Search, X, ChevronDown } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
 import { useMentorStore } from "@/store/useMentorStore";
+import { baseAPI } from "@/app/lib/utils";
 
 export default function StudentsPage() {
   // Pagination & Search
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  const { courses } = useMentorStore();
+
+  const { courses, fetchCourses } = useMentorStore();
   const [selectedCourse, setSelectedCourse] = useState("");
 
   // Update selected course if courses load and none is selected
@@ -21,19 +22,30 @@ export default function StudentsPage() {
     }
   }, [courses, selectedCourse]);
 
-  const [students, setStudents] = useState([
-    { id: 8, image: "https://i.pravatar.cc/150?u=8", name: "Alisher", phone: "+998338644553", price: "1 200 000 so'm", date: "19.08.2026", course: "CSS" },
-    { id: 9, image: "https://i.pravatar.cc/150?u=9", name: "Cloud", phone: "+998903551111", price: "1 200 000 so'm", date: "12.08.2026", course: "CSS" },
-    { id: 11, image: "https://i.pravatar.cc/150?u=11", name: "Ali Valiyevl", phone: "+998995095602", price: "1 200 000 so'm", date: "14.08.2026", course: "CSS" },
-    { id: 23, image: "https://i.pravatar.cc/150?u=23", name: "admin", phone: "+998505209272", price: "1 200 000 so'm", date: "19.08.2026", course: "CSS" },
-  ]);
+  const [students, setStudents] = useState<Array<{ id: number; image?: string | null; name: string; phone: string; price: string; date: string; course: string }>>([]);
+
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
+
+  useEffect(() => {
+    if (!selectedCourse) return;
+    const course = courses.find((item) => item.name === selectedCourse);
+    baseAPI.get(`/students/my-students?courseId=${course?.id ?? ""}`).then((response) => {
+      const data = response.data?.data ?? [];
+      setStudents(data.map((student: typeof data[number]) => ({
+        ...student,
+        date: new Date(student.date).toLocaleDateString("uz-UZ"),
+      })));
+    }).catch(() => setStudents([]));
+  }, [courses, selectedCourse]);
 
   // Derived state
   const filteredStudents = useMemo(() => {
-    return students.filter(student => 
+    return students.filter(student =>
       (student.course === selectedCourse) &&
-      (student.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-       student.phone.includes(searchQuery))
+      (student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        student.phone.includes(searchQuery))
     );
   }, [students, searchQuery, selectedCourse]);
 
@@ -60,7 +72,7 @@ export default function StudentsPage() {
       {/* Filter Row: Dropdown */}
       <div className="mb-4 w-[300px]">
         <div className="relative">
-          <select 
+          <select
             value={selectedCourse}
             onChange={(e) => {
               setSelectedCourse(e.target.value);
@@ -82,7 +94,7 @@ export default function StudentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div className="relative flex-1 max-w-[400px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input 
+          <input
             type="text"
             placeholder="Izlash..."
             value={searchQuery}
@@ -93,14 +105,14 @@ export default function StudentsPage() {
             className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500 transition-colors bg-white shadow-sm"
           />
           {searchQuery && (
-            <X 
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600" 
-              size={16} 
-              onClick={() => setSearchQuery("")} 
+            <X
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
+              size={16}
+              onClick={() => setSearchQuery("")}
             />
           )}
         </div>
-        
+
         {/* We can place the pagination here or rely on the bottom pagination component from Kebyu's design. The screenshot shows pagination at the top right, but the standard Kebyu UI has Pagination component at the bottom. I'll add the standard Kebyu UI Pagination at the bottom to follow the "Kebyu UI" rule tightly, but I'll add a simplified top pagination info to match the screenshot if needed. Let's just stick to the standard Kebyu UI Pagination at the bottom, and maybe a small page info at the top. The image has 'Bir sahifada: 10', '1', 'Keyingi' at the top right. I'll put a simplified version here if I don't use the full component. Actually, `Pagination` component is designed for the bottom. I will just use `Pagination` at the bottom to perfectly match Kebyu's style. */}
       </div>
 
@@ -111,10 +123,10 @@ export default function StudentsPage() {
             <thead>
               <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
                 <th className="px-5 py-4 w-16 border border-gray-200 border-t-0 border-l-0 border-r-0">ID</th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">O'quvchi <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Telefon raqam <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Narxi <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Sotib olgan sana <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
+                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">O'quvchi <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
+                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Telefon raqam <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
+                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Narxi <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
+                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Sotib olgan sana <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
               </tr>
             </thead>
             <tbody className="text-[14px] text-gray-800">
@@ -145,7 +157,7 @@ export default function StudentsPage() {
           </table>
         </div>
       </div>
-      
+
       {/* Bottom Pagination Component */}
       <div className="border border-gray-200 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
         <Pagination
