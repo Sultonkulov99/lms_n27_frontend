@@ -17,13 +17,13 @@ import {
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import Pagination from "@/app/components/dashboard/Pagination";
-import { baseAPI } from "@/app/lib/utils";
+import { baseAPI, API_URL } from "@/app/lib/utils";
 
 interface Lesson {
   id: number;
   title: string;
   description: string;
-  video: { name: string; size: string } | null;
+  video: { name: string; size: string; url?: string } | null;
 }
 
 export default function MentorLessonsPage() {
@@ -47,15 +47,16 @@ export default function MentorLessonsPage() {
   const [newLesson, setNewLesson] = useState<{
     title: string;
     description: string;
-    video: { name: string; size: string; progress: number } | null;
+    video: { name: string; size: string; progress: number; rawFile?: File } | null;
   }>({ title: "", description: "", video: null });
 
   const [editingLesson, setEditingLesson] = useState<
-    (Lesson & { videoProgress?: number }) | null
+    (Lesson & { videoProgress?: number; rawFile?: File }) | null
   >(null);
   const [deletingLessonId, setDeletingLessonId] = useState<number | null>(null);
   const [titleError, setTitleError] = useState(false);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [playingVideoUrl, setPlayingVideoUrl] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [saving, setSaving] = useState(false);
@@ -104,7 +105,11 @@ export default function MentorLessonsPage() {
           id: l.id,
           title: l.name || l.title || "",
           description: l.description || "",
-          video: l.video ? { name: l.video, size: "" } : null,
+          video: l.file ? { 
+            name: l.file.split("/").pop() || "video.mp4", 
+            size: "",
+            url: l.file.startsWith("http") ? l.file : `${API_URL}${l.file}`
+          } : null,
         }))
       );
     } catch {
@@ -142,13 +147,26 @@ export default function MentorLessonsPage() {
       return;
     }
 
+    if (!newLesson.video?.rawFile) {
+      setError("Dars video fayli yuklanishi shart");
+      return;
+    }
+
     try {
       setSaving(true);
-      await baseAPI.post("/lessons", {
-        name: newLesson.title.trim(),
-        description: newLesson.description.trim(),
-        sectionId: Number(sectionId),
+      setError("");
+      const formData = new FormData();
+      formData.append("name", newLesson.title.trim());
+      formData.append("description", newLesson.description.trim());
+      formData.append("sectionId", String(sectionId));
+      formData.append("file", newLesson.video.rawFile);
+
+      await baseAPI.post("/lessons", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
+
       await getLessons();
       setIsAddModalOpen(false);
       resetForm();
@@ -173,10 +191,21 @@ export default function MentorLessonsPage() {
 
     try {
       setSaving(true);
-      await baseAPI.patch(`/lessons/${editingLesson.id}`, {
-        name: editingLesson.title.trim(),
-        description: editingLesson.description.trim(),
+      setError("");
+      const formData = new FormData();
+      formData.append("name", editingLesson.title.trim());
+      formData.append("description", editingLesson.description.trim());
+      formData.append("sectionId", String(sectionId));
+      if (editingLesson.rawFile) {
+        formData.append("file", editingLesson.rawFile);
+      }
+
+      await baseAPI.patch(`/lessons/${editingLesson.id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
+
       await getLessons();
       setIsEditModalOpen(false);
       resetForm();
@@ -212,7 +241,7 @@ export default function MentorLessonsPage() {
   };
 
   // ============================================================
-  // FILE UPLOAD (simulation)
+  // FILE UPLOAD
   // ============================================================
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -222,24 +251,19 @@ export default function MentorLessonsPage() {
     const fileSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
     const fileName = file.name;
 
-    const updateVideo = (progress: number) => {
-      if (isEditModalOpen && editingLesson) {
-        setEditingLesson({ ...editingLesson, videoProgress: progress, video: { name: fileName, size: fileSize } });
-      } else {
-        setNewLesson((prev) => ({ ...prev, video: { name: fileName, size: fileSize, progress } }));
-      }
-    };
-
-    updateVideo(0);
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 20;
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-      }
-      updateVideo(currentProgress);
-    }, 200);
+    if (isEditModalOpen && editingLesson) {
+      setEditingLesson({ 
+        ...editingLesson, 
+        videoProgress: 100, 
+        rawFile: file,
+        video: { name: fileName, size: fileSize } 
+      });
+    } else {
+      setNewLesson((prev) => ({ 
+        ...prev, 
+        video: { name: fileName, size: fileSize, progress: 100, rawFile: file } 
+      }));
+    }
   };
 
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -250,24 +274,19 @@ export default function MentorLessonsPage() {
     const fileSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
     const fileName = file.name;
 
-    const updateVideo = (progress: number) => {
-      if (isEditModalOpen && editingLesson) {
-        setEditingLesson({ ...editingLesson, videoProgress: progress, video: { name: fileName, size: fileSize } });
-      } else {
-        setNewLesson((prev) => ({ ...prev, video: { name: fileName, size: fileSize, progress } }));
-      }
-    };
-
-    updateVideo(0);
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 20;
-      if (currentProgress >= 100) {
-        currentProgress = 100;
-        clearInterval(interval);
-      }
-      updateVideo(currentProgress);
-    }, 200);
+    if (isEditModalOpen && editingLesson) {
+      setEditingLesson({ 
+        ...editingLesson, 
+        videoProgress: 100, 
+        rawFile: file,
+        video: { name: fileName, size: fileSize } 
+      });
+    } else {
+      setNewLesson((prev) => ({ 
+        ...prev, 
+        video: { name: fileName, size: fileSize, progress: 100, rawFile: file } 
+      }));
+    }
   };
 
   const openEditModal = (lesson: Lesson) => {
@@ -601,7 +620,10 @@ export default function MentorLessonsPage() {
                         <td className="px-6 py-4 border border-gray-200">
                           {lesson.video ? (
                             <button
-                              onClick={() => setIsPlayingVideo(true)}
+                              onClick={() => {
+                                setPlayingVideoUrl(lesson.video?.url || "");
+                                setIsPlayingVideo(true);
+                              }}
                               className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-[13px] font-medium cursor-pointer"
                             >
                               <Play size={14} className="fill-blue-600" />
@@ -783,7 +805,7 @@ export default function MentorLessonsPage() {
               className="w-full aspect-video object-cover"
               controls
               autoPlay
-              src="/video_2026-08-10_11-15-10.mp4"
+              src={playingVideoUrl || "/video_2026-08-10_11-15-10.mp4"}
             />
           </div>
         </div>

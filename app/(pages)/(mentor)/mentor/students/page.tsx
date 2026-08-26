@@ -1,9 +1,23 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, X, ChevronDown } from "lucide-react";
+import { Search, X, ChevronDown, Loader2 } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
-import { useMentorStore } from "@/store/useMentorStore";
+import { baseAPI, API_URL } from "@/app/lib/utils";
+
+interface Student {
+  id: number;
+  fullName: string;
+  phone: string;
+  file?: string;
+  role: string;
+  created_at: string;
+}
+
+interface Course {
+  id: number;
+  name: string;
+}
 
 export default function StudentsPage() {
   // Pagination & Search
@@ -11,31 +25,46 @@ export default function StudentsPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
   
-  const { courses } = useMentorStore();
-  const [selectedCourse, setSelectedCourse] = useState("");
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCourse, setSelectedCourse] = useState("all");
 
-  // Update selected course if courses load and none is selected
   useEffect(() => {
-    if (courses.length > 0 && !selectedCourse) {
-      setSelectedCourse(courses[0].name);
-    }
-  }, [courses, selectedCourse]);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [coursesRes, studentsRes] = await Promise.allSettled([
+          baseAPI.get("/courses"),
+          baseAPI.get("/students"),
+        ]);
 
-  const [students, setStudents] = useState([
-    { id: 8, image: "https://i.pravatar.cc/150?u=8", name: "Alisher", phone: "+998338644553", price: "1 200 000 so'm", date: "19.08.2026", course: "CSS" },
-    { id: 9, image: "https://i.pravatar.cc/150?u=9", name: "Cloud", phone: "+998903551111", price: "1 200 000 so'm", date: "12.08.2026", course: "CSS" },
-    { id: 11, image: "https://i.pravatar.cc/150?u=11", name: "Ali Valiyevl", phone: "+998995095602", price: "1 200 000 so'm", date: "14.08.2026", course: "CSS" },
-    { id: 23, image: "https://i.pravatar.cc/150?u=23", name: "admin", phone: "+998505209272", price: "1 200 000 so'm", date: "19.08.2026", course: "CSS" },
-  ]);
+        if (coursesRes.status === "fulfilled") {
+          const d = coursesRes.value.data?.data || coursesRes.value.data || [];
+          setCourses(Array.isArray(d) ? d : []);
+        }
+
+        if (studentsRes.status === "fulfilled") {
+          const s = studentsRes.value.data?.students || studentsRes.value.data?.data || studentsRes.value.data || [];
+          setStudents(Array.isArray(s) ? s : []);
+        }
+      } catch (err) {
+        console.error("Talabalarni yuklashda xatolik", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Derived state
   const filteredStudents = useMemo(() => {
     return students.filter(student => 
-      (student.course === selectedCourse) &&
-      (student.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-       student.phone.includes(searchQuery))
+      (student.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+       student.phone?.includes(searchQuery))
     );
-  }, [students, searchQuery, selectedCourse]);
+  }, [students, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -43,8 +72,29 @@ export default function StudentsPage() {
   const currentStudents = filteredStudents.slice(startIndex, endIndex);
 
   const handleDownloadXLS = () => {
-    // Dummy implementation for now
-    console.log("Download XLS");
+    const headers = ["ID", "Ism", "Telefon", "Ro'yxatdan o'tgan sana"];
+    const rows = filteredStudents.map((s) => [
+      s.id,
+      `"${(s.fullName || "").replace(/"/g, '""')}"`,
+      `"${s.phone || ""}"`,
+      `"${new Date(s.created_at).toLocaleDateString()}"`,
+    ]);
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "oquvchilar.csv";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const getAvatarUrl = (file?: string) => {
+    if (!file) return null;
+    if (file.startsWith("http")) return file;
+    return `${API_URL}/${file}`;
   };
 
   return (
@@ -68,8 +118,9 @@ export default function StudentsPage() {
             }}
             className="w-full appearance-none bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-4 py-2.5 outline-none shadow-sm cursor-pointer"
           >
+            <option value="all">Barcha kurslar</option>
             {courses.map(course => (
-              <option key={course.id} value={course.name}>{course.name}</option>
+              <option key={course.id} value={course.id.toString()}>{course.name}</option>
             ))}
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
@@ -100,8 +151,6 @@ export default function StudentsPage() {
             />
           )}
         </div>
-        
-        {/* We can place the pagination here or rely on the bottom pagination component from Kebyu's design. The screenshot shows pagination at the top right, but the standard Kebyu UI has Pagination component at the bottom. I'll add the standard Kebyu UI Pagination at the bottom to follow the "Kebyu UI" rule tightly, but I'll add a simplified top pagination info to match the screenshot if needed. Let's just stick to the standard Kebyu UI Pagination at the bottom, and maybe a small page info at the top. The image has 'Bir sahifada: 10', '1', 'Keyingi' at the top right. I'll put a simplified version here if I don't use the full component. Actually, `Pagination` component is designed for the bottom. I will just use `Pagination` at the bottom to perfectly match Kebyu's style. */}
       </div>
 
       {/* Table (Excel Style Borders) */}
@@ -111,32 +160,53 @@ export default function StudentsPage() {
             <thead>
               <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
                 <th className="px-5 py-4 w-16 border border-gray-200 border-t-0 border-l-0 border-r-0">ID</th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">O'quvchi <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Telefon raqam <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Narxi <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Sotib olgan sana <ChevronDown size={14} className="inline-block text-gray-400 ml-1"/></th>
+                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">O'quvchi</th>
+                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Telefon raqam</th>
+                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Ro'yxatdan o'tgan sana</th>
               </tr>
             </thead>
             <tbody className="text-[14px] text-gray-800">
-              {currentStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="px-5 py-4 font-medium border border-gray-200 border-l-0 border-r-0">{student.id}</td>
-                  <td className="px-5 py-4 border border-gray-200 border-r-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold text-[12px]">
-                        {student.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-semibold text-[13px]">{student.name}</span>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-gray-500 border border-gray-200 border-l-0 border-r-0">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 size={20} className="animate-spin text-blue-600" />
+                      Yuklanmoqda...
                     </div>
                   </td>
-                  <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200 border-r-0">{student.phone}</td>
-                  <td className="px-5 py-4 font-bold text-[13px] text-gray-900 border border-gray-200 border-r-0">{student.price}</td>
-                  <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200 border-r-0">{student.date}</td>
                 </tr>
-              ))}
-              {currentStudents.length === 0 && (
+              ) : currentStudents.length > 0 ? (
+                currentStudents.map((student) => {
+                  const avatar = getAvatarUrl(student.file);
+                  return (
+                    <tr key={student.id} className="hover:bg-gray-50 transition-colors group">
+                      <td className="px-5 py-4 font-medium border border-gray-200 border-l-0 border-r-0">{student.id}</td>
+                      <td className="px-5 py-4 border border-gray-200 border-r-0">
+                        <div className="flex items-center gap-3">
+                          {avatar ? (
+                            <img 
+                              src={avatar} 
+                              alt={student.fullName} 
+                              className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-[12px]">
+                              {(student.fullName || "S").charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <span className="font-semibold text-[13px]">{student.fullName || "Student"}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200 border-r-0">{student.phone}</td>
+                      <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200 border-r-0">
+                        {student.created_at ? new Date(student.created_at).toLocaleDateString() : "-"}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-gray-500 border border-gray-200 border-l-0 border-r-0">
+                  <td colSpan={4} className="px-6 py-10 text-center text-gray-500 border border-gray-200 border-l-0 border-r-0">
                     Ma'lumot topilmadi
                   </td>
                 </tr>
@@ -163,3 +233,4 @@ export default function StudentsPage() {
     </div>
   );
 }
+
