@@ -8,6 +8,7 @@ import {
   BookOpen,
   CreditCard,
   MessageSquare,
+  ClipboardList,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -255,6 +256,25 @@ export default function Sidebar() {
                 }`}
               >
                 To’lovlar
+              </span>
+            </Link>
+
+            <Link
+              href="/dashboard/score"
+              className={`flex items-center py-2.5 rounded-lg transition-all overflow-hidden ${
+                pathname === "/dashboard/score"
+                  ? "bg-white/10 text-white"
+                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+              } ${isOpen ? "px-3 gap-3" : "justify-center px-0 gap-0"}`}
+              title="Natijalar"
+            >
+              <ClipboardList size={20} className="shrink-0" />
+              <span
+                className={`font-medium text-sm whitespace-nowrap transition-opacity duration-300 ${
+                  isOpen ? "opacity-100" : "opacity-0 w-0"
+                }`}
+              >
+                Natijalar
               </span>
             </Link>
 
