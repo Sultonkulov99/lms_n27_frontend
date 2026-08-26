@@ -1,374 +1,48 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { User, Check, Trash2, Loader2, CheckCircle2 } from "lucide-react";
-import { baseAPI, API_URL } from "@/app/lib/utils";
+import { useEffect, useState } from "react";
+import { Check, User } from "lucide-react";
+import { baseAPI } from "@/app/lib/utils";
+
+interface Profile { fullName: string; phone: string; file?: string | null; mentor?: Record<string, string | number | null> | null }
 
 export default function MentorProfilePage() {
-  const [activeTab, setActiveTab] = useState("personal");
-
-  // Personal Info State
+  const [profile, setProfile] = useState<Profile>({ fullName: "", phone: "" });
+  const [tab, setTab] = useState<"personal" | "mentor">("personal");
   const [fullName, setFullName] = useState("");
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [job, setJob] = useState("");
+  const [experience, setExperience] = useState("");
+  const [description, setDescription] = useState("");
+  const [socials, setSocials] = useState({ telegram: "", instagram: "", facebook: "", linkedin: "", github: "", site: "" });
+  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Mentor Info State
-  const [profession, setProfession] = useState("Full Stack Mentor");
-  const [experience, setExperience] = useState("3");
-  const [about, setAbout] = useState("Dasturlash va zamonaviy texnologiyalar o'qituvchisi");
-  const [socials, setSocials] = useState({
-    telegram: "https://t.me",
-    instagram: "https://instagram.com",
-    facebook: "https://facebook.com",
-    linkedin: "https://linkedin.com",
-    github: "https://github.com",
-    website: "https://keybu.uz",
-  });
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const res = await baseAPI.get("/profile");
-      const user = res.data?.data || res.data;
-      if (user) {
-        setFullName(user.fullName || "");
-        setPhone(user.phone || "");
-        setEmail(user.email || "");
-        if (user.file) {
-          setProfileImage(user.file.startsWith("http") ? user.file : `${API_URL}/${user.file}`);
-        }
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError("Profil ma'lumotlarini yuklashda xatolik yuz berdi");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchProfile();
+    baseAPI.get("/profile").then(({ data }) => {
+      const next = data?.data ?? data;
+      const mentor = next.mentor;
+      setProfile(next);
+      setFullName(next.fullName ?? "");
+      setJob(String(mentor?.job ?? ""));
+      setExperience(mentor?.experience == null ? "" : String(mentor.experience));
+      setDescription(String(mentor?.description ?? ""));
+      setSocials({ telegram: String(mentor?.telegram ?? ""), instagram: String(mentor?.instagram ?? ""), facebook: String(mentor?.facebook ?? ""), linkedin: String(mentor?.linkedin ?? ""), github: String(mentor?.github ?? ""), site: String(mentor?.site ?? "") });
+    }).catch(() => setError("Profil ma'lumotlarini yuklashda xatolik yuz berdi"));
   }, []);
 
-  const handleSave = async () => {
+  const save = async () => {
     try {
-      setSaving(true);
       setError("");
-      setSuccessMessage("");
-
-      if (activeTab === "personal") {
-        const formData = new FormData();
-        formData.append("fullName", fullName);
-        if (email) formData.append("email", email);
-        if (phone) formData.append("phone", phone);
-        if (selectedFile) {
-          formData.append("avatar", selectedFile);
-        }
-
-        const res = await baseAPI.patch("/profile", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-
-        const user = res.data?.data || res.data;
-        if (user?.file) {
-          setProfileImage(user.file.startsWith("http") ? user.file : `${API_URL}/${user.file}`);
-        }
-        setSelectedFile(null);
-        setSuccessMessage("Profil muvaffaqiyatli saqlandi!");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      } else {
-        setSuccessMessage("Ma'lumotlar saqlandi!");
-        setTimeout(() => setSuccessMessage(""), 3000);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.message || "Saqlashda xatolik yuz berdi");
-    } finally {
-      setSaving(false);
+      await baseAPI.patch("/profile", tab === "personal" ? { fullName } : { job, experience: experience ? Number(experience) : undefined, description, ...socials });
+      setMessage("Profil muvaffaqiyatli saqlandi");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (saveError: any) {
+      setError(saveError.response?.data?.message || "Saqlashda xatolik yuz berdi");
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const updateSocial = (key: keyof typeof socials, value: string) => setSocials((current) => ({ ...current, [key]: value }));
+  const fields = [["telegram", "Telegram"], ["instagram", "Instagram"], ["facebook", "Facebook"], ["linkedin", "LinkedIn"], ["github", "GitHub"], ["site", "Veb-sayt"]] as const;
 
-  const handleRemoveImage = () => {
-    setProfileImage(null);
-    setSelectedFile(null);
-  };
-
-  return (
-    <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FA]">
-      <h1 className="text-[24px] font-bold text-gray-900 mb-6">Profil sozlamalari</h1>
-
-      {successMessage && (
-        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 flex items-center gap-2 max-w-4xl">
-          <CheckCircle2 size={18} />
-          <span>{successMessage}</span>
-        </div>
-      )}
-
-      {error && (
-        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 max-w-4xl">
-          {error}
-        </div>
-      )}
-
-      <div className="flex flex-col md:flex-row gap-6 items-start max-w-4xl">
-        {/* Left Tabs */}
-        <div className="w-full md:w-[240px] shrink-0 flex flex-col gap-1">
-          <button
-            onClick={() => setActiveTab("personal")}
-            className={`text-left px-5 py-3 rounded-xl text-[14px] font-medium transition-colors cursor-pointer ${
-              activeTab === "personal"
-                ? "bg-white text-gray-900 shadow-sm border border-gray-100"
-                : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
-            }`}
-          >
-            Shaxsiy ma'lumotlar
-          </button>
-          <button
-            onClick={() => setActiveTab("mentor")}
-            className={`text-left px-5 py-3 rounded-xl text-[14px] font-medium transition-colors cursor-pointer ${
-              activeTab === "mentor"
-                ? "bg-white text-gray-900 shadow-sm border border-gray-100"
-                : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
-            }`}
-          >
-            Mentor ma'lumotlari
-          </button>
-        </div>
-
-        {/* Right Content */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full">
-          {loading ? (
-            <div className="flex items-center justify-center py-12 text-gray-500 gap-2">
-              <Loader2 size={20} className="animate-spin text-blue-600" />
-              Yuklanmoqda...
-            </div>
-          ) : (
-            <>
-              {/* TAB: Personal Info */}
-              {activeTab === "personal" && (
-                <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-                  {/* Profile Image */}
-                  <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
-                    {profileImage ? (
-                      <img 
-                        src={profileImage} 
-                        alt="Profile" 
-                        className="w-[72px] h-[72px] rounded-full object-cover border border-gray-200" 
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/profile.svg";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-[72px] h-[72px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
-                        <User size={32} />
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        className="hidden" 
-                        ref={fileInputRef} 
-                        onChange={handleImageUpload} 
-                      />
-                      <button 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-[13px] font-medium rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                      >
-                        Rasm tanlash
-                      </button>
-                      {profileImage && (
-                        <button 
-                          onClick={handleRemoveImage}
-                          className="px-4 py-2 bg-white border border-gray-200 text-red-500 text-[13px] font-medium rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                          title="Rasmni o'chirish"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Full Name */}
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">To'liq ism</label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">Email</label>
-                    <input
-                      type="email"
-                      placeholder="example@mail.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-
-                  {/* Phone */}
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">Telefon</label>
-                    <input
-                      type="text"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-
-                  <div className="pt-2">
-                    <button 
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-3 rounded-lg text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
-                    >
-                      {saving ? (
-                        <>
-                          <Loader2 size={18} className="animate-spin" />
-                          Saqlanmoqda...
-                        </>
-                      ) : (
-                        <>
-                          <Check size={18} strokeWidth={2.5} />
-                          Saqlash
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Mentor Info */}
-              {activeTab === "mentor" && (
-                <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-                  <div className="flex flex-col sm:flex-row gap-6">
-                    {/* Profession */}
-                    <div className="flex-1 flex flex-col">
-                      <label className="text-[13px] font-bold text-gray-900 mb-2">Kasb / Lavozim</label>
-                      <input
-                        type="text"
-                        value={profession}
-                        onChange={(e) => setProfession(e.target.value)}
-                        className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                      />
-                    </div>
-
-                    {/* Experience */}
-                    <div className="flex-1 flex flex-col">
-                      <label className="text-[13px] font-bold text-gray-900 mb-2">Tajriba (yil)</label>
-                      <input
-                        type="number"
-                        value={experience}
-                        onChange={(e) => setExperience(e.target.value)}
-                        className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                      />
-                    </div>
-                  </div>
-
-                  {/* About */}
-                  <div className="flex flex-col border-b border-gray-100 pb-8">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">O'zingiz haqingizda</label>
-                    <textarea
-                      value={about}
-                      onChange={(e) => setAbout(e.target.value)}
-                      className="w-full px-4 py-3 min-h-[120px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors resize-y"
-                    ></textarea>
-                  </div>
-
-                  {/* Socials */}
-                  <div className="flex flex-col gap-4">
-                    <div>
-                      <h3 className="text-[14px] font-bold text-gray-900 mb-1">Ijtimoiy tarmoqlar</h3>
-                      <p className="text-[12px] text-gray-500">Har bir maydonga to'liq havola kiriting. Bo'sh qoldirsangiz bo'ladi.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
-                      <div className="flex flex-col">
-                        <label className="text-[13px] font-bold text-gray-900 mb-2">Telegram</label>
-                        <input
-                          type="text"
-                          value={socials.telegram}
-                          onChange={(e) => setSocials({ ...socials, telegram: e.target.value })}
-                          className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-[13px] font-bold text-gray-900 mb-2">Instagram</label>
-                        <input
-                          type="text"
-                          value={socials.instagram}
-                          onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
-                          className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-[13px] font-bold text-gray-900 mb-2">GitHub</label>
-                        <input
-                          type="text"
-                          value={socials.github}
-                          onChange={(e) => setSocials({ ...socials, github: e.target.value })}
-                          className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <label className="text-[13px] font-bold text-gray-900 mb-2">LinkedIn</label>
-                        <input
-                          type="text"
-                          value={socials.linkedin}
-                          onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
-                          className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pt-2">
-                    <button 
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 disabled:bg-blue-300 text-white px-6 py-3 rounded-lg text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
-                    >
-                      <Check size={18} strokeWidth={2.5} />
-                      Saqlash
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FA]"><h1 className="text-2xl font-bold text-gray-900 mb-6">Profil sozlamalari</h1>{message && <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-3 text-green-700">{message}</div>}{error && <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700">{error}</div>}<div className="flex flex-col md:flex-row gap-6 items-start"><div className="w-full md:w-60 flex flex-col gap-1"><button onClick={() => setTab("personal")} className={`text-left px-5 py-3 rounded-xl ${tab === "personal" ? "bg-white shadow-sm font-medium" : "text-gray-500"}`}>Shaxsiy ma&apos;lumotlar</button><button onClick={() => setTab("mentor")} className={`text-left px-5 py-3 rounded-xl ${tab === "mentor" ? "bg-white shadow-sm font-medium" : "text-gray-500"}`}>Mentor ma&apos;lumotlari</button></div><div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full">{tab === "personal" ? <div className="space-y-5"><div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><User size={28} /></div><label className="block text-sm font-bold">To&apos;liq ism<input value={fullName} onChange={(event) => setFullName(event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label><label className="block text-sm font-bold">Telefon<input value={profile.phone} disabled className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200 bg-gray-50 text-gray-500" /></label></div> : <div className="space-y-5"><div className="grid sm:grid-cols-2 gap-5"><label className="block text-sm font-bold">Kasb / Lavozim<input value={job} onChange={(event) => setJob(event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label><label className="block text-sm font-bold">Tajriba (yil)<input type="number" value={experience} onChange={(event) => setExperience(event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label></div><label className="block text-sm font-bold">O&apos;zingiz haqingizda<textarea value={description} onChange={(event) => setDescription(event.target.value)} className="mt-2 w-full min-h-28 p-4 rounded-lg border border-gray-200" /></label><div className="grid sm:grid-cols-2 gap-5">{fields.map(([key, label]) => <label key={key} className="block text-sm font-bold">{label}<input value={socials[key]} onChange={(event) => updateSocial(key, event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label>)}</div></div>}<button onClick={save} className="mt-6 flex items-center gap-2 bg-[#407BFF] text-white px-6 py-3 rounded-lg"><Check size={18} /> Saqlash</button></div></div></div>;
 }
-

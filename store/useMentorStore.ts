@@ -1,47 +1,77 @@
 import { create } from "zustand";
+import { baseAPI } from "@/app/lib/utils";
 
 export interface Course {
-  id: number;
-  banner: string;
-  name: string;
-  level: string;
-  price: string;
-  category: string;
-  status: string;
+    id: number;
+    teacherId?: number | null;
+    banner: string;
+    name: string;
+    level: string;
+    price: string;
+    category: string;
+    status: string;
+    payments?: Array<{ status: boolean }>;
 }
 
 interface MentorState {
-  courses: Course[];
-  addCourse: (course: Course) => void;
-  fullName: string;
-  profileImage: string | null;
-  updateProfile: (name: string, image: string | null) => void;
+    courses: Course[];
+    isLoading: boolean;
+    fetchCourses: () => Promise<void>;
+    fetchProfile: () => Promise<void>;
+    addCourse: (course: Course) => void;
+    fullName: string;
+    profileImage: string | null;
+    updateProfile: (name: string, image: string | null) => void;
 }
 
 export const useMentorStore = create<MentorState>((set) => ({
-  courses: [
-    {
-      id: 1,
-      banner: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/CSS3_logo_and_wordmark.svg/1200px-CSS3_logo_and_wordmark.svg.png",
-      name: "CSS",
-      level: "ADVANCED",
-      price: "1 200 000 so'm",
-      category: "Dasturlash",
-      status: "Faol",
+    courses: [],
+    isLoading: false,
+    fetchCourses: async () => {
+        set({ isLoading: true });
+        try {
+            const response = await baseAPI.get("/courses/my-courses");
+            set({
+                courses: Array.isArray(response.data)
+                    ? response.data.map((course) => ({
+                          id: course.id,
+                          teacherId: course.teacherId,
+                          banner: course.banner,
+                          name: course.name,
+                          level: course.level,
+                          price: course.price?.toString() ?? "0",
+                          category: course.categories?.name ?? "Boshqa",
+                          status: course.status,
+                          payments: course.payments ?? [],
+                      }))
+                    : [],
+            });
+        } catch (error) {
+            console.error("Mentor kurslarini yuklashda xatolik:", error);
+            set({ courses: [] });
+        } finally {
+            set({ isLoading: false });
+        }
     },
-    {
-      id: 2,
-      banner: "https://miro.medium.com/v2/resize:fit:1200/1*y6C4nSvy2Woe0m7bWEn4BA.png",
-      name: "Full Stack",
-      level: "BEGINNER",
-      price: "2 000 000 so'm",
-      category: "Dasturlash",
-      status: "Faol",
+    addCourse: (course) =>
+        set((state) => ({ courses: [course, ...state.courses] })),
+
+    fullName: "",
+    profileImage: null,
+    fetchProfile: async () => {
+        try {
+            const response = await baseAPI.get("/profile");
+            const profile = response.data?.data;
+            if (profile) {
+                set({
+                    fullName: profile.fullName ?? "",
+                    profileImage: profile.file ?? null,
+                });
+            }
+        } catch {
+            set({ fullName: "", profileImage: null });
+        }
     },
-  ],
-  addCourse: (course) => set((state) => ({ courses: [course, ...state.courses] })),
-  
-  fullName: "Oydin",
-  profileImage: null,
-  updateProfile: (name, image) => set({ fullName: name, profileImage: image }),
+    updateProfile: (name, image) =>
+        set({ fullName: name, profileImage: image }),
 }));

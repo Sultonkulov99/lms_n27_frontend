@@ -17,7 +17,7 @@ import {
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import Pagination from "@/app/components/dashboard/Pagination";
-import { baseAPI, API_URL } from "@/app/lib/utils";
+import { API_URL, baseAPI } from "@/app/lib/utils";
 
 interface Lesson {
   id: number;
@@ -63,6 +63,7 @@ export default function MentorLessonsPage() {
   const [deleting, setDeleting] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedVideoFile, setSelectedVideoFile] = useState<File | null>(null);
 
   // ============================================================
   // LOAD DATA
@@ -105,8 +106,8 @@ export default function MentorLessonsPage() {
           id: l.id,
           title: l.name || l.title || "",
           description: l.description || "",
-          video: l.file ? { 
-            name: l.file.split("/").pop() || "video.mp4", 
+          video: l.file ? {
+            name: l.file.split("/").pop() || "video.mp4",
             size: "",
             url: l.file.startsWith("http") ? l.file : `${API_URL}${l.file}`
           } : null,
@@ -147,29 +148,23 @@ export default function MentorLessonsPage() {
       return;
     }
 
-    if (!newLesson.video?.rawFile) {
-      setError("Dars video fayli yuklanishi shart");
+    if (!selectedVideoFile) {
+      setError("Video faylni tanlang.");
       return;
     }
 
     try {
       setSaving(true);
-      setError("");
       const formData = new FormData();
       formData.append("name", newLesson.title.trim());
       formData.append("description", newLesson.description.trim());
-      formData.append("sectionId", String(sectionId));
-      formData.append("file", newLesson.video.rawFile);
-
-      await baseAPI.post("/lessons", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
+      formData.append("sectionId", String(Number(sectionId)));
+      formData.append("file", selectedVideoFile);
+      await baseAPI.post("/lessons", formData);
       await getLessons();
       setIsAddModalOpen(false);
       resetForm();
+      setSelectedVideoFile(null);
       setSuccessMessage("Dars muvaffaqiyatli qo'shildi!");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err: any) {
@@ -191,24 +186,15 @@ export default function MentorLessonsPage() {
 
     try {
       setSaving(true);
-      setError("");
       const formData = new FormData();
       formData.append("name", editingLesson.title.trim());
       formData.append("description", editingLesson.description.trim());
-      formData.append("sectionId", String(sectionId));
-      if (editingLesson.rawFile) {
-        formData.append("file", editingLesson.rawFile);
-      }
-
-      await baseAPI.patch(`/lessons/${editingLesson.id}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
+      if (selectedVideoFile) formData.append("file", selectedVideoFile);
+      await baseAPI.patch(`/lessons/${editingLesson.id}`, formData);
       await getLessons();
       setIsEditModalOpen(false);
       resetForm();
+      setSelectedVideoFile(null);
       setSuccessMessage("Dars muvaffaqiyatli tahrirlandi!");
       setTimeout(() => setSuccessMessage(""), 3000);
     } catch (err: any) {
@@ -250,18 +236,19 @@ export default function MentorLessonsPage() {
 
     const fileSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
     const fileName = file.name;
+    setSelectedVideoFile(file);
 
     if (isEditModalOpen && editingLesson) {
-      setEditingLesson({ 
-        ...editingLesson, 
-        videoProgress: 100, 
+      setEditingLesson({
+        ...editingLesson,
+        videoProgress: 100,
         rawFile: file,
-        video: { name: fileName, size: fileSize } 
+        video: { name: fileName, size: fileSize }
       });
     } else {
-      setNewLesson((prev) => ({ 
-        ...prev, 
-        video: { name: fileName, size: fileSize, progress: 100, rawFile: file } 
+      setNewLesson((prev) => ({
+        ...prev,
+        video: { name: fileName, size: fileSize, progress: 100, rawFile: file }
       }));
     }
   };
@@ -273,23 +260,25 @@ export default function MentorLessonsPage() {
 
     const fileSize = (file.size / (1024 * 1024)).toFixed(1) + " MB";
     const fileName = file.name;
+    setSelectedVideoFile(file);
 
     if (isEditModalOpen && editingLesson) {
-      setEditingLesson({ 
-        ...editingLesson, 
-        videoProgress: 100, 
+      setEditingLesson({
+        ...editingLesson,
+        videoProgress: 100,
         rawFile: file,
-        video: { name: fileName, size: fileSize } 
+        video: { name: fileName, size: fileSize }
       });
     } else {
-      setNewLesson((prev) => ({ 
-        ...prev, 
-        video: { name: fileName, size: fileSize, progress: 100, rawFile: file } 
+      setNewLesson((prev) => ({
+        ...prev,
+        video: { name: fileName, size: fileSize, progress: 100, rawFile: file }
       }));
     }
   };
 
   const openEditModal = (lesson: Lesson) => {
+    setSelectedVideoFile(null);
     setEditingLesson({ ...lesson, videoProgress: lesson.video ? 100 : undefined });
     setTitleError(false);
     setError("");
@@ -355,9 +344,8 @@ export default function MentorLessonsPage() {
                 setNewLesson({ ...newLesson, title: e.target.value });
               }
             }}
-            className={`w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] ${
-              titleError ? "border-red-500 bg-red-50/50" : "border-gray-200"
-            }`}
+            className={`w-full px-4 py-2.5 rounded-xl border focus:outline-none focus:ring-2 focus:ring-blue-500 text-[14px] ${titleError ? "border-red-500 bg-red-50/50" : "border-gray-200"
+              }`}
           />
           {titleError && (
             <p className="text-red-500 text-[12px] mt-1.5 font-medium">
@@ -440,8 +428,10 @@ export default function MentorLessonsPage() {
                   e.stopPropagation();
                   if (isEdit && editingLesson) {
                     setEditingLesson({ ...editingLesson, video: null, videoProgress: 0 });
+                    setSelectedVideoFile(null);
                   } else {
                     setNewLesson({ ...newLesson, video: null });
+                    setSelectedVideoFile(null);
                   }
                 }}
                 className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 bg-white rounded-full shadow-sm transition-colors"

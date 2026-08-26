@@ -14,6 +14,9 @@ interface Course {
     id: number;
     name: string;
   };
+  category?: string;
+  status?: string;
+  payments?: Array<{ status: boolean }>;
 }
 
 export default function MentorDashboard() {
@@ -27,7 +30,7 @@ export default function MentorDashboard() {
       try {
         setLoading(true);
         const [coursesRes, profileRes, studentsRes] = await Promise.allSettled([
-          baseAPI.get("/courses"),
+          baseAPI.get("/courses/my-courses"),
           baseAPI.get("/profile"),
           baseAPI.get("/students"),
         ]);
@@ -56,6 +59,11 @@ export default function MentorDashboard() {
     fetchData();
   }, []);
 
+  const purchasedStudents = courses.reduce(
+    (total, course) => total + (course.payments?.filter((payment) => payment.status).length ?? 0),
+    0,
+  );
+
   const stats = [
     {
       id: 1,
@@ -67,14 +75,14 @@ export default function MentorDashboard() {
     {
       id: 2,
       title: "Nashr qilingan",
-      value: courses.length.toString(),
+      value: courses.filter((c) => c.status === "ACTIVE" || c.status === "Faol").length.toString(),
       icon: <CheckCircle2 size={24} className="text-[#137333]" />,
       bg: "bg-[#E6F4EA]",
     },
     {
       id: 3,
-      title: "O'quvchilar",
-      value: studentCount.toString(),
+      title: "Sotib olganlar",
+      value: purchasedStudents.toString(),
       icon: <ShoppingBag size={24} className="text-[#FF4D4F]" />,
       bg: "bg-[#FFF0F0]",
     },
@@ -142,7 +150,7 @@ export default function MentorDashboard() {
         <div className="px-6 py-5 border-b border-gray-100">
           <h2 className="text-[16px] font-bold text-gray-900">Mening kurslarim</h2>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -156,54 +164,45 @@ export default function MentorDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-gray-500 text-[13px]">
-                    <div className="flex items-center justify-center gap-2">
-                      <Loader2 size={18} className="animate-spin text-blue-600" />
-                      Yuklanmoqda...
+              {courses.map((course, index) => (
+                <tr key={course.id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-white flex items-center justify-center p-1">
+                        <img
+                          src={course.banner}
+                          alt={course.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <span className="text-[13px] font-bold text-gray-900">{course.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-[13px] text-gray-600 font-medium">{course.category}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-[13px] font-bold text-gray-900">{course.price}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {getLevelBadge(course.level)}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[12px] font-medium">Nashr qilingan</span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="text-[13px] text-gray-600 font-medium">{index === 0 ? "4" : "3"}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-1">
+                      <Star size={14} className="text-[#FAAD14] fill-[#FAAD14]" />
+                      <span className="text-[13px] font-bold text-gray-900">0</span>
                     </div>
                   </td>
                 </tr>
-              ) : courses.length > 0 ? (
-                courses.map((course) => (
-                  <tr key={course.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-white flex items-center justify-center p-1">
-                          <img 
-                            src={getBannerUrl(course.banner)} 
-                            alt={course.name} 
-                            className="w-full h-full object-cover rounded"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/course.svg";
-                            }}
-                          />
-                        </div>
-                        <span className="text-[13px] font-bold text-gray-900">{course.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[13px] text-gray-600 font-medium">{course.categories?.name || "Boshqa"}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[13px] font-bold text-gray-900">{formatPrice(course.price)}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      {getLevelBadge(course.level)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[12px] font-medium">Nashr qilingan</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <Star size={14} className="text-[#FAAD14] fill-[#FAAD14]" />
-                        <span className="text-[13px] font-bold text-gray-900">5.0</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
+              ))}
+
+              {courses.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-[13px] text-gray-500 font-medium">
                     Hali kurslar qo'shilmagan

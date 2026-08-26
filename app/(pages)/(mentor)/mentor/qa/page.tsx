@@ -34,20 +34,20 @@ function QAContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialCourseId = searchParams.get('courseId');
-  
+
   const [courses, setCourses] = useState<any[]>([]);
   const [selectedCourse, setSelectedCourse] = useState<number | "">(initialCourseId ? Number(initialCourseId) : "");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedChat, setSelectedChat] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
-  
+
   const [chats, setChats] = useState<ChatThread[]>([]);
   const socketRef = useRef<Socket | null>(null);
   const [isOnline, setIsOnline] = useState(false);
 
   // Fetch courses
   useEffect(() => {
-    baseAPI.get("/courses").then((res) => {
+    baseAPI.get("/courses", { params: { page: 1, limit: 100 } }).then((res) => {
       const data = res.data?.data || res.data;
       setCourses(Array.isArray(data) ? data : []);
       if (Array.isArray(data) && data.length > 0) {
@@ -61,7 +61,7 @@ function QAContent() {
   // Fetch comments when course changes
   useEffect(() => {
     if (!selectedCourse) return;
-    
+
     baseAPI.get(`/course-comments/${selectedCourse}`).then((res) => {
       const data = res.data?.data || res.data;
       if (Array.isArray(data)) {
@@ -75,7 +75,7 @@ function QAContent() {
             fullName: comment.user?.fullName || "Student",
             role: comment.user?.role || "STUDENT"
           };
-          
+
           const replies = (comment.replies || []).map((r: any) => ({
             id: r.id,
             userId: r.user?.id,
@@ -97,7 +97,7 @@ function QAContent() {
             messages: [mainMessage, ...replies]
           };
         });
-        
+
         setChats(threads);
       }
     }).catch(console.error);
@@ -196,7 +196,7 @@ function QAContent() {
 
   const filteredChats = chats.filter(
     (chat) =>
-      chat.studentName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      chat.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -204,26 +204,26 @@ function QAContent() {
 
   const handleSendReply = () => {
     if (!replyText.trim() || !activeChatData || !socketRef.current) return;
-    
+
     socketRef.current.emit("send_reply", {
       courseId: selectedCourse,
       lessonId: activeChatData.lessonId,
       parentId: activeChatData.id,
       text: replyText
     });
-    
+
     socketRef.current.emit("stop_typing", {
       courseId: selectedCourse,
       lessonId: activeChatData.lessonId
     });
-    
+
     setReplyText("");
   };
 
   const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setReplyText(e.target.value);
     if (!activeChatData || !socketRef.current) return;
-    
+
     if (e.target.value.trim().length > 0) {
       socketRef.current.emit("typing", {
         courseId: selectedCourse,
@@ -257,7 +257,7 @@ function QAContent() {
       <div className="flex flex-col lg:flex-row gap-6 flex-1 overflow-hidden">
         {/* Left Pane - Chat List */}
         <div className="w-full lg:w-[380px] flex flex-col shrink-0">
-          
+
           {/* Dropdown */}
           <div className="mb-4 relative">
             <select
@@ -301,9 +301,8 @@ function QAContent() {
                 <div
                   key={chat.id}
                   onClick={() => setSelectedChat(chat.id)}
-                  className={`p-4 border-b border-gray-50 flex gap-3 cursor-pointer transition-colors ${
-                    selectedChat === chat.id ? "bg-gray-50" : "hover:bg-gray-50"
-                  }`}
+                  className={`p-4 border-b border-gray-50 flex gap-3 cursor-pointer transition-colors ${selectedChat === chat.id ? "bg-gray-50" : "hover:bg-gray-50"
+                    }`}
                 >
                   <div className={`w-10 h-10 shrink-0 rounded-full text-white flex items-center justify-center font-bold text-[14px] relative ${chat.color}`}>
                     {chat.studentName.charAt(0).toUpperCase()}
@@ -363,20 +362,18 @@ function QAContent() {
                       )}
 
                       {/* Bubble */}
-                      <div className={`max-w-[70%] px-4 py-3 rounded-2xl ${
-                        isMentor 
-                          ? "bg-blue-600 text-white rounded-tr-sm" 
+                      <div className={`max-w-[70%] px-4 py-3 rounded-2xl ${isMentor
+                          ? "bg-blue-600 text-white rounded-tr-sm"
                           : "bg-[#F3F4F6] text-[#1a1a1a] rounded-tl-sm"
-                      }`}>
+                        }`}>
                         {/* Text */}
                         <p className={`text-[14px] leading-relaxed mb-1 font-medium`}>
                           {msg.text}
                         </p>
-                        
+
                         {/* Date */}
-                        <p className={`text-[11px] font-medium ${
-                          isMentor ? "text-blue-200 text-right" : "text-gray-400"
-                        }`}>
+                        <p className={`text-[11px] font-medium ${isMentor ? "text-blue-200 text-right" : "text-gray-400"
+                          }`}>
                           {msg.date}
                         </p>
                       </div>
@@ -390,7 +387,7 @@ function QAContent() {
                     </div>
                   );
                 })}
-                
+
                 {activeChatData.isTyping && (
                   <div className="flex gap-3 justify-start">
                     <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-white font-bold text-[12px] ${activeChatData.color}`}>
