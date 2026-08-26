@@ -58,6 +58,9 @@ export default function StudentPage() {
   const [fullNameError, setNameError] = useState(false);
   const [phone, setPhone] = useState("+998");
   const [phoneError, setPhoneError] = useState(false);
+  const [phoneErrorMessage, setPhoneErrorMessage] = useState(
+    "Telefon raqam to'liq kiritilmadi",
+  );
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -130,7 +133,7 @@ export default function StudentPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "studentistratorlar.csv");
+    link.setAttribute("download", "studentlar.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -171,6 +174,9 @@ export default function StudentPage() {
     if (val.length <= 13) {
       setPhone(val);
       if (phoneError) setPhoneError(false);
+      if (val.length < 13) {
+        setPhoneErrorMessage("Telefon raqam to'liq kiritilmadi");
+      }
     }
   };
 
@@ -276,7 +282,7 @@ export default function StudentPage() {
   const handleSaveStudent = async () => {
     let hasError = false;
 
-    if (!fullName.trim()) {
+    if (!fullName.trim() || fullName.length < 4) {
       setNameError(true);
       hasError = true;
     } else {
@@ -284,6 +290,7 @@ export default function StudentPage() {
     }
 
     if (phone.length < 13) {
+      setPhoneErrorMessage("Telefon raqam to'liq kiritilmadi");
       setPhoneError(true);
       hasError = true;
     } else {
@@ -335,7 +342,18 @@ export default function StudentPage() {
       setImagePreview(null);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Xatolik yuz berdi");
+      const backendMessage: string = error.response?.data?.message || "";
+
+      if (
+        error.response?.status === 409 ||
+        backendMessage.toLowerCase().includes("band") ||
+        backendMessage.toLowerCase().includes("ro'yxatdan o'tgan")
+      ) {
+        setPhoneErrorMessage("Bu telefon raqami allaqachon band");
+        setPhoneError(true);
+      } else {
+        alert(backendMessage || error.message || "Xatolik yuz berdi");
+      }
     }
   };
 
@@ -346,12 +364,12 @@ export default function StudentPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
           <div>
             <h1 className="text-[24px] font-bold text-gray-900 mb-1">
-              Studentistratorlar
+              Studentlar
             </h1>
             <div className="flex items-center text-[13px] text-gray-500 font-medium">
               Foydalanuvchilar{" "}
               <span className="mx-2 w-1 h-1 bg-gray-400 rounded-full"></span>{" "}
-              Studentistratorlar
+              Studentlar
             </div>
           </div>
 
@@ -658,14 +676,15 @@ export default function StudentPage() {
                   value={fullName}
                   onChange={(e) => {
                     setName(e.target.value);
-                    if (fullNameError) setNameError(false);
+                    if (fullNameError && e.target.value.length >= 4)
+                      setNameError(false);
                   }}
                   placeholder="Kiriting"
                   className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors ${fullNameError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f] placeholder:text-[#ff4d4f]" : "border-gray-200 focus:border-blue-500 text-gray-900"}`}
                 />
                 {fullNameError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    To’liq kiritilmadi
+                    Eng kamida 4 ta belgi
                   </p>
                 )}
               </div>
@@ -683,7 +702,7 @@ export default function StudentPage() {
                 />
                 {phoneError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    Telefon raqam to’liq kiritilmadi
+                    {phoneErrorMessage}
                   </p>
                 )}
               </div>
@@ -819,8 +838,8 @@ export default function StudentPage() {
               Tiklashni tasdiqlash
             </h3>
             <p className="text-gray-600 text-sm mb-6">
-              Haqiqatan ham tiklamoqchimisiz? Student qaytadan faol
-              ro’yxatga qaytariladi.
+              Haqiqatan ham tiklamoqchimisiz? Student qaytadan faol ro’yxatga
+              qaytariladi.
             </p>
             <div className="flex items-center justify-end gap-3">
               <button
@@ -883,7 +902,7 @@ export default function StudentPage() {
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-[20px] font-bold text-gray-900">
-                Studentistrator haqida
+                Student haqida
               </h2>
               <button
                 onClick={() => setIsViewModalOpen(false)}
@@ -905,7 +924,7 @@ export default function StudentPage() {
                   <h3 className="text-[20px] font-bold text-gray-900 mb-1">
                     {viewingStudent.fullName}
                   </h3>
-                  <p className="text-gray-500 text-[14px]">Studentistrator</p>
+                  <p className="text-gray-500 text-[14px]">Student</p>
                 </div>
               </div>
 
