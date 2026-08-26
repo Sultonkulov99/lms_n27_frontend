@@ -1,4 +1,5 @@
 import { baseAPI } from "@/app/lib/utils";
+import { Status } from "./status";
 
 export interface Category {
   id: number;
@@ -27,9 +28,7 @@ export interface Course {
   categories?: Category;
   user?: User | null;
   sections?: unknown[];
-  
-  // Fields that might be added by backend based on dashboard requirements
-  status?: string;
+  status?: Status;
   studentsCount?: number;
   assistant?: string;
 }
@@ -44,31 +43,9 @@ function unwrapList<T>(payload: unknown): T[] {
   return [];
 }
 
-let coursesCache: Course[] | null = null;
-let coursesPromise: Promise<Course[]> | null = null;
-
-export async function getCourses(): Promise<Course[]> {
-  if (coursesCache) return coursesCache;
-  if (coursesPromise) return coursesPromise;
-
-  coursesPromise = baseAPI
-    .get("/courses")
-    .then((res) => {
-      const data = unwrapList<Course>(res.data);
-      coursesCache = data;
-      return data;
-    })
-    .catch((err) => {
-      coursesPromise = null;
-      throw err;
-    });
-
-  return coursesPromise;
-}
-
-export function clearCoursesCache() {
-  coursesCache = null;
-  coursesPromise = null;
+export async function getCourses(isActive: Status = "ACTIVE"): Promise<Course[]> {
+  const { data } = await baseAPI.get("/courses", { params: { isActive } });
+  return unwrapList<Course>(data);
 }
 
 export async function getCourseById(id: number | string): Promise<Course> {
@@ -84,6 +61,16 @@ export async function createCourse(courseData: FormData | Record<string, unknown
 export async function updateCourse(id: number | string, courseData: FormData | Record<string, unknown>): Promise<Course> {
   const { data } = await baseAPI.patch(`/courses/${id}`, courseData);
   return data.data || data;
+}
+
+export async function archiveCourse(id: number) {
+  const { data } = await baseAPI.patch(`/courses/${id}/archive`);
+  return data;
+}
+
+export async function restoreCourse(id: number) {
+  const { data } = await baseAPI.patch(`/courses/${id}/restore`);
+  return data;
 }
 
 export async function deleteCourse(id: number | string): Promise<void> {
