@@ -72,7 +72,9 @@ export default function AssistentsPage() {
   const [fullNameError, setNameError] = useState(false);
   const [phone, setPhone] = useState("+998");
   const [phoneError, setPhoneError] = useState(false);
-  const [course, setCourse] = useState("");
+  const [phoneErrorMessage, setPhoneErrorMessage] = useState(
+    "Telefon raqam to'liq kiritilmadi",
+  );
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -218,6 +220,9 @@ export default function AssistentsPage() {
     if (val.length <= 13) {
       setPhone(val);
       if (phoneError) setPhoneError(false);
+      if (val.length < 13) {
+        setPhoneErrorMessage("Telefon raqam to'liq kiritilmadi");
+      }
     }
   };
 
@@ -341,7 +346,7 @@ export default function AssistentsPage() {
   const handleSaveAssistent = async () => {
     let hasError = false;
 
-    if (!fullName.trim()) {
+    if (!fullName.trim() || fullName.length < 4) {
       setNameError(true);
       hasError = true;
     } else {
@@ -349,6 +354,7 @@ export default function AssistentsPage() {
     }
 
     if (phone.length < 13) {
+      setPhoneErrorMessage("Telefon raqam to'liq kiritilmadi");
       setPhoneError(true);
       hasError = true;
     } else {
@@ -415,7 +421,18 @@ export default function AssistentsPage() {
       setImagePreview(null);
     } catch (error: any) {
       console.error(error);
-      alert(error.message || "Xatolik yuz berdi");
+      const backendMessage: string = error.response?.data?.message || "";
+
+      if (
+        error.response?.status === 409 ||
+        backendMessage.toLowerCase().includes("band") ||
+        backendMessage.toLowerCase().includes("ro'yxatdan o'tgan")
+      ) {
+        setPhoneErrorMessage("Bu telefon raqami allaqachon band");
+        setPhoneError(true);
+      } else {
+        alert(backendMessage || error.message || "Xatolik yuz berdi");
+      }
     }
   };
 
@@ -567,7 +584,7 @@ export default function AssistentsPage() {
                             </td>
                             <td className="px-5 py-4 border border-gray-200">
                               <div
-                                className="flex items-center gap-3 cursor-pointer hover:text-[#407BFF] transition-colors"
+                                className="flex items-center gap-3 cursor-pointer hover:text-blue-500 transition-colors"
                                 onClick={() => {
                                   setViewingAssistent(assistent);
                                   setIsViewModalOpen(true);
@@ -699,7 +716,7 @@ export default function AssistentsPage() {
                 </label>
                 <div className="flex flex-col items-center gap-2 w-full">
                   <label
-                    className={`flex flex-col items-center justify-center w-1/2 aspect-square border-[1.5px] border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors bg-white overflow-hidden relative ${imageError ? "border-[#ff4d4f]" : "border-gray-300"}`}
+                    className={`flex flex-col items-center justify-center w-30 h-30 rounded-full border-[1.5px] border-dashed cursor-pointer hover:bg-gray-50 transition-colors bg-white overflow-hidden relative ${imageError ? "border-[#ff4d4f]" : "border-gray-300"}`}
                   >
                     {imagePreview ? (
                       <img
@@ -748,14 +765,15 @@ export default function AssistentsPage() {
                   value={fullName}
                   onChange={(e) => {
                     setName(e.target.value);
-                    if (fullNameError) setNameError(false);
+                    if (fullNameError && e.target.value.length >= 4)
+                      setNameError(false);
                   }}
                   placeholder="Kiriting"
                   className={`w-full px-4 h-12 rounded-lg border text-[14px] outline-none transition-colors ${fullNameError ? "border-[#ff4d4f] focus:border-[#ff4d4f] text-[#ff4d4f] placeholder:text-[#ff4d4f]" : "border-gray-200 focus:border-[#407BFF] text-gray-900"}`}
                 />
                 {fullNameError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    To’liq kiritilmadi
+                    Eng kamida 4 ta belgi
                   </p>
                 )}
               </div>
@@ -773,7 +791,7 @@ export default function AssistentsPage() {
                 />
                 {phoneError && (
                   <p className="text-[#ff4d4f] text-[12px] mt-1.5">
-                    Telefon raqam to’liq kiritilmadi
+                    {phoneErrorMessage}
                   </p>
                 )}
               </div>
