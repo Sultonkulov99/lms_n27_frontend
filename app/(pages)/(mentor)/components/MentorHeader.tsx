@@ -14,7 +14,7 @@ import {
 import { useMentorStore } from "@/store/useMentorStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useRouter } from "next/navigation";
-import { removeToken } from "@/app/lib/utils";
+import { removeToken, baseAPI, API_URL } from "@/app/lib/utils";
 
 export default function MentorHeader() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -27,6 +27,17 @@ export default function MentorHeader() {
   React.useEffect(() => {
     fetchNotifications();
     connectSocket();
+
+    baseAPI.get("/profile").then((res) => {
+      const user = res.data?.data || res.data;
+      if (user) {
+        useMentorStore.getState().updateProfile(
+          user.fullName || "Mentor",
+          user.file ? (user.file.startsWith("http") ? user.file : `${API_URL}/${user.file}`) : null
+        );
+      }
+    }).catch(() => {});
+
     return () => disconnectSocket();
   }, [fetchNotifications, connectSocket, disconnectSocket]);
 

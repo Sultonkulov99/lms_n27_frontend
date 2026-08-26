@@ -27,12 +27,12 @@ function parseJwtRole(token: string): string | null {
 }
 
 // Rollarga mos asosiy boshlang'ich va ruxsat etilgan route prefikslari
-const ROLE_CONFIG: Record<string, { home: string; allowedPrefix: string }> = {
-  SUPERADMIN: { home: "/dashboard", allowedPrefix: "/dashboard" },
-  ADMIN: { home: "/dashboard", allowedPrefix: "/dashboard" },
-  MENTOR: { home: "/mentor", allowedPrefix: "/mentor" },
-  ASSISTANT: { home: "/assistents", allowedPrefix: "/assistents" },
-  STUDENT: { home: "/students", allowedPrefix: "/students" },
+const ROLE_CONFIG: Record<string, { home: string; allowedPrefixes: string[] }> = {
+  SUPERADMIN: { home: "/dashboard", allowedPrefixes: ["/dashboard", "/mentor", "/assistents", "/students"] },
+  ADMIN: { home: "/dashboard", allowedPrefixes: ["/dashboard", "/mentor"] }, // Adminlarga ham mentor paneliga kirish ruxsati berildi
+  MENTOR: { home: "/mentor", allowedPrefixes: ["/mentor"] },
+  ASSISTANT: { home: "/assistents", allowedPrefixes: ["/assistents"] },
+  STUDENT: { home: "/students", allowedPrefixes: ["/students"] },
 };
 
 // Barcha rollarga tegishli maxsus panellar ro'yxati
@@ -105,7 +105,8 @@ export function middleware(request: NextRequest) {
 
     if (isAccessingAnyPanel) {
       // Agar kirayotgan sahifasi o'zining roliga tegishli bo'lmasa -> o'z uyiga qaytarish
-      if (!pathname.startsWith(userRoleConfig.allowedPrefix)) {
+      const hasAccess = userRoleConfig.allowedPrefixes.some(prefix => pathname.startsWith(prefix));
+      if (!hasAccess) {
         return NextResponse.redirect(new URL(userRoleConfig.home, request.url));
       }
     }
