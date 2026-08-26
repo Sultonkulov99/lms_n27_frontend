@@ -1,16 +1,33 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import { Search, X, ChevronDown, PlusCircle, Eye, Upload, Check } from "lucide-react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { Search, X, Eye, PlusCircle, ChevronDown, Check } from "lucide-react";
 import Link from "next/link";
 import Pagination from "@/app/components/dashboard/Pagination";
-import { useMentorStore } from "@/store/useMentorStore";
-import { baseAPI } from "@/app/lib/utils";
+import { baseAPI, API_URL } from "@/app/lib/utils";
 import { showToast } from "@/store/useToastStore";
 
+interface Course {
+  id: number;
+  name: string;
+  description: string;
+  level: string;
+  price: string | number;
+  banner?: string;
+  categoryId?: number;
+  categories?: {
+    id: number;
+    name: string;
+  };
+  category?: string;
+  status?: string;
+}
+
 export default function MentorCoursesPage() {
+  const [courses, setCourses] = useState<Course[]>([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [error, setError] = useState("");
 
   // Pagination & Search
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,7 +47,17 @@ export default function MentorCoursesPage() {
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const introVideoInputRef = useRef<HTMLInputElement>(null);
 
-  const { courses, fetchCourses } = useMentorStore();
+  const fetchCourses = async () => {
+    try {
+      const response = await baseAPI.get("/courses/my-courses");
+      const data = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+      setCourses(data);
+      setError("");
+    } catch (requestError: any) {
+      setCourses([]);
+      setError(requestError.response?.data?.message || "Kurslarni yuklashda xatolik yuz berdi.");
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -47,7 +74,11 @@ export default function MentorCoursesPage() {
 
   React.useEffect(() => {
     fetchCourses();
-  }, [fetchCourses]);
+  }, []);
+
+  const handleDownloadXLS = () => {
+    console.log("Download XLS");
+  };
 
   // Derived state
   const filteredCourses = useMemo(() => {
@@ -99,8 +130,21 @@ export default function MentorCoursesPage() {
     }
   };
 
-  const handleDownloadXLS = () => {
-    console.log("Download XLS");
+  const getBannerUrl = (banner?: string) => {
+    if (!banner) return "/course.svg";
+    if (banner.startsWith("http")) return banner;
+    return `${API_URL}/${banner}`;
+  };
+
+  const formatPrice = (price: string | number) => {
+    if (typeof price === "number") {
+      return `${price.toLocaleString()} so'm`;
+    }
+    const num = Number(price);
+    if (!isNaN(num)) {
+      return `${num.toLocaleString()} so'm`;
+    }
+    return price || "0 so'm";
   };
 
   return (
@@ -125,6 +169,13 @@ export default function MentorCoursesPage() {
           Qo'shish
         </button>
       </div>
+
+      {/* Error Alert */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Search Bar */}
       <div className="flex items-center gap-3 mb-6">
@@ -166,7 +217,7 @@ export default function MentorCoursesPage() {
               </tr>
             </thead>
             <tbody className="text-[14px] text-gray-800">
-              {currentCourses.map((course) => (
+              {currentCourses.length > 0 ? currentCourses.map((course) => (
                 <tr key={course.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-5 py-4 border border-gray-200 border-l-0 border-r-0">
                     <img
@@ -196,14 +247,13 @@ export default function MentorCoursesPage() {
                   </td>
                   <td className="px-5 py-4 border border-gray-200 border-r-0">
                     <div className="flex items-center justify-center">
-                      <button className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors cursor-pointer">
+                      <Link href={`/mentor/courses/${course.id}/sections`} className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition-colors" title="Bo'limlarni ko'rish">
                         <Eye size={16} />
-                      </button>
+                      </Link>
                     </div>
                   </td>
                 </tr>
-              ))}
-              {currentCourses.length === 0 && (
+              )) : (
                 <tr>
                   <td colSpan={7} className="px-6 py-10 text-center text-gray-500 border border-gray-200 border-l-0 border-r-0">
                     Ma'lumot topilmadi

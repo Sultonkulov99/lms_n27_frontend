@@ -1,405 +1,48 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { User, Check, Eye, EyeOff, Trash2 } from "lucide-react";
-import { useMentorStore } from "@/store/useMentorStore";
+import { useEffect, useState } from "react";
+import { Check, User } from "lucide-react";
 import { baseAPI } from "@/app/lib/utils";
 
+interface Profile { fullName: string; phone: string; file?: string | null; mentor?: Record<string, string | number | null> | null }
+
 export default function MentorProfilePage() {
-  const { fullName: storeFullName, profileImage: storeProfileImage, updateProfile } = useMentorStore();
-  
-  const [activeTab, setActiveTab] = useState("personal");
-
-  // Personal Info State
-  const [fullName, setFullName] = useState(storeFullName);
-  const [profileImage, setProfileImage] = useState<string | null>(storeProfileImage);
-  const [phone, setPhone] = useState("");
-  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setFullName(storeFullName);
-    setProfileImage(storeProfileImage);
-  }, [storeFullName, storeProfileImage]);
-
-  // Mentor Info State
-  const [profession, setProfession] = useState("");
+  const [profile, setProfile] = useState<Profile>({ fullName: "", phone: "" });
+  const [tab, setTab] = useState<"personal" | "mentor">("personal");
+  const [fullName, setFullName] = useState("");
+  const [job, setJob] = useState("");
   const [experience, setExperience] = useState("");
-  const [about, setAbout] = useState("");
-  const [socials, setSocials] = useState({
-    telegram: "", instagram: "", facebook: "", linkedin: "", github: "", website: "",
-  });
+  const [description, setDescription] = useState("");
+  const [socials, setSocials] = useState({ telegram: "", instagram: "", facebook: "", linkedin: "", github: "", site: "" });
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     baseAPI.get("/profile").then(({ data }) => {
-      const profile = data?.data;
-      const mentor = profile?.mentor;
-      setPhone(profile?.phone ?? "");
-      setFullName(profile?.fullName ?? "");
-      setProfileImage(profile?.file ?? null);
-      setProfession(mentor?.job ?? "");
-      setExperience(mentor?.experience?.toString() ?? "");
-      setAbout(mentor?.description ?? "");
-      setSocials({
-        telegram: mentor?.telegram ?? "", instagram: mentor?.instagram ?? "",
-        facebook: mentor?.facebook ?? "", linkedin: mentor?.linkedin ?? "",
-        github: mentor?.github ?? "", website: mentor?.site ?? "",
-      });
-    }).catch(() => undefined);
+      const next = data?.data ?? data;
+      const mentor = next.mentor;
+      setProfile(next);
+      setFullName(next.fullName ?? "");
+      setJob(String(mentor?.job ?? ""));
+      setExperience(mentor?.experience == null ? "" : String(mentor.experience));
+      setDescription(String(mentor?.description ?? ""));
+      setSocials({ telegram: String(mentor?.telegram ?? ""), instagram: String(mentor?.instagram ?? ""), facebook: String(mentor?.facebook ?? ""), linkedin: String(mentor?.linkedin ?? ""), github: String(mentor?.github ?? ""), site: String(mentor?.site ?? "") });
+    }).catch(() => setError("Profil ma'lumotlarini yuklashda xatolik yuz berdi"));
   }, []);
 
-  // Security State
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const handleSave = async () => {
-    if (activeTab === "personal") {
-      await baseAPI.patch("/profile", { fullName });
-      updateProfile(fullName, profileImage);
-    } else if (activeTab === "mentor") {
-      await baseAPI.patch("/profile", {
-        job: profession,
-        experience: experience ? Number(experience) : undefined,
-        description: about,
-        site: socials.website,
-        telegram: socials.telegram,
-        instagram: socials.instagram,
-        facebook: socials.facebook,
-        linkedin: socials.linkedin,
-        github: socials.github,
-      });
+  const save = async () => {
+    try {
+      setError("");
+      await baseAPI.patch("/profile", tab === "personal" ? { fullName } : { job, experience: experience ? Number(experience) : undefined, description, ...socials });
+      setMessage("Profil muvaffaqiyatli saqlandi");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (saveError: any) {
+      setError(saveError.response?.data?.message || "Saqlashda xatolik yuz berdi");
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const updateSocial = (key: keyof typeof socials, value: string) => setSocials((current) => ({ ...current, [key]: value }));
+  const fields = [["telegram", "Telegram"], ["instagram", "Instagram"], ["facebook", "Facebook"], ["linkedin", "LinkedIn"], ["github", "GitHub"], ["site", "Veb-sayt"]] as const;
 
-  const handleRemoveImage = () => {
-    setProfileImage(null);
-  };
-
-  return (
-    <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FA]">
-      <h1 className="text-[24px] font-bold text-gray-900 mb-6">Profil sozlamalari</h1>
-
-      <div className="flex flex-col md:flex-row gap-6 items-start">
-        {/* Left Tabs */}
-        <div className="w-full md:w-[240px] shrink-0 flex flex-col gap-1">
-          <button
-            onClick={() => setActiveTab("personal")}
-            className={`text-left px-5 py-3 rounded-xl text-[14px] font-medium transition-colors cursor-pointer ${
-              activeTab === "personal"
-                ? "bg-white text-gray-900 shadow-sm border border-gray-100"
-                : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
-            }`}
-          >
-            Shaxsiy ma'lumotlar
-          </button>
-          <button
-            onClick={() => setActiveTab("mentor")}
-            className={`text-left px-5 py-3 rounded-xl text-[14px] font-medium transition-colors cursor-pointer ${
-              activeTab === "mentor"
-                ? "bg-white text-gray-900 shadow-sm border border-gray-100"
-                : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
-            }`}
-          >
-            Mentor ma'lumotlari
-          </button>
-          <button
-            onClick={() => setActiveTab("security")}
-            className={`text-left px-5 py-3 rounded-xl text-[14px] font-medium transition-colors cursor-pointer ${
-              activeTab === "security"
-                ? "bg-white text-gray-900 shadow-sm border border-gray-100"
-                : "text-gray-500 hover:text-gray-900 hover:bg-white/50"
-            }`}
-          >
-            Xavfsizlik
-          </button>
-        </div>
-
-        {/* Right Content */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full">
-          
-          {/* TAB: Personal Info */}
-          {activeTab === "personal" && (
-            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-              {/* Profile Image */}
-              <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
-                {profileImage ? (
-                  <img src={profileImage} alt="Profile" className="w-[72px] h-[72px] rounded-full object-cover border border-gray-200" />
-                ) : (
-                  <div className="w-[72px] h-[72px] rounded-full bg-gray-100 flex items-center justify-center text-gray-400 border border-gray-200">
-                    <User size={32} />
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden" 
-                    ref={fileInputRef} 
-                    onChange={handleImageUpload} 
-                  />
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="px-4 py-2 bg-white border border-gray-200 text-gray-700 text-[13px] font-medium rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                  >
-                    Rasm tanlash
-                  </button>
-                  {profileImage && (
-                    <button 
-                      onClick={handleRemoveImage}
-                      className="px-4 py-2 bg-white border border-gray-200 text-red-500 text-[13px] font-medium rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
-                      title="Rasmni o'chirish"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Full Name */}
-              <div className="flex flex-col">
-                <label className="text-[13px] font-bold text-gray-900 mb-2">To'liq ism</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                />
-              </div>
-
-              {/* Phone */}
-              <div className="flex flex-col">
-                <label className="text-[13px] font-bold text-gray-900 mb-2">Telefon</label>
-                <input
-                  type="text"
-                  value={phone}
-                  disabled
-                  className="w-full px-4 h-[48px] rounded-lg border border-gray-200 bg-gray-50 text-[14px] text-gray-500 outline-none cursor-not-allowed"
-                />
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  onClick={handleSave}
-                  className="flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
-                >
-                  <Check size={18} strokeWidth={2.5} />
-                  Saqlash
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: Mentor Info */}
-          {activeTab === "mentor" && (
-            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-              
-              <div className="flex flex-col sm:flex-row gap-6">
-                {/* Profession */}
-                <div className="flex-1 flex flex-col">
-                  <label className="text-[13px] font-bold text-gray-900 mb-2">Kasb / Lavozim</label>
-                  <input
-                    type="text"
-                    value={profession}
-                    onChange={(e) => setProfession(e.target.value)}
-                    className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                  />
-                </div>
-
-                {/* Experience */}
-                <div className="flex-1 flex flex-col">
-                  <label className="text-[13px] font-bold text-gray-900 mb-2">Tajriba (yil)</label>
-                  <input
-                    type="number"
-                    value={experience}
-                    onChange={(e) => setExperience(e.target.value)}
-                    className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* About */}
-              <div className="flex flex-col border-b border-gray-100 pb-8">
-                <label className="text-[13px] font-bold text-gray-900 mb-2">O'zingiz haqingizda</label>
-                <textarea
-                  value={about}
-                  onChange={(e) => setAbout(e.target.value)}
-                  className="w-full px-4 py-3 min-h-[120px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors resize-y"
-                ></textarea>
-              </div>
-
-              {/* Socials */}
-              <div className="flex flex-col gap-4">
-                <div>
-                  <h3 className="text-[14px] font-bold text-gray-900 mb-1">Ijtimoiy tarmoqlar</h3>
-                  <p className="text-[12px] text-gray-500">Har bir maydonga to'liq havola kiriting (masalan: https://t.me/username). Bo'sh qoldirsangiz bo'ladi.</p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-2">
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">Telegram</label>
-                    <input
-                      type="text"
-                      value={socials.telegram}
-                      onChange={(e) => setSocials({ ...socials, telegram: e.target.value })}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">Instagram</label>
-                    <input
-                      type="text"
-                      value={socials.instagram}
-                      onChange={(e) => setSocials({ ...socials, instagram: e.target.value })}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">Facebook</label>
-                    <input
-                      type="text"
-                      value={socials.facebook}
-                      onChange={(e) => setSocials({ ...socials, facebook: e.target.value })}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">LinkedIn</label>
-                    <input
-                      type="text"
-                      value={socials.linkedin}
-                      onChange={(e) => setSocials({ ...socials, linkedin: e.target.value })}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">GitHub</label>
-                    <input
-                      type="text"
-                      value={socials.github}
-                      onChange={(e) => setSocials({ ...socials, github: e.target.value })}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <label className="text-[13px] font-bold text-gray-900 mb-2">Veb-sayt</label>
-                    <input
-                      type="text"
-                      value={socials.website}
-                      onChange={(e) => setSocials({ ...socials, website: e.target.value })}
-                      className="w-full px-4 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  onClick={handleSave}
-                  className="flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-[14px] font-medium transition-colors shadow-sm cursor-pointer"
-                >
-                  <Check size={18} strokeWidth={2.5} />
-                  Saqlash
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* TAB: Security */}
-          {activeTab === "security" && (
-            <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-              
-              <div className="flex flex-col gap-4 max-w-2xl">
-                {/* Current Password */}
-                <div className="flex flex-col">
-                  <label className="text-[13px] font-bold text-gray-900 mb-2">Joriy parol</label>
-                  <div className="relative">
-                    <input
-                      type={showCurrentPassword ? "text" : "password"}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full px-4 pr-12 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors tracking-widest placeholder:tracking-normal"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                    >
-                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* New Password */}
-                <div className="flex flex-col">
-                  <label className="text-[13px] font-bold text-gray-900 mb-2">Yangi parol</label>
-                  <div className="relative">
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 pr-12 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors tracking-widest placeholder:tracking-normal"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                    >
-                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Confirm New Password */}
-                <div className="flex flex-col">
-                  <label className="text-[13px] font-bold text-gray-900 mb-2">Yangi parolni tasdiqlang</label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 pr-12 h-[48px] rounded-lg border border-gray-200 focus:border-[#407BFF] text-[14px] text-gray-900 outline-none transition-colors tracking-widest placeholder:tracking-normal"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
-                    >
-                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button 
-                  onClick={handleSave}
-                  className="flex items-center gap-2 bg-[#407BFF] hover:bg-blue-600 text-white px-6 py-3 rounded-lg text-[14px] font-medium transition-colors shadow-sm cursor-pointer w-fit"
-                >
-                  <Check size={18} strokeWidth={2.5} />
-                  Saqlash
-                </button>
-              </div>
-            </div>
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
+  return <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FA]"><h1 className="text-2xl font-bold text-gray-900 mb-6">Profil sozlamalari</h1>{message && <div className="mb-4 rounded-lg bg-green-50 border border-green-200 p-3 text-green-700">{message}</div>}{error && <div className="mb-4 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700">{error}</div>}<div className="flex flex-col md:flex-row gap-6 items-start"><div className="w-full md:w-60 flex flex-col gap-1"><button onClick={() => setTab("personal")} className={`text-left px-5 py-3 rounded-xl ${tab === "personal" ? "bg-white shadow-sm font-medium" : "text-gray-500"}`}>Shaxsiy ma&apos;lumotlar</button><button onClick={() => setTab("mentor")} className={`text-left px-5 py-3 rounded-xl ${tab === "mentor" ? "bg-white shadow-sm font-medium" : "text-gray-500"}`}>Mentor ma&apos;lumotlari</button></div><div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-8 w-full">{tab === "personal" ? <div className="space-y-5"><div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><User size={28} /></div><label className="block text-sm font-bold">To&apos;liq ism<input value={fullName} onChange={(event) => setFullName(event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label><label className="block text-sm font-bold">Telefon<input value={profile.phone} disabled className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200 bg-gray-50 text-gray-500" /></label></div> : <div className="space-y-5"><div className="grid sm:grid-cols-2 gap-5"><label className="block text-sm font-bold">Kasb / Lavozim<input value={job} onChange={(event) => setJob(event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label><label className="block text-sm font-bold">Tajriba (yil)<input type="number" value={experience} onChange={(event) => setExperience(event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label></div><label className="block text-sm font-bold">O&apos;zingiz haqingizda<textarea value={description} onChange={(event) => setDescription(event.target.value)} className="mt-2 w-full min-h-28 p-4 rounded-lg border border-gray-200" /></label><div className="grid sm:grid-cols-2 gap-5">{fields.map(([key, label]) => <label key={key} className="block text-sm font-bold">{label}<input value={socials[key]} onChange={(event) => updateSocial(key, event.target.value)} className="mt-2 w-full h-12 px-4 rounded-lg border border-gray-200" /></label>)}</div></div>}<button onClick={save} className="mt-6 flex items-center gap-2 bg-[#407BFF] text-white px-6 py-3 rounded-lg"><Check size={18} /> Saqlash</button></div></div></div>;
 }

@@ -1,177 +1,81 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
-import { Search, X, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, Loader2, Search, X } from "lucide-react";
 import Pagination from "@/app/components/dashboard/Pagination";
-import { useMentorStore } from "@/store/useMentorStore";
-import { baseAPI } from "@/app/lib/utils";
+import { API_URL, baseAPI } from "@/app/lib/utils";
+
+interface Course { id: number; name: string }
+interface Student {
+  id: number;
+  name: string;
+  phone: string;
+  image?: string | null;
+  price?: string;
+  date?: string;
+  course: string;
+}
 
 export default function StudentsPage() {
-  // Pagination & Search
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const { courses, fetchCourses } = useMentorStore();
-  const [selectedCourse, setSelectedCourse] = useState("");
-
-  // Update selected course if courses load and none is selected
-  useEffect(() => {
-    if (courses.length > 0 && !selectedCourse) {
-      setSelectedCourse(courses[0].name);
-    }
-  }, [courses, selectedCourse]);
-
-  const [students, setStudents] = useState<Array<{ id: number; image?: string | null; name: string; phone: string; price: string; date: string; course: string }>>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    const loadCourses = async () => {
+      try {
+        const response = await baseAPI.get("/courses/my-courses");
+        const data = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
+        setCourses(data);
+        if (data.length) setSelectedCourse(String(data[0].id));
+      } catch {
+        setCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadCourses();
+  }, []);
 
   useEffect(() => {
     if (!selectedCourse) return;
-    const course = courses.find((item) => item.name === selectedCourse);
-    baseAPI.get(`/students/my-students?courseId=${course?.id ?? ""}`).then((response) => {
-      const data = response.data?.data ?? [];
-      setStudents(data.map((student: typeof data[number]) => ({
-        ...student,
-        date: new Date(student.date).toLocaleDateString("uz-UZ"),
-      })));
-    }).catch(() => setStudents([]));
-  }, [courses, selectedCourse]);
+    baseAPI.get(`/students/my-students?courseId=${selectedCourse}`)
+      .then((response) => setStudents(response.data?.data ?? []))
+      .catch(() => setStudents([]));
+  }, [selectedCourse]);
 
-  // Derived state
-  const filteredStudents = useMemo(() => {
-    return students.filter(student =>
-      (student.course === selectedCourse) &&
-      (student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.phone.includes(searchQuery))
-    );
-  }, [students, searchQuery, selectedCourse]);
-
+  const filteredStudents = useMemo(() => students.filter((student) =>
+    student.name?.toLowerCase().includes(searchQuery.toLowerCase()) || student.phone?.includes(searchQuery)
+  ), [students, searchQuery]);
   const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, filteredStudents.length);
   const currentStudents = filteredStudents.slice(startIndex, endIndex);
-
-  const handleDownloadXLS = () => {
-    // Dummy implementation for now
-    console.log("Download XLS");
+  const getAvatarUrl = (image?: string | null) => image?.startsWith("http") ? image : image ? `${API_URL}${image}` : null;
+  const download = () => {
+    const rows = filteredStudents.map((student) => [student.id, student.name, student.phone, student.course].join(","));
+    const url = URL.createObjectURL(new Blob([["ID,Ism,Telefon,Kurs", ...rows].join("\n")], { type: "text/csv" }));
+    const link = document.createElement("a");
+    link.href = url; link.download = "oquvchilar.csv"; link.click(); URL.revokeObjectURL(url);
   };
 
   return (
     <div className="flex-1 overflow-y-auto p-6">
-      {/* Top Page Header */}
-      <div className="mb-6">
-        <h1 className="text-[24px] font-bold text-gray-900 mb-1">O'quvchilarim</h1>
-        <div className="flex items-center text-[13px] text-gray-500 font-medium">
-          Mening kurslarim <span className="mx-2 w-1 h-1 bg-gray-400 rounded-full"></span> O'quvchilar
-        </div>
+      <div className="mb-6"><h1 className="text-[24px] font-bold text-gray-900 mb-1">O&apos;quvchilarim</h1><div className="text-[13px] text-gray-500">Mening kurslarim <span className="mx-2">•</span> O&apos;quvchilar</div></div>
+      <div className="mb-4 w-[300px] relative">
+        <select value={selectedCourse} onChange={(event) => { setSelectedCourse(event.target.value); setCurrentPage(1); }} className="w-full appearance-none bg-white border border-gray-200 text-gray-900 text-sm rounded-lg px-4 py-2.5 outline-none shadow-sm">
+          {courses.map((course) => <option key={course.id} value={course.id}>{course.name}</option>)}
+        </select><ChevronDown size={16} className="pointer-events-none absolute right-4 top-3.5 text-gray-500" />
       </div>
-
-      {/* Filter Row: Dropdown */}
-      <div className="mb-4 w-[300px]">
-        <div className="relative">
-          <select
-            value={selectedCourse}
-            onChange={(e) => {
-              setSelectedCourse(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full appearance-none bg-white border border-gray-200 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-4 py-2.5 outline-none shadow-sm cursor-pointer"
-          >
-            {courses.map(course => (
-              <option key={course.id} value={course.name}>{course.name}</option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-            <ChevronDown size={16} />
-          </div>
-        </div>
-      </div>
-
-      {/* Search and Pagination Info Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-        <div className="relative flex-1 max-w-[400px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input
-            type="text"
-            placeholder="Izlash..."
-            value={searchQuery}
-            onChange={e => {
-              setSearchQuery(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm outline-none focus:border-blue-500 transition-colors bg-white shadow-sm"
-          />
-          {searchQuery && (
-            <X
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer hover:text-gray-600"
-              size={16}
-              onClick={() => setSearchQuery("")}
-            />
-          )}
-        </div>
-
-        {/* We can place the pagination here or rely on the bottom pagination component from Kebyu's design. The screenshot shows pagination at the top right, but the standard Kebyu UI has Pagination component at the bottom. I'll add the standard Kebyu UI Pagination at the bottom to follow the "Kebyu UI" rule tightly, but I'll add a simplified top pagination info to match the screenshot if needed. Let's just stick to the standard Kebyu UI Pagination at the bottom, and maybe a small page info at the top. The image has 'Bir sahifada: 10', '1', 'Keyingi' at the top right. I'll put a simplified version here if I don't use the full component. Actually, `Pagination` component is designed for the bottom. I will just use `Pagination` at the bottom to perfectly match Kebyu's style. */}
-      </div>
-
-      {/* Table (Excel Style Borders) */}
-      <div className="bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 border-b-0">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse border-hidden min-w-[1000px]">
-            <thead>
-              <tr className="bg-white text-[12px] text-gray-900 font-bold tracking-wider">
-                <th className="px-5 py-4 w-16 border border-gray-200 border-t-0 border-l-0 border-r-0">ID</th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">O'quvchi <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Telefon raqam <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Narxi <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
-                <th className="px-5 py-4 border border-gray-200 border-t-0 border-r-0">Sotib olgan sana <ChevronDown size={14} className="inline-block text-gray-400 ml-1" /></th>
-              </tr>
-            </thead>
-            <tbody className="text-[14px] text-gray-800">
-              {currentStudents.map((student) => (
-                <tr key={student.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="px-5 py-4 font-medium border border-gray-200 border-l-0 border-r-0">{student.id}</td>
-                  <td className="px-5 py-4 border border-gray-200 border-r-0">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-bold text-[12px]">
-                        {student.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-semibold text-[13px]">{student.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-4 text-gray-600 font-medium text-[13px] border border-gray-200 border-r-0">{student.phone}</td>
-                  <td className="px-5 py-4 font-bold text-[13px] text-gray-900 border border-gray-200 border-r-0">{student.price}</td>
-                  <td className="px-5 py-4 text-gray-600 text-[13px] border border-gray-200 border-r-0">{student.date}</td>
-                </tr>
-              ))}
-              {currentStudents.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-10 text-center text-gray-500 border border-gray-200 border-l-0 border-r-0">
-                    Ma'lumot topilmadi
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Bottom Pagination Component */}
-      <div className="border border-gray-200 rounded-b-xl overflow-hidden bg-[#F8F9FA]">
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredStudents.length}
-          startIndex={startIndex}
-          endIndex={endIndex}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-          onDownloadXLS={handleDownloadXLS}
-        />
-      </div>
+      <div className="relative max-w-[400px] mb-6"><Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} /><input value={searchQuery} onChange={(event) => { setSearchQuery(event.target.value); setCurrentPage(1); }} placeholder="Izlash..." className="w-full pl-10 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm outline-none bg-white shadow-sm" />{searchQuery && <X className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer" size={16} onClick={() => setSearchQuery("")} />}</div>
+      <div className="bg-white rounded-t-xl shadow-sm overflow-hidden border border-gray-200 border-b-0 overflow-x-auto"><table className="w-full text-left min-w-[850px]"><thead><tr className="text-[12px] font-bold text-gray-900"><th className="px-5 py-4">ID</th><th className="px-5 py-4">O&apos;quvchi</th><th className="px-5 py-4">Telefon raqam</th><th className="px-5 py-4">Narxi</th><th className="px-5 py-4">Sotib olgan sana</th></tr></thead><tbody className="text-[14px]">
+        {loading ? <tr><td colSpan={5} className="p-10 text-center"><Loader2 className="inline animate-spin" /></td></tr> : currentStudents.length ? currentStudents.map((student) => { const avatar = getAvatarUrl(student.image); return <tr key={`${student.id}-${student.course}`} className="border-t border-gray-100"><td className="px-5 py-4">{student.id}</td><td className="px-5 py-4"><div className="flex items-center gap-3">{avatar ? <img src={avatar} alt={student.name} className="w-8 h-8 rounded-full object-cover" /> : <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center">{student.name?.[0]}</div>}<span className="font-semibold">{student.name}</span></div></td><td className="px-5 py-4 text-gray-600">{student.phone}</td><td className="px-5 py-4">{student.price ?? "-"}</td><td className="px-5 py-4 text-gray-600">{student.date ? new Date(student.date).toLocaleDateString() : "-"}</td></tr>; }) : <tr><td colSpan={5} className="p-10 text-center text-gray-500">Ma&apos;lumot topilmadi</td></tr>}
+      </tbody></table></div>
+      <div className="border border-gray-200 rounded-b-xl overflow-hidden bg-[#F8F9FA]"><Pagination currentPage={currentPage} totalPages={totalPages} totalItems={filteredStudents.length} startIndex={startIndex} endIndex={endIndex} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} onItemsPerPageChange={setItemsPerPage} onDownloadXLS={download} /></div>
     </div>
   );
 }

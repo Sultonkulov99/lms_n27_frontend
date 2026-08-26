@@ -1,15 +1,63 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { BookOpen, CheckCircle2, ShoppingBag, Star } from "lucide-react";
-import { useMentorStore } from "@/store/useMentorStore";
+import React, { useEffect, useState } from "react";
+import { BookOpen, CheckCircle2, ShoppingBag, Star, Loader2 } from "lucide-react";
+import { baseAPI, API_URL } from "@/app/lib/utils";
+
+interface Course {
+  id: number;
+  name: string;
+  level: string;
+  price: string | number;
+  banner?: string;
+  categories?: {
+    id: number;
+    name: string;
+  };
+  category?: string;
+  status?: string;
+  payments?: Array<{ status: boolean }>;
+}
 
 export default function MentorDashboard() {
-  const { courses, fullName, fetchCourses } = useMentorStore();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [studentCount, setStudentCount] = useState<number>(0);
+  const [fullName, setFullName] = useState<string>("Mentor");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [coursesRes, profileRes, studentsRes] = await Promise.allSettled([
+          baseAPI.get("/courses/my-courses"),
+          baseAPI.get("/profile"),
+          baseAPI.get("/students"),
+        ]);
+
+        if (coursesRes.status === "fulfilled") {
+          const d = coursesRes.value.data?.data || coursesRes.value.data || [];
+          setCourses(Array.isArray(d) ? d : []);
+        }
+
+        if (profileRes.status === "fulfilled") {
+          const p = profileRes.value.data?.data || profileRes.value.data;
+          if (p?.fullName) setFullName(p.fullName);
+        }
+
+        if (studentsRes.status === "fulfilled") {
+          const s = studentsRes.value.data?.students || studentsRes.value.data?.data || studentsRes.value.data || [];
+          setStudentCount(Array.isArray(s) ? s.length : 0);
+        }
+      } catch (err) {
+        console.error("Dashboard yuklashda xatolik", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const purchasedStudents = courses.reduce(
     (total, course) => total + (course.payments?.filter((payment) => payment.status).length ?? 0),
@@ -41,29 +89,42 @@ export default function MentorDashboard() {
     {
       id: 4,
       title: "Jami baholar",
-      value: "0",
+      value: "5.0",
       icon: <Star size={24} className="text-[#FAAD14]" />,
       bg: "bg-[#FFFBE6]",
     },
   ];
 
   // Map levels to badges
-  const getLevelBadge = (level: string) => {
-    switch (level.toUpperCase()) {
+  const getLevelBadge = (level?: string) => {
+    switch ((level || "").toUpperCase()) {
       case "ADVANCED":
         return <span className="px-3 py-1 bg-red-50 text-red-500 rounded-full text-[12px] font-medium">Yuqori</span>;
       case "BEGINNER":
         return <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[12px] font-medium">Boshlang'ich</span>;
       default:
-        return <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[12px] font-medium">{level}</span>;
+        return <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[12px] font-medium">{level || "Standart"}</span>;
     }
+  };
+
+  const getBannerUrl = (banner?: string) => {
+    if (!banner) return "/course.svg";
+    if (banner.startsWith("http")) return banner;
+    return `${API_URL}/${banner}`;
+  };
+
+  const formatPrice = (price: string | number) => {
+    if (typeof price === "number") return `${price.toLocaleString()} so'm`;
+    const num = Number(price);
+    if (!isNaN(num)) return `${num.toLocaleString()} so'm`;
+    return price || "0 so'm";
   };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-[#F8F9FA]">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-[24px] font-bold text-gray-900 mb-2">Xush kelibsiz, {fullName || "Mentor"}!</h1>
+        <h1 className="text-[24px] font-bold text-gray-900 mb-2">Xush kelibsiz, {fullName}!</h1>
         <p className="text-gray-500 text-[14px]">
           Bu yerda o'zingizga tegishli kurslar va o'quvchilarni boshqarishingiz mumkin.
         </p>
@@ -99,7 +160,6 @@ export default function MentorDashboard() {
                 <th className="px-6 py-4 whitespace-nowrap">NARXI</th>
                 <th className="px-6 py-4 whitespace-nowrap">DARAJASI</th>
                 <th className="px-6 py-4 whitespace-nowrap">HOLATI</th>
-                <th className="px-6 py-4 whitespace-nowrap text-center">SOTIB OLGAN</th>
                 <th className="px-6 py-4 whitespace-nowrap text-center">BAHO</th>
               </tr>
             </thead>
@@ -144,7 +204,7 @@ export default function MentorDashboard() {
 
               {courses.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-[13px] text-gray-500 font-medium">
+                  <td colSpan={6} className="px-6 py-8 text-center text-[13px] text-gray-500 font-medium">
                     Hali kurslar qo'shilmagan
                   </td>
                 </tr>
@@ -156,3 +216,4 @@ export default function MentorDashboard() {
     </div>
   );
 }
+
