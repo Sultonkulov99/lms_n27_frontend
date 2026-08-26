@@ -46,6 +46,9 @@ export const useMentorStore = create<MentorState>((set) => ({
                       }))
                     : [],
             });
+        } catch (error) {
+            console.error("Mentor kurslarini yuklashda xatolik:", error);
+            set({ courses: [] });
         } finally {
             set({ isLoading: false });
         }
